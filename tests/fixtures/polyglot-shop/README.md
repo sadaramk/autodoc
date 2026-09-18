@@ -1,6 +1,6 @@
 # polyglot-shop
 
-A small checkout platform used as the autodoc-engine demo repository.
+A small checkout platform used as the autodoc demo repository.
 
 | Unit | Language | Role |
 |------|----------|------|

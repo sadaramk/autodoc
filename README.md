@@ -78,7 +78,7 @@ claude mcp add autodoc -- autodoc serve          # Claude Code
 
 The agent protocol lives in [`skills/autodoc/SKILL.md`](skills/autodoc/SKILL.md); the IR field guide, diagnostic
 catalog and worked examples in [`skills/autodoc/reference.md`](skills/autodoc/reference.md).
-To install the skill for Claude Code: `cp -r skills/autodoc ~/.claude/skills/autodoc-engine`.
+To install the skill for Claude Code: `cp -r skills/autodoc ~/.claude/skills/autodoc`.
 
 ## The architecture book
 

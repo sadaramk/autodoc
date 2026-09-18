@@ -16,7 +16,7 @@ pub use html::EvidenceView;
 pub use layout::{GeometryIssue, Layout};
 pub use theme::Accent;
 
-pub const GENERATOR: &str = concat!("autodoc-engine ", env!("CARGO_PKG_VERSION"));
+pub const GENERATOR: &str = concat!("autodoc ", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Clone, Default)]
 pub struct RenderOptions {

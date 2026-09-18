@@ -18,10 +18,10 @@ use serde_json::{json, Value};
 
 use engine::{CompileOutcome, CompileRequest, IrInput, OutputFormat};
 
-pub const SERVER_NAME: &str = "autodoc-engine";
+pub const SERVER_NAME: &str = "autodoc";
 pub const SUPPORTED_PROTOCOLS: &[&str] = &["2025-06-18", "2025-03-26", "2024-11-05"];
 
-const INSTRUCTIONS: &str = "autodoc-engine turns source code into verifiable, editorial architecture diagrams. \
+const INSTRUCTIONS: &str = "autodoc turns source code into verifiable, editorial architecture diagrams. \
 Workflow: (1) autodoc_scan_repository to get containers, relationships, an evidence map and a draft DiagramIR; \
 (2) refine the IR — never emit SVG yourself; keep density <= 0.40 and at most 1-2 isKeyFocalPoint nodes; \
 (3) autodoc_compile_diagram; if it returns status=rejected, fix exactly the elements named in each diagnostic \
@@ -124,7 +124,7 @@ impl Server {
         json!({
             "protocolVersion": version,
             "capabilities": { "tools": { "listChanged": false } },
-            "serverInfo": { "name": SERVER_NAME, "title": "AutoDoc Engine", "version": env!("CARGO_PKG_VERSION") },
+            "serverInfo": { "name": SERVER_NAME, "title": "autodoc", "version": env!("CARGO_PKG_VERSION") },
             "instructions": INSTRUCTIONS,
         })
     }

@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 pub const FILE_NAME: &str = "autodoc.toml";
 
-pub const TEMPLATE: &str = r#"# autodoc-engine configuration. CLI flags override these values.
+pub const TEMPLATE: &str = r#"# autodoc configuration. CLI flags override these values.
 
 [output]
 dir = "docs/architecture"   # where `autodoc generate` writes diagrams
