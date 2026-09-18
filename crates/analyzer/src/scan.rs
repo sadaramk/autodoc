@@ -816,6 +816,48 @@ pub fn slug(s: &str) -> String {
     out.trim_end_matches('-').to_string()
 }
 
+/// The longest id the IR accepts; see `validator::valid_id`.
+pub const MAX_ID: usize = 80;
+
+/// `{source}--{target}`, kept within [`MAX_ID`].
+///
+/// Deeply nested package layouts (Go vertical slices, feature folders) make node
+/// ids long enough that the joined pair overruns the limit and the whole diagram
+/// fails validation. Shorten both halves and pin a hash of the full pair on the
+/// end, so the id stays unique and stable across runs.
+pub fn edge_id(source: &str, target: &str) -> String {
+    let joined = format!("{source}--{target}");
+    if joined.len() <= MAX_ID {
+        return joined;
+    }
+    let hash = format!("{:08x}", fnv1a(&joined));
+    // 2 separators + the hash; split what is left evenly between the two halves.
+    let budget = MAX_ID - hash.len() - 3;
+    let half = budget / 2;
+    format!("{}--{}-{hash}", clip(source, budget - half), clip(target, half))
+}
+
+/// Trim to `max` bytes on a character boundary, without a trailing separator.
+fn clip(s: &str, max: usize) -> &str {
+    if s.len() <= max {
+        return s;
+    }
+    let mut end = max;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    s[..end].trim_end_matches(['-', '.', '_', ':'])
+}
+
+fn fnv1a(s: &str) -> u32 {
+    let mut h: u32 = 0x811c_9dc5;
+    for b in s.as_bytes() {
+        h ^= *b as u32;
+        h = h.wrapping_mul(0x0100_0193);
+    }
+    h
+}
+
 const ACRONYMS: &[&str] =
     &["ddd", "ml", "api", "db", "ui", "http", "sql", "cli", "sdk", "id", "grpc", "io", "mcp", "ir", "url"];
 
@@ -1524,7 +1566,7 @@ impl RelBuilder {
         self.map
             .into_values()
             .map(|mut r| {
-                r.id = format!("{}--{}", r.source, r.target);
+                r.id = edge_id(&r.source, &r.target);
                 r
             })
             .collect()

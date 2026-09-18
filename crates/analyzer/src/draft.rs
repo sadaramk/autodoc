@@ -317,7 +317,7 @@ fn lift_library_infrastructure(report: &ScanReport, ir: &mut DiagramIR, notes: &
                     continue;
                 }
                 ir.edges.push(Edge {
-                    id: format!("{source}--{target}--via-{lib}"),
+                    id: crate::scan::edge_id(&source, &format!("{target}--via-{lib}")),
                     source,
                     target,
                     label: Some(truncate(&format!("{} (via {lib})", r.label), 32)),
@@ -524,7 +524,7 @@ fn system_context(report: &ScanReport, ir: &mut DiagramIR, notes: &mut Vec<Strin
     for c in &clients {
         ir.nodes.push(unit_node(c, report, "clients"));
         ir.edges.push(Edge {
-            id: format!("{}--{}", c.id, system_id),
+            id: crate::scan::edge_id(&c.id, &system_id),
             source: c.id.clone(),
             target: system_id.clone(),
             label: Some("uses".into()),
@@ -547,7 +547,7 @@ fn system_context(report: &ScanReport, ir: &mut DiagramIR, notes: &mut Vec<Strin
             .find(|r| r.target == i.id && internal_ids.contains(r.source.as_str()))
             .map(|r| r.label.clone());
         ir.edges.push(Edge {
-            id: format!("{}--{}", system_id, i.id),
+            id: crate::scan::edge_id(&system_id, &i.id),
             source: system_id.clone(),
             target: i.id.clone(),
             label,
@@ -631,7 +631,7 @@ fn components(report: &ScanReport, view: Option<&ComponentView>, ir: &mut Diagra
     for d in &view.dependencies {
         let event = !d.events.is_empty();
         ir.edges.push(Edge {
-            id: format!("{}--{}", d.source, d.target),
+            id: crate::scan::edge_id(&d.source, &d.target),
             source: d.source.clone(),
             target: d.target.clone(),
             label: event.then(|| truncate(&d.events.join(", "), 32)),
@@ -662,7 +662,7 @@ fn components(report: &ScanReport, view: Option<&ComponentView>, ir: &mut Diagra
             None => (module.clone(), kind.id().to_string(), EdgeType::Sync, String::new()),
         };
         ir.edges.push(Edge {
-            id: format!("{source}--{target}"),
+            id: crate::scan::edge_id(&source, &target),
             source,
             target,
             label: (!label.is_empty()).then(|| truncate(&label, 28)),
@@ -952,7 +952,7 @@ fn dedupe_edges(ir: &mut DiagramIR) {
             None => {
                 seen.insert(key, keep.len());
                 let mut e = e;
-                e.id = format!("{}--{}", e.source, e.target);
+                e.id = crate::scan::edge_id(&e.source, &e.target);
                 keep.push(e);
             }
         }

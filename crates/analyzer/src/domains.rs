@@ -718,7 +718,7 @@ pub fn draft_domain_overview_ir(report: &ScanReport, data: &DataModel, opts: &Dr
     let mut edges: Vec<Edge> = Vec::new();
     for ((from, to), (count, ev)) in ref_edges {
         edges.push(Edge {
-            id: format!("{}--{}", dom_id(&from), dom_id(&to)),
+            id: crate::scan::edge_id(&dom_id(&from), &dom_id(&to)),
             source: dom_id(&from),
             target: dom_id(&to),
             label: Some(format!("{count} reference{}", if count == 1 { "" } else { "s" })),
@@ -735,7 +735,7 @@ pub fn draft_domain_overview_ir(report: &ScanReport, data: &DataModel, opts: &Dr
     }
     for ((u, d), (write, ev)) in pairs.iter().filter(|((u, _), _)| drawn_units.contains(u.as_str())) {
         edges.push(Edge {
-            id: format!("{u}--{}", dom_id(d)),
+            id: crate::scan::edge_id(u, &dom_id(d)),
             source: u.clone(),
             target: dom_id(d),
             label: Some(if *write { "reads & writes" } else { "reads" }.into()),

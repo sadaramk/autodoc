@@ -386,7 +386,7 @@ fn build(
             ir.nodes.push(n);
         }
         ir.edges.push(Edge {
-            id: format!("{caller}--{}", group_node_id(&areas[*ai].name)),
+            id: crate::scan::edge_id(caller, &group_node_id(&areas[*ai].name)),
             source: caller.clone(),
             target: group_node_id(&areas[*ai].name),
             label: Some(format!("{count} call{}", if *count == 1 { "" } else { "s" })),
@@ -410,7 +410,7 @@ fn build(
         ir.nodes.push(n);
         for ai in uncalled {
             ir.edges.push(Edge {
-                id: format!("external-clients--{}", group_node_id(&areas[ai].name)),
+                id: crate::scan::edge_id("external-clients", &group_node_id(&areas[ai].name)),
                 source: "external-clients".into(),
                 target: group_node_id(&areas[ai].name),
                 label: None,
@@ -472,7 +472,7 @@ fn build(
             EdgeType::Sync
         };
         ir.edges.push(Edge {
-            id: format!("{}--{target}", group_node_id(&areas[*ai].name)),
+            id: crate::scan::edge_id(&group_node_id(&areas[*ai].name), target),
             source: group_node_id(&areas[*ai].name),
             target: target.clone(),
             label: Some(short(&vs.join(", "), LABEL_MAX)),
