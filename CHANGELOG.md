@@ -10,6 +10,11 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- Command-bus dispatch is resolved by the message type: `mediatr.Send[*CreateOrder,
+  *Res](ctx, command)` names the command rather than the handler, so a CQRS
+  service produced no request flow at all. The handler is taken to be the one
+  method that accepts the message, which holds for any bus that dispatches by
+  type rather than for one library's API.
 - Go request flows are traced through struct field chains, ports and store
   clients. `h.app.Queries.AllTrainings.Handle` names no function — `Handle` is
   declared on every handler in a CQRS service — so the analyzer now records
@@ -23,8 +28,24 @@ All notable changes to this project are recorded here. The format follows
   it. Where the data model already reads the query it remains the source, since
   it names the table and the operation exactly.
 
+### Security
+
+- A file path recorded in an existing `manifest.json` can no longer reach outside
+  the book directory. `generate` prunes the files a previous run produced, and
+  those keys are untrusted — a book may be generated for a repository the user
+  does not control — so `../../id_rsa` escaped the output directory, and an
+  absolute path replaced it entirely. Reading a hand-edited diagram had the same
+  flaw. Paths are now restricted to plain relative components and confirmed to
+  resolve inside the book.
+
 ### Fixed
 
+- Source files above the size limit are named on the evidence page instead of
+  being skipped silently, which had let a repository with large generated or
+  vendored sources produce documentation that was confidently incomplete.
+- Generated mocks (`mocks/`, as mockery and gomock write them) are no longer
+  documented as architecture; a flow had been citing a test double as the code
+  that reads products.
 - Edge ids are kept within the 80 characters the IR accepts. Deeply nested
   package layouts made the joined `source--target` pair overrun, and every edge
   in the figure then failed validation — 19 errors on one component diagram of a
