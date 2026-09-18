@@ -11,7 +11,7 @@ A business requirements document scaffolded from the implementation: what is bui
 
 _needs input: the problem this system solves, for whom_
 
-_from README_ A small checkout platform used as the autodoc-engine demo repository. `README.md:3`
+_from README_ A small checkout platform used as the autodoc-engine demo repository. [`README.md:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/README.md#L3)
 
 ## 2. Goals & non-goals
 
@@ -63,5 +63,5 @@ _needs input: how success is measured, with targets_
 
 - 5 of 5 requirements have no authored actor or purpose.
 - [FR-001](../pages/07-functional-specification.md#fr-001) GET /catalog declares no request or response type: what does it accept and return?
-- [Web](../pages/03-containers-web.md) reads estimatedDelivery from POST /checkout, which the operation does not declare `web/src/api/client.ts:10` — CheckoutPostResponse declares orderId, status `api-gateway/src/routes/checkout.ts:47`
+- [Web](../pages/03-containers-web.md) reads estimatedDelivery from POST /checkout, which the operation does not declare [`web/src/api/client.ts:10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L10) — CheckoutPostResponse declares orderId, status [`api-gateway/src/routes/checkout.ts:47`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L47)
 

@@ -78,10 +78,9 @@ pub fn web_base(remote: &str) -> Option<String> {
         rest.replacen(':', "/", 1)
     } else if let Some(rest) = r.strip_prefix("ssh://git@") {
         rest.to_string()
-    } else if let Some(rest) = r.strip_prefix("https://").or_else(|| r.strip_prefix("http://")) {
-        rest.split_once('@').map(|(_, h)| h.to_string()).unwrap_or_else(|| rest.to_string())
     } else {
-        return None;
+        let rest = r.strip_prefix("https://").or_else(|| r.strip_prefix("http://"))?;
+        rest.split_once('@').map(|(_, h)| h.to_string()).unwrap_or_else(|| rest.to_string())
     };
     let host = hostpath.split('/').next()?;
     let forge = ["github.com", "gitlab.com", "bitbucket.org", "codeberg.org"];

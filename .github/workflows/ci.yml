@@ -15,7 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      # Same toolchain as the Docker image, so lints agree everywhere.
+      - uses: dtolnay/rust-toolchain@1.91.0
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
@@ -41,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.91.0
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
@@ -67,8 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release -p autodoc-cli
-      # The book is deterministic for a commit: regenerating must change nothing.
-      - run: ./target/release/autodoc check tests/fixtures/polyglot-shop --out examples/polyglot-shop
+      # Through Docker, like `make demo`: the container sees the fixture at a fixed
+      # path and without this repository's `.git`, so the committed book is
+      # reproducible on any machine and doesn't move with our commits.
+      - run: make demo-check

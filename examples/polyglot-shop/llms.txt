@@ -2,7 +2,7 @@
 
 > A small checkout platform used as the autodoc-engine demo repository.
 
-Architecture book generated from source by autodoc-engine. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
+Architecture book generated from source by autodoc-engine. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · commit `e7b68ce276` · 2026-09-17T21:21:44-05:00 · 138/138 citations verified
 
 ## Pages
 
@@ -21,7 +21,7 @@ Architecture book generated from source by autodoc-engine. Every claim links to 
 - [Payments API](pages/06-api-payments.md): The contract of every net/http operation Payments serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
 - [Functional specification](pages/07-functional-specification.md): 5 functional requirements and 19 business rules as the code implements them, each traceable to the handler, rule or state change that realises it.
 - [Business requirements](pages/08-business-requirements.md): A business requirements document scaffolded from the implementation: what is built is measured, why and for whom is authored, and every unanswered question is listed.
-- [Evidence & unknowns](pages/09-evidence-and-unknowns.md): 135 of 135 citations verified. What was observed, what was only declared, and what static analysis can't see.
+- [Evidence & unknowns](pages/09-evidence-and-unknowns.md): 135 of 135 citations verified against e7b68ce2. What was observed, what was only declared, and what static analysis can't see.
 
 ## Diagrams (typed DiagramIR JSON)
 

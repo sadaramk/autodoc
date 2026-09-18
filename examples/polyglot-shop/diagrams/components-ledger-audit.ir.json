@@ -6,7 +6,8 @@
   "theme": "editorial-light",
   "metadata": {
     "targetRepo": "/repo/tests/fixtures/polyglot-shop",
-    "generatedAt": "unversioned",
+    "commitHash": "e7b68ce276f2e4470e6daf110d740e81698c7f96",
+    "generatedAt": "2026-09-17T21:21:44-05:00",
     "visualDensityScore": 0.113
   },
   "containers": [

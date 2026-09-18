@@ -2,7 +2,7 @@
 
 _Evidence_ · [Book index](../README.md)
 
-135 of 135 citations verified. What was observed, what was only declared, and what static analysis can't see.
+135 of 135 citations verified against e7b68ce2. What was observed, what was only declared, and what static analysis can't see.
 
 **135** Citations · **135** Verified · **0** Stale · **0** Broken
 
@@ -19,139 +19,139 @@ _Evidence_ · [Book index](../README.md)
 
 | Location | Symbol | State | Detail |
 |---|---|---|---|
-| `README.md:3` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/cache.ts:1` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/cache.ts:9-17` | `cached` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/clients/payments.ts:1` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/clients/payments.ts:4-7` | `ChargeResult` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/clients/payments.ts:10-20` | `chargeOrder` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/clients/payments.ts:11` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:6-10` | `Order` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:13-20` | `insertOrder` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:16` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:23-26` | `listProducts` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:24` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:29-31` | `markOrderPaid` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:30` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:34-36` | `cancelOrder` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/db.ts:35` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/events.ts:11-13` | `connectProducer` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/events.ts:16-21` | `publishOrderPlaced` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/auth.ts:4-10` | `requireCustomer` | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/catalog.ts:8-11` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:11-24` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:13` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:16` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:17` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:22` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:23` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:33` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:33-48` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:36` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:43` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/routes/checkout.ts:47` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/server.ts:14` |  | _verified_ | verified against the pinned commit |
-| `api-gateway/src/server.ts:19-24` | `main` | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:3` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:4` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:5` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:6` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:7` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:10` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:11` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:12` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:13` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:15` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:16` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:17` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:20` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:21` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:22` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:23` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/001_init.sql:24` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:3` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:4` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:5` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:6` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:7` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:8` |  | _verified_ | verified against the pinned commit |
-| `db/migrations/002_payments.sql:9` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:2` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:5` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:7` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:11` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:14` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:22` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:24` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:26` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:34` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:41` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:44` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:51` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:57` |  | _verified_ | verified against the pinned commit |
-| `docker-compose.yml:60` |  | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/__init__.py:1-3` |  | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/__main__.py:10-13` | `handle_order` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/__main__.py:16-19` | `main` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/__main__.py:22-23` | `__main__` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/consumer.py:11-29` | `OrderConsumer` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/consumer.py:19-29` | `run` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/notify.py:5` |  | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/notify.py:9-19` | `send_shipped_email` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/shipping.py:6` |  | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/shipping.py:9-17` | `ship_order` | _verified_ | verified against the pinned commit |
-| `fulfillment/fulfillment/shipping.py:14` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:4` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:8-12` | `DailyTotal` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:9` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:10` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:11` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:15-22` | `daily_totals` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/audit.rs:17` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/main.rs:10-21` | `main` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:15-17` | `router` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:22` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:23` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:29-33` | `DailyQuery` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:32` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:36-40` | `daily_report` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:43` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:43-46` | `daily_status` | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:44` |  | _verified_ | verified against the pinned commit |
-| `ledger-audit/src/routes.rs:45` |  | _verified_ | verified against the pinned commit |
-| `payments/cmd/payments/main.go:13` |  | _verified_ | verified against the pinned commit |
-| `payments/cmd/payments/main.go:17-30` | `main` | _verified_ | verified against the pinned commit |
-| `payments/internal/charge/charge.go:5` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/charge/charge.go:10-13` | `Result` | _verified_ | verified against the pinned commit |
-| `payments/internal/charge/charge.go:16` | `StripeCharger` | _verified_ | verified against the pinned commit |
-| `payments/internal/charge/charge.go:19-22` | `NewStripeCharger` | _verified_ | verified against the pinned commit |
-| `payments/internal/charge/charge.go:25-38` | `Charge` | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:13-19` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:15` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:16` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:17` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:18` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:22-25` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:23` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:24` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:28-31` | `Handler` | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:34-36` | `NewHandler` | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:39-43` | `Routes` | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:46-64` | `createCharge` | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:49` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:53` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/httpapi/handler.go:59` |  | _verified_ | verified against the pinned commit |
-| `payments/internal/ledger/ledger.go:11-13` | `Ledger` | _verified_ | verified against the pinned commit |
-| `payments/internal/ledger/ledger.go:16-18` | `New` | _verified_ | verified against the pinned commit |
-| `payments/internal/ledger/ledger.go:21-26` | `Record` | _verified_ | verified against the pinned commit |
-| `payments/internal/ledger/ledger.go:23` |  | _verified_ | verified against the pinned commit |
-| `web/src/api/client.ts:3` |  | _verified_ | verified against the pinned commit |
-| `web/src/api/client.ts:9-19` | `submitCheckout` | _verified_ | verified against the pinned commit |
-| `web/src/api/client.ts:10` |  | _verified_ | verified against the pinned commit |
-| `web/src/api/client.ts:22-25` | `fetchCatalog` | _verified_ | verified against the pinned commit |
-| `web/src/api/client.ts:23` |  | _verified_ | verified against the pinned commit |
-| `web/src/api/types.ts:2-7` | `CartItem` | _verified_ | verified against the pinned commit |
-| `web/src/api/types.ts:10-15` | `CheckoutResult` | _verified_ | verified against the pinned commit |
-| `web/src/main.tsx:9` | `createRoot` | _verified_ | verified against the pinned commit |
-| `web/src/pages/Checkout.tsx:6-32` | `Checkout` | _verified_ | verified against the pinned commit |
+| [`README.md:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/README.md#L3) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/cache.ts:1`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/cache.ts#L1) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/cache.ts:9-17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/cache.ts#L9-L17) | `cached` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/clients/payments.ts:1`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/clients/payments.ts#L1) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/clients/payments.ts:4-7`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/clients/payments.ts#L4-L7) | `ChargeResult` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/clients/payments.ts:10-20`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/clients/payments.ts#L10-L20) | `chargeOrder` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/clients/payments.ts:11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/clients/payments.ts#L11) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:6-10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L6-L10) | `Order` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:13-20`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L13-L20) | `insertOrder` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L16) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:23-26`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L23-L26) | `listProducts` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L24) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:29-31`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L29-L31) | `markOrderPaid` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:30`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L30) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:34-36`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L34-L36) | `cancelOrder` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/db.ts:35`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/db.ts#L35) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/events.ts:11-13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/events.ts#L11-L13) | `connectProducer` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/events.ts:16-21`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/events.ts#L16-L21) | `publishOrderPlaced` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/auth.ts:4-10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/auth.ts#L4-L10) | `requireCustomer` | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/catalog.ts:8-11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/catalog.ts#L8-L11) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:11-24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L11-L24) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L16) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L17) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L22) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L23) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:33`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L33) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:33-48`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L33-L48) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:36`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L36) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:43`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L43) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/routes/checkout.ts:47`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L47) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/server.ts:14`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/server.ts#L14) |  | _verified_ | verified against the pinned commit |
+| [`api-gateway/src/server.ts:19-24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/server.ts#L19-L24) | `main` | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L3) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:4`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L4) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:5`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L5) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:6`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L6) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:7`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L7) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L10) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L11) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:12`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L12) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L13) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:15`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L15) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L16) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L17) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:20`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L20) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:21`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L21) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L22) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L23) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/001_init.sql:24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/001_init.sql#L24) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L3) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:4`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L4) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:5`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L5) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:6`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L6) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:7`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L7) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:8`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L8) |  | _verified_ | verified against the pinned commit |
+| [`db/migrations/002_payments.sql:9`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/db/migrations/002_payments.sql#L9) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:2`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L2) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:5`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L5) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:7`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L7) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L11) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:14`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L14) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L22) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L24) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:26`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L26) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:34`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L34) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:41`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L41) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:44`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L44) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:51`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L51) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:57`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L57) |  | _verified_ | verified against the pinned commit |
+| [`docker-compose.yml:60`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/docker-compose.yml#L60) |  | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/__init__.py:1-3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/__init__.py#L1-L3) |  | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/__main__.py:10-13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/__main__.py#L10-L13) | `handle_order` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/__main__.py:16-19`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/__main__.py#L16-L19) | `main` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/__main__.py:22-23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/__main__.py#L22-L23) | `__main__` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/consumer.py:11-29`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/consumer.py#L11-L29) | `OrderConsumer` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/consumer.py:19-29`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/consumer.py#L19-L29) | `run` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/notify.py:5`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/notify.py#L5) |  | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/notify.py:9-19`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/notify.py#L9-L19) | `send_shipped_email` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/shipping.py:6`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/shipping.py#L6) |  | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/shipping.py:9-17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/shipping.py#L9-L17) | `ship_order` | _verified_ | verified against the pinned commit |
+| [`fulfillment/fulfillment/shipping.py:14`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/fulfillment/fulfillment/shipping.py#L14) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:4`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L4) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:8-12`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L8-L12) | `DailyTotal` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:9`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L9) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L10) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L11) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:15-22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L15-L22) | `daily_totals` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/audit.rs:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/audit.rs#L17) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/main.rs:10-21`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/main.rs#L10-L21) | `main` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:15-17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L15-L17) | `router` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L22) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L23) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:29-33`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L29-L33) | `DailyQuery` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:32`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L32) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:36-40`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L36-L40) | `daily_report` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:43`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L43) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:43-46`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L43-L46) | `daily_status` | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:44`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L44) |  | _verified_ | verified against the pinned commit |
+| [`ledger-audit/src/routes.rs:45`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/ledger-audit/src/routes.rs#L45) |  | _verified_ | verified against the pinned commit |
+| [`payments/cmd/payments/main.go:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/cmd/payments/main.go#L13) |  | _verified_ | verified against the pinned commit |
+| [`payments/cmd/payments/main.go:17-30`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/cmd/payments/main.go#L17-L30) | `main` | _verified_ | verified against the pinned commit |
+| [`payments/internal/charge/charge.go:5`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/charge/charge.go#L5) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/charge/charge.go:10-13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/charge/charge.go#L10-L13) | `Result` | _verified_ | verified against the pinned commit |
+| [`payments/internal/charge/charge.go:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/charge/charge.go#L16) | `StripeCharger` | _verified_ | verified against the pinned commit |
+| [`payments/internal/charge/charge.go:19-22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/charge/charge.go#L19-L22) | `NewStripeCharger` | _verified_ | verified against the pinned commit |
+| [`payments/internal/charge/charge.go:25-38`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/charge/charge.go#L25-L38) | `Charge` | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:13-19`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L13-L19) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:15`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L15) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L16) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L17) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:18`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L18) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:22-25`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L22-L25) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L23) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L24) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:28-31`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L28-L31) | `Handler` | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:34-36`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L34-L36) | `NewHandler` | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:39-43`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L39-L43) | `Routes` | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:46-64`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L46-L64) | `createCharge` | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:49`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L49) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:53`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L53) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/httpapi/handler.go:59`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/httpapi/handler.go#L59) |  | _verified_ | verified against the pinned commit |
+| [`payments/internal/ledger/ledger.go:11-13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/ledger/ledger.go#L11-L13) | `Ledger` | _verified_ | verified against the pinned commit |
+| [`payments/internal/ledger/ledger.go:16-18`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/ledger/ledger.go#L16-L18) | `New` | _verified_ | verified against the pinned commit |
+| [`payments/internal/ledger/ledger.go:21-26`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/ledger/ledger.go#L21-L26) | `Record` | _verified_ | verified against the pinned commit |
+| [`payments/internal/ledger/ledger.go:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/payments/internal/ledger/ledger.go#L23) |  | _verified_ | verified against the pinned commit |
+| [`web/src/api/client.ts:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L3) |  | _verified_ | verified against the pinned commit |
+| [`web/src/api/client.ts:9-19`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L9-L19) | `submitCheckout` | _verified_ | verified against the pinned commit |
+| [`web/src/api/client.ts:10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L10) |  | _verified_ | verified against the pinned commit |
+| [`web/src/api/client.ts:22-25`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L22-L25) | `fetchCatalog` | _verified_ | verified against the pinned commit |
+| [`web/src/api/client.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L23) |  | _verified_ | verified against the pinned commit |
+| [`web/src/api/types.ts:2-7`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/types.ts#L2-L7) | `CartItem` | _verified_ | verified against the pinned commit |
+| [`web/src/api/types.ts:10-15`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/types.ts#L10-L15) | `CheckoutResult` | _verified_ | verified against the pinned commit |
+| [`web/src/main.tsx:9`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/main.tsx#L9) | `createRoot` | _verified_ | verified against the pinned commit |
+| [`web/src/pages/Checkout.tsx:6-32`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/pages/Checkout.tsx#L6-L32) | `Checkout` | _verified_ | verified against the pinned commit |
 
