@@ -17,7 +17,7 @@ pub mod markdown;
 pub mod model;
 
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -31,9 +31,44 @@ pub enum BookError {
     Scan(#[from] autodoc_analyzer::ScanError),
     #[error("cannot write {path}: {source}")]
     Io { path: String, source: std::io::Error },
+    #[error("refusing to write `{path}`: it would leave the output directory")]
+    UnsafePath { path: String },
 }
 
 pub const MANIFEST: &str = "manifest.json";
+
+/// Resolve a path recorded in a manifest against the book directory, or `None`
+/// when it would reach outside it.
+///
+/// The manifest is read back from the output directory, and a book may be
+/// generated for a repository the user does not control, so its file list is
+/// untrusted input. `Path::join` follows `..` and an absolute path replaces the
+/// base outright, which on the pruning pass would delete a file anywhere the
+/// process can write. Accept only plain, relative components, then confirm the
+/// resolved parent really is inside the book — a symlinked directory within it
+/// could otherwise redirect an innocent-looking path.
+fn book_path(out_dir: &Path, rel: &str) -> Option<PathBuf> {
+    let path = relative_in(out_dir, rel)?;
+    let root = out_dir.canonicalize().ok()?;
+    // A symlinked directory inside the book could redirect an otherwise plain
+    // path, so resolve before reading or deleting anything it names.
+    let parent = path.parent()?.canonicalize().ok()?;
+    parent.starts_with(&root).then_some(path)
+}
+
+/// `out_dir` joined with `rel`, accepting only plain relative components.
+///
+/// Used where the file need not exist yet, so the parent cannot be resolved.
+fn relative_in(out_dir: &Path, rel: &str) -> Option<PathBuf> {
+    let mut safe = PathBuf::new();
+    for c in Path::new(rel).components() {
+        match c {
+            Component::Normal(part) => safe.push(part),
+            _ => return None,
+        }
+    }
+    (!safe.as_os_str().is_empty()).then(|| out_dir.join(safe))
+}
 
 /// Files of a book, keyed by path relative to the book directory.
 pub struct Planned {
@@ -90,7 +125,8 @@ pub fn curated_diagrams(out_dir: &Path) -> BTreeMap<String, String> {
     let Some(files) = manifest.get("files").and_then(Value::as_object) else { return out };
     for (path, recorded) in files {
         let Some(id) = path.strip_prefix("diagrams/").and_then(|p| p.strip_suffix(".ir.json")) else { continue };
-        let Ok(text) = std::fs::read_to_string(out_dir.join(path)) else { continue };
+        let Some(full) = book_path(out_dir, path) else { continue };
+        let Ok(text) = std::fs::read_to_string(full) else { continue };
         if Some(content_hash(&text).as_str()) != recorded.as_str() {
             out.insert(id.to_string(), text);
         }
@@ -127,7 +163,10 @@ pub fn generate(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<Write
     let mut written = Vec::new();
     let mut unchanged = 0;
     for (rel, content) in &planned.files {
-        let path = out_dir.join(rel);
+        let path = match relative_in(out_dir, rel) {
+            Some(p) => p,
+            None => return Err(BookError::UnsafePath { path: rel.clone() }),
+        };
         if std::fs::read_to_string(&path).is_ok_and(|old| &old == content) {
             unchanged += 1;
             continue;
@@ -142,11 +181,12 @@ pub fn generate(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<Write
     let mut removed = Vec::new();
     if let Some(prev) = previous.as_ref().and_then(|m| m.get("files")).and_then(Value::as_object) {
         for old in prev.keys() {
-            if !planned.files.contains_key(old) && old != MANIFEST {
-                let path = out_dir.join(old);
-                if path.is_file() && std::fs::remove_file(&path).is_ok() {
-                    removed.push(old.clone());
-                }
+            if planned.files.contains_key(old) || old == MANIFEST {
+                continue;
+            }
+            let Some(path) = book_path(out_dir, old) else { continue };
+            if path.is_file() && std::fs::remove_file(&path).is_ok() {
+                removed.push(old.clone());
             }
         }
     }
