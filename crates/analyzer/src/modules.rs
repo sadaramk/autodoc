@@ -241,10 +241,87 @@ pub fn module_id(unit: &str, key: &str) -> String {
     format!("{unit}.{}", slug(key))
 }
 
+/// Path segments that name a layer rather than a thing. On their own they make
+/// a useless label, and a repository laid out in feature folders produces
+/// several of them: six modules all called "Dtos" say nothing.
+const LAYER_SEGMENTS: &[&str] = &[
+    "dto",
+    "dtos",
+    "query",
+    "queries",
+    "command",
+    "commands",
+    "handler",
+    "handlers",
+    "model",
+    "models",
+    "entity",
+    "entities",
+    "event",
+    "events",
+    "endpoint",
+    "endpoints",
+    "repository",
+    "repositories",
+    "service",
+    "services",
+    "config",
+    "configs",
+    "configuration",
+    "configurations",
+    "contract",
+    "contracts",
+    "type",
+    "types",
+    "util",
+    "utils",
+    "helper",
+    "helpers",
+    "internal",
+    "pkg",
+    "app",
+    "cmd",
+    "api",
+    "core",
+    "common",
+    "shared",
+    "domain",
+    "infra",
+    "infrastructure",
+    "adapter",
+    "adapters",
+    "port",
+    "ports",
+    "mapper",
+    "mappers",
+    "feature",
+    "features",
+    "src",
+    "lib",
+    "main",
+];
+
+/// `v1`, `v2` — a version qualifies a name, it is not one.
+fn is_version_segment(s: &str) -> bool {
+    let rest = s.trim_start_matches(['v', 'V']);
+    rest.len() < s.len() && !rest.is_empty() && rest.chars().all(|c| c.is_ascii_digit())
+}
+
 fn module_name(key: &str) -> String {
-    let last = key.rsplit('/').next().unwrap_or(key);
-    let last = last.trim_start_matches("__").trim_end_matches("__");
-    crate::scan::display_name(last)
+    fn clean(s: &str) -> &str {
+        s.trim_start_matches("__").trim_end_matches("__")
+    }
+    let segs: Vec<&str> = key.split('/').map(clean).filter(|s| !s.is_empty()).collect();
+    let Some((base_at, base)) = segs.iter().enumerate().rev().find(|(_, s)| !is_version_segment(s)) else {
+        return crate::scan::display_name(key.rsplit('/').next().unwrap_or(key));
+    };
+    // A layer name alone is ambiguous; the folder above it says which one.
+    if LAYER_SEGMENTS.contains(&base.to_ascii_lowercase().as_str()) {
+        if let Some(q) = segs[..base_at].iter().rev().find(|s| !is_version_segment(s)) {
+            return crate::scan::display_name(&format!("{q} {base}"));
+        }
+    }
+    crate::scan::display_name(base)
 }
 
 fn module_evidence(fis: &[usize], files: &[FileRec]) -> Option<EvidenceRef> {
@@ -517,6 +594,11 @@ mod tests {
     fn module_names_are_readable() {
         assert_eq!(module_name("internal/httpapi"), "Httpapi");
         assert_eq!(module_name("__main__"), "Main");
+        // Feature-folder layouts: the layer alone repeats across the service.
+        assert_eq!(module_name("internal/orders/dtos/v1"), "Orders Dtos");
+        assert_eq!(module_name("internal/orders/features/getting_orders/v1/queries"), "Getting Orders Queries");
+        assert_eq!(module_name("internal/orders/features/getting_order_by_id/v1/dtos"), "Getting Order By ID Dtos");
+        assert_eq!(module_name("cmd/app"), "Cmd App");
         assert_eq!(module_id("payments", "internal/charge"), "payments.internal-charge");
         assert_eq!(common_path(&["a/src/routes/x.ts", "a/src/routes/y.ts"]), "a/src/routes/");
         assert_eq!(common_path(&["a/src/db.ts"]), "a/src/db.ts");
