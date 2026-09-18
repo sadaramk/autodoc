@@ -505,7 +505,22 @@ fn system_context(report: &ScanReport, ir: &mut DiagramIR, notes: &mut Vec<Strin
         id: system_id.clone(),
         container_id: Some("system".into()),
         label: truncate(&report.system.name, 28),
-        subtitle: Some(format!("{} deployable units", internal.len())),
+        subtitle: Some({
+            // Libraries are linked into the deployables, not shipped themselves;
+            // counting them here contradicted the deployable count on the
+            // overview page of any workspace with more crates than binaries.
+            let deployables = internal.iter().filter(|u| u.kind != UnitKind::Library).count();
+            let libraries = internal.len() - deployables;
+            match (deployables, libraries) {
+                (d, 0) => format!("{d} deployable unit{}", if d == 1 { "" } else { "s" }),
+                (0, l) => format!("{l} librar{}", if l == 1 { "y" } else { "ies" }),
+                (d, l) => format!(
+                    "{d} deployable unit{} · {l} librar{}",
+                    if d == 1 { "" } else { "s" },
+                    if l == 1 { "y" } else { "ies" }
+                ),
+            }
+        }),
         tech_stack: Some(stack.into_iter().collect::<Vec<_>>().join(" · ")),
         is_key_focal_point: true,
         evidence: anchor.and_then(|u| report.evidence_map.get(&u.id)).map(|e| e.to_ir()),

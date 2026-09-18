@@ -2358,8 +2358,17 @@ fn read_readme_summary(root: &Path) -> Option<String> {
 
 /// First prose paragraph of a README: skips headings, badges, HTML blocks and
 /// code fences, and strips inline markup.
+/// A Markdown list item, bulleted or numbered.
+fn structural_list(line: &str) -> bool {
+    line.starts_with("- ")
+        || line.starts_with("* ")
+        || line.starts_with("+ ")
+        || line.split_once(". ").is_some_and(|(n, _)| !n.is_empty() && n.chars().all(|c| c.is_ascii_digit()))
+}
+
 pub fn summary_from_markdown(text: &str) -> Option<String> {
     let mut in_fence = false;
+    let mut in_list = false;
     let mut paragraph: Vec<String> = Vec::new();
     let mut candidates: Vec<String> = Vec::new();
     let mut taglines: Vec<String> = Vec::new();
@@ -2378,6 +2387,12 @@ pub fn summary_from_markdown(text: &str) -> Option<String> {
         if in_fence {
             continue;
         }
+        // A list item wrapped over several lines continues at an indent. Without
+        // this its tail reads as a paragraph and the summary starts mid-sentence.
+        let indented = raw.starts_with([' ', '\t']) && !line.is_empty();
+        if in_list && indented {
+            continue;
+        }
         let structural = line.starts_with('#')
             || line.starts_with('<')
             || line.starts_with('|')
@@ -2386,6 +2401,7 @@ pub fn summary_from_markdown(text: &str) -> Option<String> {
             || line.starts_with("* ")
             || line.starts_with("---")
             || line.starts_with("===");
+        in_list = !line.is_empty() && (structural_list(line) || (in_list && indented));
         if line.is_empty() || structural {
             if let Some(prose) = prose_of(&paragraph.join(" ")) {
                 candidates.push(prose);
@@ -2507,6 +2523,16 @@ mod tests {
             Some("Lemmy is a link aggregator and forum for the fediverse.")
         );
         assert_eq!(summary_from_markdown("# Only a title\n\n```\ncode block with many words here\n```\n"), None);
+
+        // A bullet wrapped over two lines is one item: its tail is not a
+        // paragraph, and taking it as the summary starts mid-sentence.
+        let wrapped = "# autodoc\n\n- **Opinionated.** Density budgets, orthogonal connectors that never pass behind\n  a card. A cluttered IR is rejected with diagnostics.\n\nautodoc is a tool that turns source code into architecture documentation.";
+        assert_eq!(
+            summary_from_markdown(wrapped).as_deref(),
+            Some("autodoc is a tool that turns source code into architecture documentation.")
+        );
+        let numbered = "# t\n\n1. Install the binary and then run it against\n   your repository to see the book.\n\nThe tool is a documenter of repositories.";
+        assert_eq!(summary_from_markdown(numbered).as_deref(), Some("The tool is a documenter of repositories."));
     }
 
     #[test]
