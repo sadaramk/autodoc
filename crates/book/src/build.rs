@@ -1198,7 +1198,7 @@ impl<'a> Builder<'a> {
             }
         }
         unknown.push(vec![Inline::text(
-            "Static analysis doesn't see runtime service discovery, reflection, dynamically built URLs or configuration injected at deploy time.",
+            "This book is read from the source, not from the running system. Static analysis doesn't see runtime service discovery, reflection, dynamically built URLs, configuration injected at deploy time, generated code, or infrastructure provisioned outside this repository. Treat it as a well-evidenced starting point to review, not as the authority on the architecture.",
         )]);
         blocks.push(Block::List { items: unknown });
 

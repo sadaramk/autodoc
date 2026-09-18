@@ -216,3 +216,30 @@ fn copy_dir(from: &Path, to: &Path) {
         }
     }
 }
+
+/// A source file past the size limit is not parsed, so anything it declares is
+/// absent from the book. Dropping it silently makes the documentation
+/// confidently incomplete, so the scan has to say what it left out.
+#[test]
+fn oversized_source_files_are_reported_not_dropped_in_silence() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path();
+    std::fs::write(repo.join("go.mod"), "module github.com/acme/big\n\ngo 1.22\n").unwrap();
+    std::fs::write(repo.join("main.go"), "package main\n\nfunc main() {}\n").unwrap();
+    let big = format!("package main\n\n// {}\nfunc Huge() {{}}\n", "x".repeat(40_000));
+    std::fs::write(repo.join("generated.go"), &big).unwrap();
+
+    let r = scan(repo, &ScanOptions { max_file_bytes: 1_000, ..Default::default() }).unwrap();
+
+    let note = r
+        .notes
+        .iter()
+        .find(|n| n.contains("were not parsed"))
+        .unwrap_or_else(|| panic!("no note about the skipped file; notes: {:?}", r.notes));
+    assert!(note.contains("generated.go"), "the note should name what was skipped: {note}");
+    assert!(note.contains('1'), "the note should count what was skipped: {note}");
+
+    // Under the limit it is parsed as usual, and there is nothing to report.
+    let all = scan(repo, &ScanOptions::default()).unwrap();
+    assert!(!all.notes.iter().any(|n| n.contains("were not parsed")), "notes: {:?}", all.notes);
+}

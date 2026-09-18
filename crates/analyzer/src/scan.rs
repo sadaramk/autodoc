@@ -385,12 +385,28 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
     let ctx = autodoc_git::repo_context(&root);
     let mut notes = Vec::new();
 
-    let Walked { manifests: manifest_paths, sources: source_paths, truncated, skipped_test_dirs, skipped_test_files } =
-        walk(&root, opts);
+    let Walked {
+        manifests: manifest_paths,
+        sources: source_paths,
+        truncated,
+        skipped_test_dirs,
+        skipped_test_files,
+        oversized,
+    } = walk(&root, opts);
     if skipped_test_dirs + skipped_test_files > 0 {
         notes.push(format!(
             "excluded {skipped_test_dirs} test/example/tooling director{} and {skipped_test_files} test file(s); pass include_tests to scan them",
             if skipped_test_dirs == 1 { "y" } else { "ies" }
+        ));
+    }
+    if !oversized.is_empty() {
+        let shown: Vec<&str> = oversized.iter().take(5).filter_map(|p| p.to_str()).collect();
+        notes.push(format!(
+            "{} source file(s) above {} KB were not parsed, so anything they declare is missing: {}{}",
+            oversized.len(),
+            opts.max_file_bytes / 1024,
+            shown.join(", "),
+            if oversized.len() > shown.len() { ", …" } else { "" }
         ));
     }
     if truncated {
@@ -682,12 +698,15 @@ struct Walked {
     truncated: bool,
     skipped_test_dirs: usize,
     skipped_test_files: usize,
+    /// Source files past `max_file_bytes`, or whose size could not be read.
+    oversized: Vec<PathBuf>,
 }
 
 fn walk(root: &Path, opts: &ScanOptions) -> Walked {
     let mut manifests = Vec::new();
     let mut sources = Vec::new();
     let mut truncated = false;
+    let mut oversized: Vec<PathBuf> = Vec::new();
     let skipped_dirs = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let mut skipped_files = 0;
     let counter = skipped_dirs.clone();
@@ -761,7 +780,10 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
             continue;
         }
         let Some((grammar, language)) = Grammar::for_path(rel) else { continue };
+        // Silently dropping a source file makes the documentation confidently
+        // incomplete, so record what was left out and report it.
         if entry.metadata().map(|m| m.len() > opts.max_file_bytes).unwrap_or(true) {
+            oversized.push(rel.to_path_buf());
             continue;
         }
         if sources.len() >= opts.max_files {
@@ -770,12 +792,14 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
         }
         sources.push((rel.to_path_buf(), grammar, language));
     }
+    oversized.sort();
     Walked {
         manifests,
         sources,
         truncated,
         skipped_test_dirs: skipped_dirs.load(std::sync::atomic::Ordering::Relaxed),
         skipped_test_files: skipped_files,
+        oversized,
     }
 }
 

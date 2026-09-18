@@ -88,6 +88,19 @@ autodoc render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
     diagram; a request that writes two stores and publishes an event is.
   </p>
 
+  <h2>What it cannot see</h2>
+  <p>
+    A book is read from the source, not from the running system. Extraction is necessarily heuristic, and
+    misses dynamic routing, reflection, configuration injected at deploy time, generated code, indirect
+    dependencies and infrastructure provisioned outside the repository. Source files too large to parse are
+    named on the evidence page rather than dropped quietly.
+  </p>
+  <p>
+    So treat a book as a well-evidenced starting point to review, not as the authority on the architecture.
+    The citations tell you exactly where each claim came from, which is what makes reviewing it quick — and
+    the <code>authored.json</code> overlay is where what the tool got wrong or could not know gets corrected.
+  </p>
+
   <h2>What it will not do</h2>
   <ul>
     <li>Invent intent. If the code does not show why, the book says so.</li>
