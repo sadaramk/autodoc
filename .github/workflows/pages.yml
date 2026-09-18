@@ -1,0 +1,60 @@
+name: Examples site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release -p autodoc-cli
+
+      - name: The project's own demo repository
+        run: |
+          mkdir -p site/examples
+          cp -R examples/polyglot-shop site/examples/polyglot-shop
+
+      # Third-party examples: permissively licensed, generated fresh, attribution on the gallery page.
+      - name: Spring PetClinic (Apache-2.0)
+        run: |
+          git clone --depth 1 https://github.com/spring-projects/spring-petclinic /tmp/spring-petclinic
+          ./target/release/autodoc generate /tmp/spring-petclinic --out site/examples/spring-petclinic
+
+      - name: PiggyMetrics (MIT)
+        run: |
+          git clone --depth 1 https://github.com/sqshq/piggymetrics /tmp/piggymetrics
+          ./target/release/autodoc generate /tmp/piggymetrics --out site/examples/piggymetrics
+
+      - name: Assemble the site
+        run: |
+          cp docs/index.html site/index.html
+          touch site/.nojekyll
+          du -sh site site/examples/*
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
