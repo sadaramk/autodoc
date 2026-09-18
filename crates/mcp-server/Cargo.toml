@@ -1,0 +1,22 @@
+[package]
+name = "autodoc-mcp"
+description = "Model Context Protocol stdio server exposing autodoc-engine tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+autodoc-ir.workspace = true
+autodoc-git.workspace = true
+autodoc-analyzer.workspace = true
+autodoc-validator.workspace = true
+autodoc-renderer.workspace = true
+autodoc-book.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

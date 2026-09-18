@@ -1,0 +1,52 @@
+services:
+  # Rust unit + integration + journey tests (CLI binary and MCP stdio server).
+  test:
+    build: { context: ., target: dev }
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - cargo-registry:/usr/local/cargo/registry
+      - rust-target:/workspace/target
+    command: cargo test --workspace --locked
+
+  lint:
+    build: { context: ., target: dev }
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - cargo-registry:/usr/local/cargo/registry
+      - rust-target:/workspace/target
+    command: sh -c "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings"
+
+  # TypeScript/zod mirror of DiagramIR + cross-language contract fixtures.
+  test-ts:
+    image: node:24-slim
+    working_dir: /workspace/packages/ir-spec-ts
+    volumes:
+      - .:/workspace
+      - ts-node-modules:/workspace/packages/ir-spec-ts/node_modules
+    command: sh -c "npm ci --no-audit --no-fund && npm run typecheck && npm test"
+
+  # Playwright journeys over the interactive HTML (pan/zoom, tracing, drawer, theme, export).
+  e2e:
+    build: { context: ., target: e2e }
+    working_dir: /workspace/tests/e2e
+    volumes:
+      - ./tests/e2e/specs:/workspace/tests/e2e/specs:ro
+      - ./tests/e2e/playwright.config.ts:/workspace/tests/e2e/playwright.config.ts:ro
+      - ./tests/e2e/global-setup.ts:/workspace/tests/e2e/global-setup.ts:ro
+      - ./tests/fixtures:/workspace/tests/fixtures:ro
+      - ./tests/contract:/workspace/tests/contract:ro
+      - ./tests/e2e/test-results:/workspace/tests/e2e/test-results
+    command: npx playwright test
+
+  autodoc:
+    build: { context: ., target: runtime }
+    volumes:
+      - .:/repo
+    working_dir: /repo
+
+volumes:
+  cargo-registry:
+  rust-target:
+  ts-node-modules:

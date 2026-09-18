@@ -1,0 +1,8 @@
+/target
+node_modules/
+test-results/
+.e2e-paths.json
+packages/ir-spec-ts/dist/
+scratchpad/
+site/
+.DS_Store

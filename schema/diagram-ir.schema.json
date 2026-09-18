@@ -1,0 +1,461 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DiagramIR",
+  "type": "object",
+  "properties": {
+    "version": {
+      "$ref": "#/$defs/IrVersion"
+    },
+    "diagramType": {
+      "$ref": "#/$defs/DiagramType"
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "theme": {
+      "$ref": "#/$defs/Theme"
+    },
+    "metadata": {
+      "$ref": "#/$defs/DiagramMetadata"
+    },
+    "containers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Container"
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Edge"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "diagramType",
+    "title",
+    "theme",
+    "metadata",
+    "containers",
+    "nodes",
+    "edges"
+  ],
+  "$defs": {
+    "IrVersion": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "1.0.0"
+          ]
+        },
+        {
+          "description": "Adds sequence and entity-relationship diagrams, entity attributes,\nstate kinds, message order, cardinality and edge evidence.",
+          "type": "string",
+          "const": "1.1.0"
+        }
+      ]
+    },
+    "DiagramType": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "system-context",
+            "container",
+            "component",
+            "data-flow"
+          ]
+        },
+        {
+          "description": "State machine: nodes are states, edges are transitions.",
+          "type": "string",
+          "const": "lifecycle"
+        },
+        {
+          "description": "Nodes are participants (in order), edges are messages ordered by `sequence`.",
+          "type": "string",
+          "const": "sequence"
+        },
+        {
+          "description": "Nodes are entities with `attributes`, edges are relations with `cardinality`.",
+          "type": "string",
+          "const": "entity-relationship"
+        }
+      ]
+    },
+    "Theme": {
+      "type": "string",
+      "enum": [
+        "editorial-light",
+        "editorial-dark"
+      ]
+    },
+    "DiagramMetadata": {
+      "type": "object",
+      "properties": {
+        "targetRepo": {
+          "type": "string"
+        },
+        "commitHash": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "generatedAt": {
+          "type": "string"
+        },
+        "visualDensityScore": {
+          "description": "Target: <= 0.40. Recomputed by the validator; an agent-supplied value is advisory.",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "targetRepo",
+        "generatedAt"
+      ]
+    },
+    "Container": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "boundaryType": {
+          "$ref": "#/$defs/BoundaryType"
+        },
+        "roleDescription": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "boundaryType"
+      ]
+    },
+    "BoundaryType": {
+      "type": "string",
+      "enum": [
+        "trust-zone",
+        "internal-service",
+        "third-party",
+        "storage",
+        "client"
+      ]
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "containerId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "subtitle": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "techStack": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "isKeyFocalPoint": {
+          "description": "Max 1-2 nodes. Triggers the primary accent color.",
+          "type": "boolean"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "metadata": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "attributes": {
+          "description": "Entity-relationship diagrams: columns / fields.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/$defs/Attribute"
+          }
+        },
+        "stateKind": {
+          "description": "Lifecycle diagrams: initial / terminal states.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StateKind"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "isKeyFocalPoint"
+      ]
+    },
+    "Evidence": {
+      "type": "object",
+      "properties": {
+        "filePath": {
+          "type": "string"
+        },
+        "startLine": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "endLine": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "symbolName": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "filePath",
+        "startLine",
+        "endLine"
+      ]
+    },
+    "Attribute": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "typeName": {
+          "type": "string"
+        },
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/KeyKind"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "note": {
+          "description": "Constraint or reference note (`→ orders.id`, `max 255`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "typeName"
+      ]
+    },
+    "KeyKind": {
+      "type": "string",
+      "enum": [
+        "pk",
+        "fk",
+        "pk-fk"
+      ]
+    },
+    "StateKind": {
+      "type": "string",
+      "enum": [
+        "initial",
+        "normal",
+        "terminal"
+      ]
+    },
+    "Edge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "edgeType": {
+          "$ref": "#/$defs/EdgeType"
+        },
+        "style": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EdgeStyle"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isPrimaryPath": {
+          "description": "Accent highlight for the critical transaction path.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "sequence": {
+          "description": "Sequence diagrams: 1-based message order.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0
+        },
+        "reply": {
+          "description": "Sequence diagrams: a response travelling back to the caller.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "payload": {
+          "description": "Sequence diagrams: what the message carries (`CheckoutRequest`, `order.placed`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cardinality": {
+          "description": "Entity-relationship diagrams.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Cardinality"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "guard": {
+          "description": "Lifecycle diagrams: condition that must hold for the transition.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "description": "Where the interaction happens in code.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Evidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "source",
+        "target",
+        "edgeType"
+      ]
+    },
+    "EdgeType": {
+      "type": "string",
+      "enum": [
+        "sync",
+        "async",
+        "event",
+        "read",
+        "write"
+      ]
+    },
+    "EdgeStyle": {
+      "type": "string",
+      "enum": [
+        "solid",
+        "dashed"
+      ]
+    },
+    "Cardinality": {
+      "type": "string",
+      "enum": [
+        "1:1",
+        "1:n",
+        "n:1",
+        "n:m"
+      ]
+    }
+  }
+}

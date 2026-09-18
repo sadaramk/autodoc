@@ -1,0 +1,54 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ir-spec",
+    "crates/git-context",
+    "crates/analyzer",
+    "crates/validator",
+    "crates/renderer",
+    "crates/book",
+    "crates/mcp-server",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/sadaramk/autodoc"
+homepage = "https://sadaramk.github.io/autodoc/"
+rust-version = "1.85"
+
+[workspace.dependencies]
+autodoc-ir = { path = "crates/ir-spec" }
+autodoc-git = { path = "crates/git-context" }
+autodoc-analyzer = { path = "crates/analyzer" }
+autodoc-validator = { path = "crates/validator" }
+autodoc-renderer = { path = "crates/renderer" }
+autodoc-book = { path = "crates/book" }
+autodoc-mcp = { path = "crates/mcp-server" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_path_to_error = "0.1"
+serde_yaml = "0.9"
+schemars = "1.2"
+thiserror = "2"
+anyhow = "1"
+clap = { version = "4.6", features = ["derive"] }
+ignore = "0.4"
+toml = "0.9"
+tempfile = "3"
+tree-sitter = "0.25"
+tree-sitter-rust = "0.24"
+tree-sitter-typescript = "0.23"
+tree-sitter-go = "0.25"
+tree-sitter-python = "0.25"
+tree-sitter-java = "0.23.5"
+tree-sitter-kotlin-ng = "1.1"
+roxmltree = "0.21"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

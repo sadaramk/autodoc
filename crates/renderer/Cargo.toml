@@ -1,0 +1,16 @@
+[package]
+name = "autodoc-renderer"
+description = "Deterministic layout plus editorial SVG and standalone interactive HTML compiler"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+autodoc-ir.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+autodoc-analyzer.workspace = true

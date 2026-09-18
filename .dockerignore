@@ -1,0 +1,6 @@
+target
+**/node_modules
+**/test-results
+**/.e2e-paths.json
+.git
+docs/architecture
