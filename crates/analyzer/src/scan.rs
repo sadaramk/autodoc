@@ -633,6 +633,9 @@ const TEST_DIRS: &[&str] = &[
     "tests",
     "__tests__",
     "__mocks__",
+    // mockery and gomock generate into `mocks/`; a test double is not
+    // architecture, and tracing into one cites a mock as if it were the code.
+    "mocks",
     "testdata",
     "test-data",
     "test_data",
