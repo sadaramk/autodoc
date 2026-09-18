@@ -2,7 +2,7 @@
 
 > A small checkout platform used as the autodoc demo repository.
 
-Architecture book generated from source by autodoc-engine. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
+Architecture book generated from source by autodoc. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
 
 ## Pages
 

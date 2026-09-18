@@ -28,10 +28,12 @@ DEMO_IN_CONTAINER = docker compose run --rm --entrypoint sh autodoc -c \
 	'cp -R /repo/tests/fixtures/polyglot-shop /tmp/polyglot-shop && \
 	 autodoc $(1) /tmp/polyglot-shop --out /repo/examples/polyglot-shop'
 
-demo:
+# Both rebuild the image first: a stale binary would regenerate the example
+# from the previously released code and hide the very drift this checks for.
+demo: build
 	$(call DEMO_IN_CONTAINER,generate)
 
-demo-check:
+demo-check: build
 	$(call DEMO_IN_CONTAINER,check)
 
 schema:
