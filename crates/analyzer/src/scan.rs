@@ -2441,7 +2441,24 @@ pub fn summary_from_markdown(text: &str) -> Option<String> {
             || l.starts_with("an ")
     };
     let imperative = |p: &String| IMPERATIVE.iter().any(|w| p.to_lowercase().starts_with(w));
-    candidates.iter().find(|p| descriptive(p) && !imperative(p)).or_else(|| taglines.first()).cloned()
+    // Many projects open with a noun phrase rather than a sentence — "Verifiable
+    // architecture documentation from source code" — which says what the thing is
+    // just as well as "X is a …". Prefer a copular sentence, but do not discard a
+    // short opening paragraph for lacking a verb; instructions are still excluded.
+    // Only the opening paragraph: a tagline sits at the top, and prose further
+    // down a README is as likely to be setup instructions as a description.
+    let tagline_like = |p: &&String| !imperative(p) && p.len() <= 160 && !p.ends_with(':');
+    // A description introduces the project, so it is near the top. Searching the
+    // whole file finds sentences that merely read like one: Caddy's install
+    // instructions ("…if you know what you are doing") match on " are ".
+    const NEAR_TOP: usize = 3;
+    candidates
+        .iter()
+        .take(NEAR_TOP)
+        .find(|p| descriptive(p) && !imperative(p))
+        .or_else(|| taglines.first())
+        .or_else(|| candidates.first().filter(tagline_like))
+        .cloned()
 }
 
 fn prose_of(paragraph: &str) -> Option<String> {
@@ -2530,6 +2547,18 @@ mod tests {
         assert_eq!(
             summary_from_markdown(wrapped).as_deref(),
             Some("autodoc is a tool that turns source code into architecture documentation.")
+        );
+        let noun_phrase = "# autodoc\n\n[![CI](https://x/b.svg)](https://x)\n\nVerifiable, editorial architecture documentation from source code — as a CLI, an MCP server, and an agent skill.\n\nMore words here.";
+        assert_eq!(
+            summary_from_markdown(noun_phrase).as_deref(),
+            Some("Verifiable, editorial architecture documentation from source code — as a CLI, an MCP server, and an agent skill.")
+        );
+        // Caddy: install prose deep in the README matches " are " but describes
+        // nothing. The opening line introduces the project; the buried one does not.
+        let buried = "# Caddy\n\nCaddy is an extensible server platform that uses TLS by default.\n\n## Install\n\nBuild the binary from source with the Go toolchain available on your machine.\n\nFetch the modules the build needs before compiling anything else here.\n\nGrant the binary permission to bind low ports on your host system now.\n\nreplacing username with your actual username. Be careful if you know what you are doing.";
+        assert_eq!(
+            summary_from_markdown(buried).as_deref(),
+            Some("Caddy is an extensible server platform that uses TLS by default.")
         );
         let numbered = "# t\n\n1. Install the binary and then run it against\n   your repository to see the book.\n\nThe tool is a documenter of repositories.";
         assert_eq!(summary_from_markdown(numbered).as_deref(), Some("The tool is a documenter of repositories."));
