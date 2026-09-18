@@ -5,47 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>autodoc — example architecture books</title>
 <meta name="description" content="Architecture documentation generated from source code, with every claim linked to the line it came from.">
-<style>
-  :root {
-    color-scheme: light dark;
-    --bg: #FBFBFD; --card: #FFFFFF; --text: #14161C; --muted: #5B616E;
-    --border: #E3E5EA; --accent: #4F46E5; --tint: #4F46E50F;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0E1014; --card: #16181F; --text: #ECEEF3; --muted: #9AA1AE;
-      --border: #262A33; --accent: #818CF8; --tint: #818CF814;
-    }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 64px 16px 96px; }
-  .eyebrow { font: 500 11px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
-  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; letter-spacing: -.02em; margin: 8px 0 12px; }
-  .lead { font-size: 18px; color: var(--muted); max-width: 62ch; margin: 0 0 32px; }
-  h2 { font-size: 20px; margin: 48px 0 8px; letter-spacing: -.01em; }
-  p { max-width: 68ch; }
-  a { color: var(--accent); }
-  .cards { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 24px 0; }
-  .card { display: block; border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 18px 20px; text-decoration: none; color: inherit; }
-  .card:hover { border-color: var(--accent); background: var(--tint); }
-  .card h3 { margin: 0 0 4px; font-size: 17px; }
-  .card p { margin: 0; font-size: 14px; color: var(--muted); }
-  .meta { margin-top: 10px; font: 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
-  ul { max-width: 68ch; padding-left: 20px; }
-  li { margin: 6px 0; }
-  code { font: 13.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--tint); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; }
-  pre { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; overflow-x: auto; }
-  pre code { background: none; border: 0; padding: 0; }
-  footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="wrap">
+  <nav>
+    <a class="brand" href="index.html">autodoc</a>
+    <a href="index.html" aria-current="page">Examples</a>
+    <a href="start.html">Getting started</a>
+    <a href="how.html">How it works</a>
+    <a href="support.html">What it reads</a>
+    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+  </nav>
+
   <p class="eyebrow">autodoc</p>
   <h1>Architecture documentation generated from source code</h1>
   <p class="lead">
@@ -73,6 +45,11 @@
       <p>A Spring Cloud microservice system: gateway routes from config, Feign calls, MongoDB, RabbitMQ, scheduled jobs that send email.</p>
       <p class="meta">Java · Spring Cloud · MIT</p>
     </a>
+    <a class="card" href="examples/autodoc/index.html">
+      <h3>autodoc itself →</h3>
+      <p>The tool documenting its own repository: the analyzer, renderer, validator and MCP server, and how a scan becomes a book.</p>
+      <p class="meta">Rust · workspace · MIT</p>
+    </a>
   </div>
   <p class="meta">
     PetClinic and PiggyMetrics are third-party open-source projects, documented here as examples and
@@ -96,6 +73,8 @@ open docs/architecture/index.html</code></pre>
   <p>
     The book is self-contained and offline: one HTML file, a Markdown mirror for GitHub, <code>llms.txt</code>
     for agents, and the typed <code>DiagramIR</code> behind every figure, which you can edit by hand and keep.
+    <a href="start.html">Getting started</a> covers CI checks, hand edits and the agent interface;
+    <a href="how.html">how it works</a> explains why the citations can be trusted.
   </p>
 
   <footer>

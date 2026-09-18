@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What it reads — autodoc</title>
+<meta name="description" content="Languages, web frameworks, data access, messaging and deployment formats autodoc understands.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <nav>
+    <a class="brand" href="index.html">autodoc</a>
+    <a href="index.html">Examples</a>
+    <a href="start.html">Getting started</a>
+    <a href="how.html">How it works</a>
+    <a href="support.html" aria-current="page">What it reads</a>
+    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+  </nav>
+
+  <p class="eyebrow">What it reads</p>
+  <h1>Languages, frameworks and formats</h1>
+  <p class="lead">
+    Support is per-signal rather than per-language: a repository in an unlisted language still gets
+    containers, deployment topology and evidence from its manifests and Dockerfiles — it just gets no
+    API contracts or flows.
+  </p>
+
+  <h2>Languages</h2>
+  <p>Parsed with tree-sitter for symbols, calls, imports and types.</p>
+  <table>
+    <tr><th>Language</th><th>Module layout read from</th></tr>
+    <tr><td>Rust</td><td>Cargo workspaces and crates</td></tr>
+    <tr><td>TypeScript / JavaScript</td><td>npm and workspace packages</td></tr>
+    <tr><td>Go</td><td>Go modules and package directories</td></tr>
+    <tr><td>Python</td><td>Packages, uv and Poetry workspaces</td></tr>
+    <tr><td>Java</td><td>Maven and Gradle modules</td></tr>
+    <tr><td>Kotlin</td><td>Gradle modules</td></tr>
+  </table>
+  <p class="meta">
+    A file in any other language still counts towards a unit and its Dockerfile, and the book says
+    plainly which parts were not parsed.
+  </p>
+
+  <h2>HTTP and RPC</h2>
+  <p>Where operations, parameters, request and response models and callers come from.</p>
+  <table>
+    <tr><th>Go</th><td>chi, Echo, Gin, Fiber, gorilla/mux, <code>net/http</code></td></tr>
+    <tr><th>TypeScript</th><td>Express, Fastify, Koa, Hono, NestJS</td></tr>
+    <tr><th>Python</th><td>FastAPI, Flask, Django, Starlette, aiohttp</td></tr>
+    <tr><th>Rust</th><td>Axum, Actix Web, Rocket, warp, Poem</td></tr>
+    <tr><th>JVM</th><td>Spring MVC, Spring WebFlux, JAX-RS, Quarkus, Micronaut, Dropwizard, Jersey, Helidon, Javalin, Vert.x, Ktor</td></tr>
+    <tr><th>Service-to-service</th><td>Feign, MicroProfile Rest Client, Micronaut clients, gRPC stubs, and HTTP client calls matched to the operation they hit</td></tr>
+    <tr><th>Gateways</th><td>Spring Cloud Gateway and Zuul routes read from configuration, including routes declared in a config server</td></tr>
+  </table>
+
+  <h2>Data</h2>
+  <table>
+    <tr><th>ORMs and mappers</th><td>JPA/Hibernate, Spring Data, jOOQ, MyBatis, JDBI, Micronaut Data, Panache, Exposed, GORM, sqlx, <code>database/sql</code>, Diesel, SeaORM, Prisma, TypeORM, Sequelize, Drizzle, Kysely, Knex, SQLAlchemy, SQLModel, Django ORM, Peewee, Tortoise</td></tr>
+    <tr><th>Migrations</th><td>Liquibase, Flyway, Alembic, raw SQL</td></tr>
+    <tr><th>Stores</th><td>PostgreSQL, MySQL, SQLite, MongoDB, Redis, Elasticsearch, S3, Firestore, DynamoDB</td></tr>
+    <tr><th>Read from them</th><td>Entities, columns, keys, cardinality, which service reads and which writes, and lifecycles inferred from status fields plus the code that changes them</td></tr>
+  </table>
+
+  <h2>Messaging and background work</h2>
+  <table>
+    <tr><th>Brokers</th><td>Kafka, RabbitMQ, NATS, SQS, Google Pub/Sub</td></tr>
+    <tr><th>In-process events</th><td>Spring <code>publishEvent</code>, <code>@EventListener</code>, Spring Modulith <code>@ApplicationModuleListener</code>, Micronaut events</td></tr>
+    <tr><th>Schedules</th><td><code>@Scheduled</code> and cron expressions, resolved through configuration placeholders</td></tr>
+    <tr><th>Traced</th><td>A published event is followed into the handlers that consume it, across services</td></tr>
+  </table>
+
+  <h2>Deployment</h2>
+  <table>
+    <tr><th>Docker Compose</th><td>Services, builds, images, ports, volumes, profiles, health checks, <code>depends_on</code>, <code>.env</code> substitution, and overlay files layered with <code>-f</code></td></tr>
+    <tr><th>Kubernetes</th><td>Deployment, StatefulSet, DaemonSet, Job, CronJob, Service and Ingress, found by content anywhere in the repository</td></tr>
+    <tr><th>Helm</th><td>Value-only templates rendered; a template needing control flow is reported as not read rather than guessed at</td></tr>
+    <tr><th>Third-party services</th><td>Stripe, SendGrid, Twilio, OpenAI, Anthropic, Slack and SMTP, from the client libraries that call them</td></tr>
+  </table>
+
+  <h2>Known gaps</h2>
+  <ul>
+    <li>Dispatch through a mediator or command bus keyed by message type (<code>mediatr.Send[*CreateOrder]</code>) is not yet resolved to its handler, so those request flows stop at the endpoint.</li>
+    <li>Authentication applied by middleware, rather than per route, is not attributed to the operations it protects.</li>
+    <li>A port with several implementations in one service is left unresolved rather than guessed.</li>
+  </ul>
+  <p>
+    Something missing or wrong for your stack is worth an issue — the
+    <a href="https://github.com/sadaramk/autodoc/issues/new/choose">templates</a> are built around exactly
+    those two cases.
+  </p>
+
+  <footer>
+    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed
+  </footer>
+</main>
+</body>
+</html>

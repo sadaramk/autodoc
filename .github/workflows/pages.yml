@@ -23,10 +23,17 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release -p autodoc-cli
 
+      # Documenting itself is the honest demonstration: the book on the site is
+      # produced by the same commit it describes. It runs before anything is
+      # copied into site/, so the scan sees the repository and not the output.
+      - name: autodoc's own repository
+        run: ./target/release/autodoc generate . --out /tmp/autodoc-self
+
       - name: The project's own demo repository
         run: |
           mkdir -p site/examples
           cp -R examples/polyglot-shop site/examples/polyglot-shop
+          cp -R /tmp/autodoc-self site/examples/autodoc
 
       # Third-party examples: permissively licensed, generated fresh, attribution on the gallery page.
       - name: Spring PetClinic (Apache-2.0)
@@ -41,7 +48,7 @@ jobs:
 
       - name: Assemble the site
         run: |
-          cp docs/index.html site/index.html
+          cp docs/*.html docs/style.css site/
           touch site/.nojekyll
           du -sh site site/examples/*
 

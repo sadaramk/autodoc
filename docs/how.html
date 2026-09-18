@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it works — autodoc</title>
+<meta name="description" content="Evidence, the typed DiagramIR, density budgets, and why autodoc marks what it does not know.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <nav>
+    <a class="brand" href="index.html">autodoc</a>
+    <a href="index.html">Examples</a>
+    <a href="start.html">Getting started</a>
+    <a href="how.html" aria-current="page">How it works</a>
+    <a href="support.html">What it reads</a>
+    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+  </nav>
+
+  <p class="eyebrow">How it works</p>
+  <h1>Why you can trust a generated diagram</h1>
+  <p class="lead">
+    Architecture documentation usually rots because nothing connects it to the code. autodoc's answer
+    is that every claim carries the line it came from, and that line is checked against the commit.
+  </p>
+
+  <h2>Evidence, not assertion</h2>
+  <p>
+    Each element, edge, operation and flow step records a file path, a line range and, where it applies,
+    a symbol name. On every run those references are verified against the working tree and the commit
+    they were pinned to. A reference whose lines have changed becomes <em>stale</em>; one whose file has
+    gone becomes <em>broken</em>. The book reports its own counts rather than presenting everything as
+    equally certain, and <code>autodoc check</code> turns that into a build failure.
+  </p>
+  <p>
+    This is also why the tool refuses to guess. Business intent, service ownership and the reason behind
+    a design are not in the source, so they are marked <em>needs input</em> and left for a human to write
+    in <code>authored.json</code> — kept visibly apart from what was measured.
+  </p>
+
+  <h2>A typed IR, not a picture</h2>
+  <p>
+    Nothing draws SVG directly. Every figure is compiled from <code>DiagramIR</code>, a versioned,
+    schema-checked document describing nodes, edges, containers, evidence and intent. That indirection is
+    what makes the output editable and reviewable: an IR file diffs in a pull request, survives
+    regeneration, and can be produced by an agent that is told precisely what is wrong with its draft.
+  </p>
+  <pre><code>autodoc schema                       # the JSON Schema
+autodoc validate diagrams/x.ir.json  # diagnostics, exit 1 on errors
+autodoc render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
+  <p>
+    Diagnostics are machine-actionable. A rejection names the offending element and, where the fix is
+    mechanical, carries a JSON Patch that applies it — which is how the agent loop converges without a
+    human in the middle.
+  </p>
+
+  <h2>Diagrams chosen for the question they answer</h2>
+  <p>
+    A diagram that shows everything answers nothing. autodoc picks the view that fits the question and
+    holds it to a budget: visual density at or below 0.40, at most two focal points, orthogonal routing,
+    and a layout contract enforced by property tests over hundreds of random graphs.
+  </p>
+  <table>
+    <tr><th>System context</th><td>What the system is and who it talks to.</td></tr>
+    <tr><th>Container</th><td>The deployable pieces and what runs between them.</td></tr>
+    <tr><th>Component</th><td>Inside one container: modules and their dependencies.</td></tr>
+    <tr><th>Sequence</th><td>One request or job, hop by hop, each message linked to the line that sends it.</td></tr>
+    <tr><th>Entity-relationship</th><td>The data model: keys, cardinality, ownership.</td></tr>
+    <tr><th>Lifecycle</th><td>States read from status fields and the code that changes them.</td></tr>
+    <tr><th>Data flow</th><td>Where data enters, is stored and leaves.</td></tr>
+  </table>
+  <p>
+    When a repository is too large for one honest picture, the book splits rather than crams: capability
+    groups for a large API, per-domain pages for a large data model, module pages for a modular monolith.
+  </p>
+
+  <h2>How a flow is traced</h2>
+  <p>
+    A request flow starts at a handler and follows what the code actually does: local calls expanded
+    inline, calls to other services, reads and writes, and published events continued into the handlers
+    that consume them. Resolution follows the language's own idioms — an interface to its implementation,
+    a struct field chain to the type that owns the method, a port to its one adapter — because that is
+    how the dispatch is written, and a trace by name alone stops at the first layer.
+  </p>
+  <p>
+    A flow is only drawn when it says something a table would not. A request and its reply are not a
+    diagram; a request that writes two stores and publishes an event is.
+  </p>
+
+  <h2>What it will not do</h2>
+  <ul>
+    <li>Invent intent. If the code does not show why, the book says so.</li>
+    <li>Trust a manifest over a call site. A dependency in <code>go.mod</code> is not evidence that the code uses it; the line that calls it is.</li>
+    <li>Draw a figure it cannot validate, or hide a citation it could not verify.</li>
+    <li>Send your source anywhere. Everything runs locally, and the book embeds only the excerpts it cites.</li>
+  </ul>
+
+  <footer>
+    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed
+  </footer>
+</main>
+</body>
+</html>

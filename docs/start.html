@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Getting started — autodoc</title>
+<meta name="description" content="Install autodoc, generate an architecture book from a repository, and keep it honest in CI.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="wrap">
+  <nav>
+    <a class="brand" href="index.html">autodoc</a>
+    <a href="index.html">Examples</a>
+    <a href="start.html" aria-current="page">Getting started</a>
+    <a href="how.html">How it works</a>
+    <a href="support.html">What it reads</a>
+    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+  </nav>
+
+  <p class="eyebrow">Getting started</p>
+  <h1>From a repository to a book</h1>
+  <p class="lead">
+    autodoc reads a repository and writes the documentation into a directory you commit. There is no
+    server, no account and no network call: the book is plain files.
+  </p>
+
+  <h2>Build it</h2>
+  <p>A Rust toolchain is the only requirement. There are no published binaries yet.</p>
+  <pre><code>git clone https://github.com/sadaramk/autodoc
+cd autodoc
+cargo build --release -p autodoc-cli</code></pre>
+  <p>Or run everything through Docker, which is how the project tests itself:</p>
+  <pre><code>docker compose build autodoc
+docker compose run --rm autodoc generate /repo --out /repo/docs/architecture</code></pre>
+
+  <h2>Generate the book</h2>
+  <pre><code>./target/release/autodoc generate /path/to/your/repo --out docs/architecture
+open docs/architecture/index.html</code></pre>
+  <p>What lands in the output directory:</p>
+  <table>
+    <tr><th><code>index.html</code></th><td>The interactive book: navigation, figure drill-down, citation popovers, flow walkthrough, search. One self-contained file that works offline.</td></tr>
+    <tr><th><code>pages/*.md</code></th><td>A Markdown mirror, so the same content reads on GitHub and diffs in review.</td></tr>
+    <tr><th><code>diagrams/*.ir.json</code></th><td>The typed <code>DiagramIR</code> behind every figure. Edit it by hand and it is kept.</td></tr>
+    <tr><th><code>diagrams/*.svg</code></th><td>Compiled figures, for embedding elsewhere.</td></tr>
+    <tr><th><code>llms.txt</code>, <code>llms-full.txt</code></th><td>The book as context for agents.</td></tr>
+    <tr><th><code>authored.json</code></th><td>Created once, never overwritten: where you write the intent the code cannot show.</td></tr>
+  </table>
+
+  <h2>Keep it honest in CI</h2>
+  <p>
+    <code>check</code> exits non-zero when the book is out of date or cites code that has moved, which
+    is the point: documentation that is wrong should fail the build rather than mislead a reader.
+  </p>
+  <pre><code>autodoc check /path/to/your/repo --out docs/architecture</code></pre>
+  <blockquote>
+    <p>
+      Citations are pinned to a commit and verified against it. A citation whose lines have changed is
+      reported as <em>stale</em>; one whose file has gone is <em>broken</em>. The book states its own
+      coverage on the evidence page rather than presenting every claim as equally certain.
+    </p>
+  </blockquote>
+
+  <h2>Edit a figure and keep the edit</h2>
+  <p>
+    Every figure is compiled from an IR file. Change a label, drop a node, mark a different focal
+    point — regenerating will not undo it, as long as the IR still validates. That is the intended
+    workflow: the tool drafts, you edit, the edit survives.
+  </p>
+  <pre><code>autodoc validate docs/architecture/diagrams/containers.ir.json
+autodoc render docs/architecture/diagrams/containers.ir.json -o containers.html</code></pre>
+
+  <h2>Write the parts code cannot know</h2>
+  <p>
+    Business intent is not in the source. autodoc marks it <em>needs input</em> instead of guessing,
+    and <code>authored.json</code> is where you supply it. Anything you write there is shown as
+    authored, kept apart from what was measured, and never overwritten by a later run.
+  </p>
+
+  <h2>Let an agent drive it</h2>
+  <p>
+    <code>autodoc serve</code> runs an MCP server on stdio, exposing scan, compile and verify. An agent
+    drafts an IR, has it rejected with JSON Patch diagnostics naming exactly what to fix, and retries —
+    it never emits SVG itself.
+  </p>
+  <pre><code>autodoc serve</code></pre>
+
+  <footer>
+    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed
+  </footer>
+</main>
+</body>
+</html>
