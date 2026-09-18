@@ -1,0 +1,140 @@
+{
+  "version": "1.0.0",
+  "diagramType": "component",
+  "title": "Ledger Audit — components",
+  "subtitle": "Read-only reconciliation reports over the payments ledger",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.113
+  },
+  "containers": [
+    {
+      "id": "ledger-audit",
+      "label": "Ledger Audit",
+      "boundaryType": "internal-service",
+      "roleDescription": "HTTP service (Rust · Axum)"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage",
+      "roleDescription": "Stateful infrastructure"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ledger-audit.audit",
+      "containerId": "ledger-audit",
+      "label": "Audit",
+      "subtitle": "Reconciliation queries over the payments le…",
+      "techStack": "ledger-audit/src/audit.rs",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "ledger-audit/src/audit.rs",
+        "startLine": 8,
+        "endLine": 12,
+        "symbolName": "DailyTotal"
+      },
+      "metadata": {
+        "docstring": "Reconciliation queries over the payments ledger.",
+        "files": "ledger-audit/src/audit.rs",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "ledger-audit.main",
+      "containerId": "ledger-audit",
+      "label": "Main",
+      "subtitle": "ledger-audit: serves reconciliation reports…",
+      "techStack": "ledger-audit/src/main.rs",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "ledger-audit/src/main.rs",
+        "startLine": 10,
+        "endLine": 21,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "docstring": "ledger-audit: serves reconciliation reports over the payments table.",
+        "entryPoint": "yes",
+        "files": "ledger-audit/src/main.rs",
+        "symbols": "3"
+      }
+    },
+    {
+      "id": "ledger-audit.routes",
+      "containerId": "ledger-audit",
+      "label": "Routes",
+      "subtitle": "HTTP routes for the audit service",
+      "techStack": "ledger-audit/src/routes.rs",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "ledger-audit/src/routes.rs",
+        "startLine": 15,
+        "endLine": 17,
+        "symbolName": "router"
+      },
+      "metadata": {
+        "docstring": "HTTP routes for the audit service.",
+        "files": "ledger-audit/src/routes.rs",
+        "symbols": "5"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "data",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "techStack": "compose: db",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "ledger-audit.main--ledger-audit.routes",
+      "source": "ledger-audit.main",
+      "target": "ledger-audit.routes",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "ledger-audit.routes--ledger-audit.audit",
+      "source": "ledger-audit.routes",
+      "target": "ledger-audit.audit",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "ledger-audit.audit--postgres",
+      "source": "ledger-audit.audit",
+      "target": "postgres",
+      "label": "reads payments",
+      "edgeType": "read"
+    },
+    {
+      "id": "ledger-audit.main--postgres",
+      "source": "ledger-audit.main",
+      "target": "postgres",
+      "label": "reads payments",
+      "edgeType": "read"
+    },
+    {
+      "id": "ledger-audit.routes--postgres",
+      "source": "ledger-audit.routes",
+      "target": "postgres",
+      "label": "reads payments",
+      "edgeType": "read"
+    }
+  ]
+}

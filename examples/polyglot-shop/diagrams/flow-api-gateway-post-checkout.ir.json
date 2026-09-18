@@ -1,0 +1,212 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "POST /checkout",
+  "subtitle": "POST /checkout — the critical transaction path.",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.188
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "web",
+      "label": "Web",
+      "techStack": "TypeScript · React",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      }
+    },
+    {
+      "id": "api-gateway",
+      "label": "API Gateway",
+      "techStack": "TypeScript · Express",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    },
+    {
+      "id": "payments",
+      "label": "Payments",
+      "techStack": "Go · net/http",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/cmd/payments/main.go",
+        "startLine": 17,
+        "endLine": 30,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "kafka",
+      "label": "Kafka",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    },
+    {
+      "id": "fulfillment",
+      "label": "Fulfillment",
+      "techStack": "Python",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/__main__.py",
+        "startLine": 22,
+        "endLine": 23,
+        "symbolName": "__main__"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "web",
+      "target": "api-gateway",
+      "label": "POST /checkout",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 1,
+      "payload": "CheckoutRequest",
+      "evidence": {
+        "filePath": "web/src/api/client.ts",
+        "startLine": 10,
+        "endLine": 10
+      }
+    },
+    {
+      "id": "m2",
+      "source": "api-gateway",
+      "target": "postgres",
+      "label": "write orders",
+      "edgeType": "write",
+      "sequence": 2,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 16,
+        "endLine": 16
+      }
+    },
+    {
+      "id": "m3",
+      "source": "api-gateway",
+      "target": "payments",
+      "label": "POST /charges",
+      "edgeType": "sync",
+      "sequence": 3,
+      "payload": "chargeRequest",
+      "evidence": {
+        "filePath": "api-gateway/src/clients/payments.ts",
+        "startLine": 11,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "m4",
+      "source": "payments",
+      "target": "postgres",
+      "label": "write payments",
+      "edgeType": "write",
+      "sequence": 4,
+      "evidence": {
+        "filePath": "payments/internal/ledger/ledger.go",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "m5",
+      "source": "payments",
+      "target": "api-gateway",
+      "label": "201 chargeResponse",
+      "edgeType": "sync",
+      "sequence": 5,
+      "reply": true,
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 46,
+        "endLine": 64,
+        "symbolName": "createCharge"
+      }
+    },
+    {
+      "id": "m6",
+      "source": "api-gateway",
+      "target": "kafka",
+      "label": "publishes order.placed",
+      "edgeType": "event",
+      "sequence": 6,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 16,
+        "endLine": 21,
+        "symbolName": "publishOrderPlaced"
+      }
+    },
+    {
+      "id": "m7",
+      "source": "api-gateway",
+      "target": "web",
+      "label": "201 CheckoutPostResponse",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 7,
+      "reply": true,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 33,
+        "endLine": 48
+      }
+    },
+    {
+      "id": "m8",
+      "source": "kafka",
+      "target": "fulfillment",
+      "label": "delivers order.placed",
+      "edgeType": "event",
+      "sequence": 8,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/consumer.py",
+        "startLine": 19,
+        "endLine": 29,
+        "symbolName": "run"
+      }
+    },
+    {
+      "id": "m9",
+      "source": "fulfillment",
+      "target": "postgres",
+      "label": "write orders",
+      "edgeType": "write",
+      "style": "dashed",
+      "sequence": 9,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/shipping.py",
+        "startLine": 14,
+        "endLine": 14
+      }
+    }
+  ]
+}

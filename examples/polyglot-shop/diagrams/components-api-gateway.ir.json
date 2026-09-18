@@ -1,0 +1,263 @@
+{
+  "version": "1.0.0",
+  "diagramType": "component",
+  "title": "API Gateway — components",
+  "subtitle": "HTTP service · TypeScript · Express",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.238
+  },
+  "containers": [
+    {
+      "id": "api-gateway",
+      "label": "API Gateway",
+      "boundaryType": "internal-service",
+      "roleDescription": "HTTP service (TypeScript · Express)"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage",
+      "roleDescription": "Stateful infrastructure"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "api-gateway.cache",
+      "containerId": "api-gateway",
+      "label": "Cache",
+      "subtitle": "Read-through cache: returns the cached JSON…",
+      "techStack": "api-gateway/src/cache.ts",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 9,
+        "endLine": 17,
+        "symbolName": "cached"
+      },
+      "metadata": {
+        "docstring": "Read-through cache: returns the cached JSON value for `key`,",
+        "files": "api-gateway/src/cache.ts",
+        "symbols": "1"
+      }
+    },
+    {
+      "id": "api-gateway.clients",
+      "containerId": "api-gateway",
+      "label": "Clients",
+      "subtitle": "Synchronously charges an order via the Go p…",
+      "techStack": "api-gateway/src/clients/payments.ts",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/clients/payments.ts",
+        "startLine": 4,
+        "endLine": 7,
+        "symbolName": "ChargeResult"
+      },
+      "metadata": {
+        "docstring": "Synchronously charges an order via the Go payments service.",
+        "files": "api-gateway/src/clients/payments.ts",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "api-gateway.db",
+      "containerId": "api-gateway",
+      "label": "DB",
+      "subtitle": "Inserts a new pending order and returns it",
+      "techStack": "api-gateway/src/db.ts",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 6,
+        "endLine": 10,
+        "symbolName": "Order"
+      },
+      "metadata": {
+        "docstring": "Inserts a new pending order and returns it.",
+        "files": "api-gateway/src/db.ts",
+        "symbols": "5"
+      }
+    },
+    {
+      "id": "api-gateway.events",
+      "containerId": "api-gateway",
+      "label": "Events",
+      "subtitle": "Connects the shared Kafka producer; called…",
+      "techStack": "api-gateway/src/events.ts",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 11,
+        "endLine": 13,
+        "symbolName": "connectProducer"
+      },
+      "metadata": {
+        "docstring": "Connects the shared Kafka producer; called once at startup.",
+        "files": "api-gateway/src/events.ts",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "api-gateway.routes",
+      "containerId": "api-gateway",
+      "label": "Routes",
+      "subtitle": "Rejects requests without a customer session…",
+      "techStack": "api-gateway/src/routes/ · 3 files",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/auth.ts",
+        "startLine": 4,
+        "endLine": 10,
+        "symbolName": "requireCustomer"
+      },
+      "metadata": {
+        "docstring": "Rejects requests without a customer session token.",
+        "files": "api-gateway/src/routes/auth.ts\napi-gateway/src/routes/catalog.ts\napi-gateway/src/routes/checkout.ts",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "api-gateway.server",
+      "containerId": "api-gateway",
+      "label": "Server",
+      "subtitle": "Builds the HTTP application with all public…",
+      "techStack": "api-gateway/src/server.ts",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "docstring": "Builds the HTTP application with all public routes mounted.",
+        "entryPoint": "yes",
+        "files": "api-gateway/src/server.ts",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "data",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "techStack": "compose: db",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    },
+    {
+      "id": "redis",
+      "containerId": "data",
+      "label": "Redis",
+      "subtitle": "Cache",
+      "techStack": "compose: redis",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway"
+      }
+    },
+    {
+      "id": "kafka",
+      "containerId": "data",
+      "label": "Kafka",
+      "subtitle": "Event bus",
+      "techStack": "compose: kafka",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "eventbus",
+        "topics": "order.placed",
+        "usedBy": "api-gateway, fulfillment"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "api-gateway.events--api-gateway.db",
+      "source": "api-gateway.events",
+      "target": "api-gateway.db",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "api-gateway.routes--api-gateway.cache",
+      "source": "api-gateway.routes",
+      "target": "api-gateway.cache",
+      "edgeType": "sync"
+    },
+    {
+      "id": "api-gateway.routes--api-gateway.clients",
+      "source": "api-gateway.routes",
+      "target": "api-gateway.clients",
+      "edgeType": "sync"
+    },
+    {
+      "id": "api-gateway.routes--api-gateway.db",
+      "source": "api-gateway.routes",
+      "target": "api-gateway.db",
+      "edgeType": "sync"
+    },
+    {
+      "id": "api-gateway.routes--api-gateway.events",
+      "source": "api-gateway.routes",
+      "target": "api-gateway.events",
+      "edgeType": "sync"
+    },
+    {
+      "id": "api-gateway.server--api-gateway.events",
+      "source": "api-gateway.server",
+      "target": "api-gateway.events",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "api-gateway.server--api-gateway.routes",
+      "source": "api-gateway.server",
+      "target": "api-gateway.routes",
+      "edgeType": "sync"
+    },
+    {
+      "id": "api-gateway.db--postgres",
+      "source": "api-gateway.db",
+      "target": "postgres",
+      "label": "writes orders",
+      "edgeType": "write",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "api-gateway.cache--redis",
+      "source": "api-gateway.cache",
+      "target": "redis",
+      "label": "reads & writes",
+      "edgeType": "write"
+    },
+    {
+      "id": "api-gateway.events--kafka",
+      "source": "api-gateway.events",
+      "target": "kafka",
+      "label": "publishes order.placed",
+      "edgeType": "event"
+    }
+  ]
+}

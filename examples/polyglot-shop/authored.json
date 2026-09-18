@@ -1,0 +1,56 @@
+{
+  "$comment": "Intent the code cannot tell. Fill in what you know; empty answers are shown as open questions. autodoc never writes to this file after creating it.",
+  "business": {
+    "problem": "",
+    "goals": [],
+    "nonGoals": [],
+    "stakeholders": [
+      {
+        "name": "",
+        "role": "",
+        "interest": ""
+      }
+    ],
+    "successMetrics": [
+      {
+        "metric": "",
+        "target": ""
+      }
+    ],
+    "assumptions": [],
+    "constraints": []
+  },
+  "operations": {
+    "api-gateway:GET /catalog": {
+      "name": "",
+      "actor": "",
+      "purpose": "",
+      "acceptance": []
+    },
+    "api-gateway:POST /checkout": {
+      "name": "",
+      "actor": "",
+      "purpose": "",
+      "acceptance": []
+    },
+    "ledger-audit:GET /reports/daily": {
+      "name": "",
+      "actor": "",
+      "purpose": "",
+      "acceptance": []
+    },
+    "ledger-audit:GET /reports/daily/{status}": {
+      "name": "",
+      "actor": "",
+      "purpose": "",
+      "acceptance": []
+    },
+    "payments:POST /charges": {
+      "name": "",
+      "actor": "",
+      "purpose": "",
+      "acceptance": []
+    }
+  },
+  "glossary": {}
+}

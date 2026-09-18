@@ -1,0 +1,94 @@
+{
+  "version": "1.0.0",
+  "diagramType": "component",
+  "title": "Web — components",
+  "subtitle": "Web client · TypeScript · React",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.063
+  },
+  "containers": [
+    {
+      "id": "web",
+      "label": "Web",
+      "boundaryType": "internal-service",
+      "roleDescription": "Web client (TypeScript · React)"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "web.api",
+      "containerId": "web",
+      "label": "API",
+      "subtitle": "Submits the cart to the api-gateway checkou…",
+      "techStack": "web/src/api/ · 2 files",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/api/types.ts",
+        "startLine": 2,
+        "endLine": 7,
+        "symbolName": "CartItem"
+      },
+      "metadata": {
+        "docstring": "Submits the cart to the api-gateway checkout endpoint.",
+        "files": "web/src/api/client.ts\nweb/src/api/types.ts",
+        "symbols": "4"
+      }
+    },
+    {
+      "id": "web.main",
+      "containerId": "web",
+      "label": "Main",
+      "techStack": "web/src/main.tsx",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      },
+      "metadata": {
+        "entryPoint": "yes",
+        "files": "web/src/main.tsx",
+        "symbols": "1"
+      }
+    },
+    {
+      "id": "web.pages",
+      "containerId": "web",
+      "label": "Pages",
+      "subtitle": "Checkout page: lists the catalog and places…",
+      "techStack": "web/src/pages/Checkout.tsx",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "web/src/pages/Checkout.tsx",
+        "startLine": 6,
+        "endLine": 32,
+        "symbolName": "Checkout"
+      },
+      "metadata": {
+        "docstring": "Checkout page: lists the catalog and places an order for the whole cart.",
+        "files": "web/src/pages/Checkout.tsx",
+        "symbols": "2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "web.main--web.pages",
+      "source": "web.main",
+      "target": "web.pages",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "web.pages--web.api",
+      "source": "web.pages",
+      "target": "web.api",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    }
+  ]
+}

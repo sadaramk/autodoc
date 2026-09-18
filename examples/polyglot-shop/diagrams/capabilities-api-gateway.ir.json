@@ -1,0 +1,198 @@
+{
+  "version": "1.1.0",
+  "diagramType": "component",
+  "title": "API Gateway — capabilities",
+  "subtitle": "2 operations in 2 capability groups: who calls each area and what it touches",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.163
+  },
+  "containers": [
+    {
+      "id": "callers",
+      "label": "Callers",
+      "boundaryType": "client",
+      "roleDescription": "Code that calls this service's operations"
+    },
+    {
+      "id": "service",
+      "label": "API Gateway",
+      "boundaryType": "internal-service",
+      "roleDescription": "Capability groups of the service's API"
+    },
+    {
+      "id": "dependencies",
+      "label": "Reaches",
+      "boundaryType": "storage",
+      "roleDescription": "Stores, brokers and services the operations use"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "cap-catalog",
+      "containerId": "service",
+      "label": "Catalog",
+      "subtitle": "1 operation",
+      "techStack": "GET 1",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/catalog.ts",
+        "startLine": 8,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "cap-checkout",
+      "containerId": "service",
+      "label": "Checkout",
+      "subtitle": "1 operation",
+      "techStack": "POST 1",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 33,
+        "endLine": 48
+      }
+    },
+    {
+      "id": "web",
+      "containerId": "callers",
+      "label": "Web",
+      "subtitle": "Web client",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      }
+    },
+    {
+      "id": "redis",
+      "containerId": "dependencies",
+      "label": "Redis",
+      "subtitle": "Cache",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    },
+    {
+      "id": "kafka",
+      "containerId": "dependencies",
+      "label": "Kafka",
+      "subtitle": "Event bus",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    },
+    {
+      "id": "payments",
+      "containerId": "dependencies",
+      "label": "Payments",
+      "subtitle": "HTTP service",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/cmd/payments/main.go",
+        "startLine": 17,
+        "endLine": 30,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "dependencies",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "web--cap-catalog",
+      "source": "web",
+      "target": "cap-catalog",
+      "label": "1 call",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "web/src/api/client.ts",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "web--cap-checkout",
+      "source": "web",
+      "target": "cap-checkout",
+      "label": "1 call",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "web/src/api/client.ts",
+        "startLine": 10,
+        "endLine": 10
+      }
+    },
+    {
+      "id": "cap-catalog--redis",
+      "source": "cap-catalog",
+      "target": "redis",
+      "label": "writes",
+      "edgeType": "write",
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 9,
+        "endLine": 17,
+        "symbolName": "cached"
+      }
+    },
+    {
+      "id": "cap-checkout--kafka",
+      "source": "cap-checkout",
+      "target": "kafka",
+      "label": "publishes",
+      "edgeType": "event",
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 16,
+        "endLine": 21,
+        "symbolName": "publishOrderPlaced"
+      }
+    },
+    {
+      "id": "cap-checkout--payments",
+      "source": "cap-checkout",
+      "target": "payments",
+      "label": "calls",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "api-gateway/src/clients/payments.ts",
+        "startLine": 11,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "cap-checkout--postgres",
+      "source": "cap-checkout",
+      "target": "postgres",
+      "label": "writes",
+      "edgeType": "write",
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 16,
+        "endLine": 16
+      }
+    }
+  ]
+}

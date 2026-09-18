@@ -1,0 +1,87 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "GET /reports/daily",
+  "subtitle": "GET /reports/daily — today's payment totals by status.",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.075
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "client",
+      "label": "Client",
+      "isKeyFocalPoint": false
+    },
+    {
+      "id": "ledger-audit",
+      "label": "Ledger Audit",
+      "techStack": "Rust · Axum",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "ledger-audit/src/main.rs",
+        "startLine": 10,
+        "endLine": 21,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "client",
+      "target": "ledger-audit",
+      "label": "GET /reports/daily",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 1,
+      "evidence": {
+        "filePath": "ledger-audit/src/routes.rs",
+        "startLine": 22,
+        "endLine": 22
+      }
+    },
+    {
+      "id": "m2",
+      "source": "ledger-audit",
+      "target": "postgres",
+      "label": "read payments",
+      "edgeType": "read",
+      "sequence": 2,
+      "evidence": {
+        "filePath": "ledger-audit/src/audit.rs",
+        "startLine": 17,
+        "endLine": 17
+      }
+    },
+    {
+      "id": "m3",
+      "source": "ledger-audit",
+      "target": "client",
+      "label": "200 Vec<DailyTotal>[]",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 3,
+      "reply": true,
+      "evidence": {
+        "filePath": "ledger-audit/src/routes.rs",
+        "startLine": 36,
+        "endLine": 40,
+        "symbolName": "daily_report"
+      }
+    }
+  ]
+}

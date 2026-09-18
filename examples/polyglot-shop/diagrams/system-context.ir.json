@@ -1,0 +1,131 @@
+{
+  "version": "1.0.0",
+  "diagramType": "system-context",
+  "title": "Polyglot Shop — system context",
+  "subtitle": "A small checkout platform used as the autodoc-engine demo repository",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.088
+  },
+  "containers": [
+    {
+      "id": "clients",
+      "label": "Clients",
+      "boundaryType": "client",
+      "roleDescription": "How people reach the system"
+    },
+    {
+      "id": "system",
+      "label": "Polyglot Shop",
+      "boundaryType": "trust-zone",
+      "roleDescription": "Everything built from this repository"
+    },
+    {
+      "id": "external",
+      "label": "Third-party services",
+      "boundaryType": "third-party",
+      "roleDescription": "Vendor APIs outside the trust boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "polyglot-shop",
+      "containerId": "system",
+      "label": "Polyglot Shop",
+      "subtitle": "4 deployable units",
+      "techStack": "Go · Python · Rust · TypeScript",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "docstring": "A small checkout platform used as the autodoc-engine demo repository.",
+        "units": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    },
+    {
+      "id": "web",
+      "containerId": "clients",
+      "label": "Web",
+      "subtitle": "Web client",
+      "techStack": "TypeScript · React",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      },
+      "metadata": {
+        "composeService": "web",
+        "entryPoint": "client mount point",
+        "frameworks": "React, Vite",
+        "language": "TypeScript",
+        "path": "web/",
+        "size": "4 files · 88 lines"
+      }
+    },
+    {
+      "id": "stripe",
+      "containerId": "external",
+      "label": "Stripe",
+      "subtitle": "Payments API",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/charge/charge.go",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "payments"
+      }
+    },
+    {
+      "id": "sendgrid",
+      "containerId": "external",
+      "label": "SendGrid",
+      "subtitle": "Email delivery",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/notify.py",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "fulfillment"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "web--polyglot-shop",
+      "source": "web",
+      "target": "polyglot-shop",
+      "label": "uses",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "polyglot-shop--stripe",
+      "source": "polyglot-shop",
+      "target": "stripe",
+      "label": "charges cards",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "polyglot-shop--sendgrid",
+      "source": "polyglot-shop",
+      "target": "sendgrid",
+      "label": "sends email",
+      "edgeType": "sync"
+    }
+  ]
+}

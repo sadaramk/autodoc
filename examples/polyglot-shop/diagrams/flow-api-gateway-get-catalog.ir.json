@@ -1,0 +1,94 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "GET /catalog",
+  "subtitle": "GET /catalog — product list, cached in Redis for 60 seconds.",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.075
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "web",
+      "label": "Web",
+      "techStack": "TypeScript · React",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      }
+    },
+    {
+      "id": "api-gateway",
+      "label": "API Gateway",
+      "techStack": "TypeScript · Express",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "redis",
+      "label": "Redis",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "web",
+      "target": "api-gateway",
+      "label": "GET /catalog",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 1,
+      "evidence": {
+        "filePath": "web/src/api/client.ts",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "m2",
+      "source": "api-gateway",
+      "target": "redis",
+      "label": "reads & writes",
+      "edgeType": "write",
+      "sequence": 2,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 9,
+        "endLine": 17,
+        "symbolName": "cached"
+      }
+    },
+    {
+      "id": "m3",
+      "source": "api-gateway",
+      "target": "web",
+      "label": "200",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 3,
+      "reply": true,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/catalog.ts",
+        "startLine": 8,
+        "endLine": 11
+      }
+    }
+  ]
+}

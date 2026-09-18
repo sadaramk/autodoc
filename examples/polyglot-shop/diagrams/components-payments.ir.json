@@ -1,0 +1,199 @@
+{
+  "version": "1.0.0",
+  "diagramType": "component",
+  "title": "Payments — components",
+  "subtitle": "Command payments runs the payments HTTP service.",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.175
+  },
+  "containers": [
+    {
+      "id": "payments",
+      "label": "Payments",
+      "boundaryType": "internal-service",
+      "roleDescription": "HTTP service (Go · net/http)"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage",
+      "roleDescription": "Stateful infrastructure"
+    },
+    {
+      "id": "external",
+      "label": "Third-party services",
+      "boundaryType": "third-party",
+      "roleDescription": "Vendor APIs outside the trust boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "payments.cmd-payments",
+      "containerId": "payments",
+      "label": "Payments",
+      "subtitle": "Command payments runs the payments HTTP ser…",
+      "techStack": "payments/cmd/payments/main.go",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "payments/cmd/payments/main.go",
+        "startLine": 17,
+        "endLine": 30,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "docstring": "Command payments runs the payments HTTP service.",
+        "entryPoint": "yes",
+        "files": "payments/cmd/payments/main.go",
+        "symbols": "1"
+      }
+    },
+    {
+      "id": "payments.internal-charge",
+      "containerId": "payments",
+      "label": "Charge",
+      "subtitle": "Package charge talks to Stripe to capture c…",
+      "techStack": "payments/internal/charge/charge.go",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/charge/charge.go",
+        "startLine": 10,
+        "endLine": 13,
+        "symbolName": "Result"
+      },
+      "metadata": {
+        "docstring": "Package charge talks to Stripe to capture card payments.",
+        "files": "payments/internal/charge/charge.go",
+        "symbols": "4"
+      }
+    },
+    {
+      "id": "payments.internal-httpapi",
+      "containerId": "payments",
+      "label": "Httpapi",
+      "subtitle": "Package httpapi exposes the payments servic…",
+      "techStack": "payments/internal/httpapi/handler.go",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 28,
+        "endLine": 31,
+        "symbolName": "Handler"
+      },
+      "metadata": {
+        "docstring": "Package httpapi exposes the payments service over HTTP.",
+        "files": "payments/internal/httpapi/handler.go",
+        "symbols": "6"
+      }
+    },
+    {
+      "id": "payments.internal-ledger",
+      "containerId": "payments",
+      "label": "Ledger",
+      "subtitle": "Package ledger records every charge attempt…",
+      "techStack": "payments/internal/ledger/ledger.go",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/ledger/ledger.go",
+        "startLine": 11,
+        "endLine": 13,
+        "symbolName": "Ledger"
+      },
+      "metadata": {
+        "docstring": "Package ledger records every charge attempt in Postgres.",
+        "files": "payments/internal/ledger/ledger.go",
+        "symbols": "3"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "data",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "techStack": "compose: db",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    },
+    {
+      "id": "stripe",
+      "containerId": "external",
+      "label": "Stripe",
+      "subtitle": "Payments API",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/charge/charge.go",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "payments"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "payments.cmd-payments--payments.internal-charge",
+      "source": "payments.cmd-payments",
+      "target": "payments.internal-charge",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "payments.cmd-payments--payments.internal-httpapi",
+      "source": "payments.cmd-payments",
+      "target": "payments.internal-httpapi",
+      "edgeType": "sync"
+    },
+    {
+      "id": "payments.cmd-payments--payments.internal-ledger",
+      "source": "payments.cmd-payments",
+      "target": "payments.internal-ledger",
+      "edgeType": "sync"
+    },
+    {
+      "id": "payments.internal-httpapi--payments.internal-charge",
+      "source": "payments.internal-httpapi",
+      "target": "payments.internal-charge",
+      "edgeType": "sync"
+    },
+    {
+      "id": "payments.internal-httpapi--payments.internal-ledger",
+      "source": "payments.internal-httpapi",
+      "target": "payments.internal-ledger",
+      "edgeType": "sync"
+    },
+    {
+      "id": "payments.cmd-payments--postgres",
+      "source": "payments.cmd-payments",
+      "target": "postgres",
+      "label": "writes payments",
+      "edgeType": "write"
+    },
+    {
+      "id": "payments.internal-ledger--postgres",
+      "source": "payments.internal-ledger",
+      "target": "postgres",
+      "label": "writes payments",
+      "edgeType": "write"
+    },
+    {
+      "id": "payments.internal-charge--stripe",
+      "source": "payments.internal-charge",
+      "target": "stripe",
+      "label": "charges cards",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    }
+  ]
+}

@@ -1,0 +1,361 @@
+{
+  "generator": "autodoc-engine 0.1.0",
+  "generatedAt": "2026-09-18T01:36:30Z",
+  "repository": "polyglot-shop",
+  "commit": null,
+  "commitDate": null,
+  "branch": null,
+  "evidence": {
+    "total": 138,
+    "verified": 138,
+    "stale": 0,
+    "broken": 0,
+    "unverified": 0
+  },
+  "pages": [
+    {
+      "id": "overview",
+      "title": "Polyglot Shop",
+      "section": "Overview",
+      "markdown": "pages/01-overview.md"
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "section": "Architecture",
+      "markdown": "pages/02-architecture.md"
+    },
+    {
+      "id": "containers/api-gateway",
+      "title": "API Gateway",
+      "section": "Container",
+      "markdown": "pages/03-containers-api-gateway.md"
+    },
+    {
+      "id": "containers/fulfillment",
+      "title": "Fulfillment",
+      "section": "Container",
+      "markdown": "pages/03-containers-fulfillment.md"
+    },
+    {
+      "id": "containers/ledger-audit",
+      "title": "Ledger Audit",
+      "section": "Container",
+      "markdown": "pages/03-containers-ledger-audit.md"
+    },
+    {
+      "id": "containers/payments",
+      "title": "Payments",
+      "section": "Container",
+      "markdown": "pages/03-containers-payments.md"
+    },
+    {
+      "id": "containers/web",
+      "title": "Web",
+      "section": "Container",
+      "markdown": "pages/03-containers-web.md"
+    },
+    {
+      "id": "data",
+      "title": "Data & integrations",
+      "section": "Data",
+      "markdown": "pages/04-data-and-integrations.md"
+    },
+    {
+      "id": "flows",
+      "title": "Critical flows",
+      "section": "Flows",
+      "markdown": "pages/05-critical-flows.md"
+    },
+    {
+      "id": "runtime",
+      "title": "Runtime & deployment",
+      "section": "Runtime",
+      "markdown": "pages/05-runtime-and-deployment.md"
+    },
+    {
+      "id": "api/api-gateway",
+      "title": "API Gateway API",
+      "section": "API reference",
+      "markdown": "pages/06-api-api-gateway.md"
+    },
+    {
+      "id": "api/ledger-audit",
+      "title": "Ledger Audit API",
+      "section": "API reference",
+      "markdown": "pages/06-api-ledger-audit.md"
+    },
+    {
+      "id": "api/payments",
+      "title": "Payments API",
+      "section": "API reference",
+      "markdown": "pages/06-api-payments.md"
+    },
+    {
+      "id": "functional",
+      "title": "Functional specification",
+      "section": "Product",
+      "markdown": "pages/07-functional-specification.md"
+    },
+    {
+      "id": "requirements",
+      "title": "Business requirements",
+      "section": "Product",
+      "markdown": "pages/08-business-requirements.md"
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence & unknowns",
+      "section": "Evidence",
+      "markdown": "pages/09-evidence-and-unknowns.md"
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "system-context",
+      "title": "Polyglot Shop — system context",
+      "ir": "diagrams/system-context.ir.json",
+      "svg": "diagrams/system-context.svg",
+      "nodes": 4,
+      "edges": 3,
+      "density": 0.088,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "containers",
+      "title": "Polyglot Shop — containers",
+      "ir": "diagrams/containers.ir.json",
+      "svg": "diagrams/containers.svg",
+      "nodes": 10,
+      "edges": 11,
+      "density": 0.263,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "components-api-gateway",
+      "title": "API Gateway — components",
+      "ir": "diagrams/components-api-gateway.ir.json",
+      "svg": "diagrams/components-api-gateway.svg",
+      "nodes": 9,
+      "edges": 10,
+      "density": 0.238,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "components-fulfillment",
+      "title": "Fulfillment — components",
+      "ir": "diagrams/components-fulfillment.ir.json",
+      "svg": "diagrams/components-fulfillment.svg",
+      "nodes": 7,
+      "edges": 6,
+      "density": 0.163,
+      "curated": false,
+      "notes": [
+        "dropped `fulfillment.fulfillment`: no detected relationships"
+      ]
+    },
+    {
+      "id": "components-ledger-audit",
+      "title": "Ledger Audit — components",
+      "ir": "diagrams/components-ledger-audit.ir.json",
+      "svg": "diagrams/components-ledger-audit.svg",
+      "nodes": 4,
+      "edges": 5,
+      "density": 0.113,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "components-payments",
+      "title": "Payments — components",
+      "ir": "diagrams/components-payments.ir.json",
+      "svg": "diagrams/components-payments.svg",
+      "nodes": 6,
+      "edges": 8,
+      "density": 0.175,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "components-web",
+      "title": "Web — components",
+      "ir": "diagrams/components-web.ir.json",
+      "svg": "diagrams/components-web.svg",
+      "nodes": 3,
+      "edges": 2,
+      "density": 0.063,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-api-gateway-post-checkout",
+      "title": "POST /checkout",
+      "ir": "diagrams/flow-api-gateway-post-checkout.ir.json",
+      "svg": "diagrams/flow-api-gateway-post-checkout.svg",
+      "nodes": 6,
+      "edges": 9,
+      "density": 0.188,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-api-gateway-get-catalog",
+      "title": "GET /catalog",
+      "ir": "diagrams/flow-api-gateway-get-catalog.ir.json",
+      "svg": "diagrams/flow-api-gateway-get-catalog.svg",
+      "nodes": 3,
+      "edges": 3,
+      "density": 0.075,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-payments-post-charges",
+      "title": "POST /charges",
+      "ir": "diagrams/flow-payments-post-charges.ir.json",
+      "svg": "diagrams/flow-payments-post-charges.svg",
+      "nodes": 3,
+      "edges": 3,
+      "density": 0.075,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-ledger-audit-get-reports-daily",
+      "title": "GET /reports/daily",
+      "ir": "diagrams/flow-ledger-audit-get-reports-daily.ir.json",
+      "svg": "diagrams/flow-ledger-audit-get-reports-daily.svg",
+      "nodes": 3,
+      "edges": 3,
+      "density": 0.075,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-ledger-audit-get-reports-daily-status",
+      "title": "GET /reports/daily/{status}",
+      "ir": "diagrams/flow-ledger-audit-get-reports-daily-status.ir.json",
+      "svg": "diagrams/flow-ledger-audit-get-reports-daily-status.svg",
+      "nodes": 3,
+      "edges": 3,
+      "density": 0.075,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "flow-fulfillment-message-handle-order",
+      "title": "handle_order · Kafka topic order.placed",
+      "ir": "diagrams/flow-fulfillment-message-handle-order.ir.json",
+      "svg": "diagrams/flow-fulfillment-message-handle-order.svg",
+      "nodes": 3,
+      "edges": 2,
+      "density": 0.063,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "data-model",
+      "title": "Data model",
+      "ir": "diagrams/data-model.ir.json",
+      "svg": "diagrams/data-model.svg",
+      "nodes": 4,
+      "edges": 3,
+      "density": 0.088,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "lifecycle-orders-status",
+      "title": "orders.status lifecycle",
+      "ir": "diagrams/lifecycle-orders-status.ir.json",
+      "svg": "diagrams/lifecycle-orders-status.svg",
+      "nodes": 4,
+      "edges": 3,
+      "density": 0.088,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "capabilities-api-gateway",
+      "title": "API Gateway — capabilities",
+      "ir": "diagrams/capabilities-api-gateway.ir.json",
+      "svg": "diagrams/capabilities-api-gateway.svg",
+      "nodes": 7,
+      "edges": 6,
+      "density": 0.163,
+      "curated": false,
+      "notes": []
+    },
+    {
+      "id": "runtime-compose",
+      "title": "Polyglot Shop — runtime (compose)",
+      "ir": "diagrams/runtime-compose.ir.json",
+      "svg": "diagrams/runtime-compose.svg",
+      "nodes": 9,
+      "edges": 11,
+      "density": 0.25,
+      "curated": false,
+      "notes": []
+    }
+  ],
+  "warnings": [],
+  "files": {
+    "README.md": "9b915d425d260f70",
+    "diagrams/capabilities-api-gateway.ir.json": "6edbe786aeb1e8c7",
+    "diagrams/capabilities-api-gateway.svg": "a6911ca54ddc8a47",
+    "diagrams/components-api-gateway.ir.json": "86bce27bd6eb884c",
+    "diagrams/components-api-gateway.svg": "a07521acb1b523db",
+    "diagrams/components-fulfillment.ir.json": "bb887eedfe9a742a",
+    "diagrams/components-fulfillment.svg": "d15c6f01a4bbaf02",
+    "diagrams/components-ledger-audit.ir.json": "3397479652e63546",
+    "diagrams/components-ledger-audit.svg": "4d56b99c88cdda63",
+    "diagrams/components-payments.ir.json": "79836a701f3953ad",
+    "diagrams/components-payments.svg": "7add2f41dd8bb993",
+    "diagrams/components-web.ir.json": "64b926d1c9005f69",
+    "diagrams/components-web.svg": "03e7a1181ca3510e",
+    "diagrams/containers.ir.json": "4b35cc3f0a62672f",
+    "diagrams/containers.svg": "d0a1ff8bef5f2b72",
+    "diagrams/data-model.ir.json": "3a43d6e8fc3dcf88",
+    "diagrams/data-model.svg": "dd9f4ec53cd24ea2",
+    "diagrams/flow-api-gateway-get-catalog.ir.json": "adb546591e8d364a",
+    "diagrams/flow-api-gateway-get-catalog.svg": "e2cdaebc99bc12b9",
+    "diagrams/flow-api-gateway-post-checkout.ir.json": "8db76c65ac98ef5b",
+    "diagrams/flow-api-gateway-post-checkout.svg": "6885a2c73e529708",
+    "diagrams/flow-fulfillment-message-handle-order.ir.json": "a456030e9e563507",
+    "diagrams/flow-fulfillment-message-handle-order.svg": "2125b04afc7db1db",
+    "diagrams/flow-ledger-audit-get-reports-daily-status.ir.json": "6a8707fe655d9a3a",
+    "diagrams/flow-ledger-audit-get-reports-daily-status.svg": "8fe72d8aa0f2c838",
+    "diagrams/flow-ledger-audit-get-reports-daily.ir.json": "20d14bc770ab74d2",
+    "diagrams/flow-ledger-audit-get-reports-daily.svg": "54ded127a419b552",
+    "diagrams/flow-payments-post-charges.ir.json": "e93f385da2767c02",
+    "diagrams/flow-payments-post-charges.svg": "5fe62c505d26c800",
+    "diagrams/lifecycle-orders-status.ir.json": "e4f13010da544f1f",
+    "diagrams/lifecycle-orders-status.svg": "614721584cf1b19c",
+    "diagrams/runtime-compose.ir.json": "bccd5ec2d522e3f1",
+    "diagrams/runtime-compose.svg": "7bbe5da56c33b0a5",
+    "diagrams/system-context.ir.json": "3b70b1bc32af636a",
+    "diagrams/system-context.svg": "d0f48cddd8fd5c45",
+    "index.html": "2da6ce19e848d290",
+    "llms-full.txt": "137590d1681fb74a",
+    "llms.txt": "b789dabbfc161f0e",
+    "pages/01-overview.md": "e59b36994beb66e8",
+    "pages/02-architecture.md": "38917fc32ee45d33",
+    "pages/03-containers-api-gateway.md": "f5204428a3cdccd1",
+    "pages/03-containers-fulfillment.md": "7d2708dc04473ce1",
+    "pages/03-containers-ledger-audit.md": "aeaf5f38879bc109",
+    "pages/03-containers-payments.md": "5a8c0501d6e1189b",
+    "pages/03-containers-web.md": "3615a2310c21c5f4",
+    "pages/04-data-and-integrations.md": "0305261239bd11db",
+    "pages/05-critical-flows.md": "0bfb73c19081eb52",
+    "pages/05-runtime-and-deployment.md": "96f0b463d5fff9b8",
+    "pages/06-api-api-gateway.md": "efc45349d176054b",
+    "pages/06-api-ledger-audit.md": "6b5e9a4781e9f5c8",
+    "pages/06-api-payments.md": "b25eac9dc40e8e84",
+    "pages/07-functional-specification.md": "5fbb939c73b732c6",
+    "pages/08-business-requirements.md": "75addd75ed2fdaed",
+    "pages/09-evidence-and-unknowns.md": "165b5f3278d9afa6"
+  }
+}

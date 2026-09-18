@@ -1,0 +1,318 @@
+{
+  "version": "1.0.0",
+  "diagramType": "container",
+  "title": "Polyglot Shop — containers",
+  "subtitle": "A small checkout platform used as the autodoc-engine demo repository",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.263
+  },
+  "containers": [
+    {
+      "id": "clients",
+      "label": "Clients",
+      "boundaryType": "client",
+      "roleDescription": "User-facing applications"
+    },
+    {
+      "id": "platform",
+      "label": "Polyglot Shop platform",
+      "boundaryType": "trust-zone",
+      "roleDescription": "Services deployed from this repository"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage",
+      "roleDescription": "Stateful infrastructure"
+    },
+    {
+      "id": "external",
+      "label": "Third-party services",
+      "boundaryType": "third-party",
+      "roleDescription": "Vendor APIs outside the trust boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "api-gateway",
+      "containerId": "platform",
+      "label": "API Gateway",
+      "subtitle": "HTTP service",
+      "techStack": "TypeScript · Express",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "composeService": "api-gateway",
+        "entryPoint": "server bootstrap `createApp().listen()`",
+        "frameworks": "Express",
+        "language": "TypeScript",
+        "path": "api-gateway/",
+        "size": "8 files · 189 lines"
+      }
+    },
+    {
+      "id": "fulfillment",
+      "containerId": "platform",
+      "label": "Fulfillment",
+      "subtitle": "Background worker",
+      "techStack": "Python",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/__main__.py",
+        "startLine": 22,
+        "endLine": 23,
+        "symbolName": "__main__"
+      },
+      "metadata": {
+        "composeService": "fulfillment",
+        "docstring": "Ships placed orders and notifies customers",
+        "entryPoint": "`if __name__ == \"__main__\"` guard",
+        "language": "Python",
+        "path": "fulfillment/",
+        "size": "5 files · 91 lines"
+      }
+    },
+    {
+      "id": "ledger-audit",
+      "containerId": "platform",
+      "label": "Ledger Audit",
+      "subtitle": "HTTP service",
+      "techStack": "Rust · Axum",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "ledger-audit/src/main.rs",
+        "startLine": 10,
+        "endLine": 21,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "composeService": "ledger-audit",
+        "docstring": "Read-only reconciliation reports over the payments ledger",
+        "entryPoint": "binary `fn main`",
+        "frameworks": "Axum",
+        "language": "Rust",
+        "path": "ledger-audit/",
+        "size": "3 files · 89 lines"
+      }
+    },
+    {
+      "id": "payments",
+      "containerId": "platform",
+      "label": "Payments",
+      "subtitle": "HTTP service",
+      "techStack": "Go · net/http",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/cmd/payments/main.go",
+        "startLine": 17,
+        "endLine": 30,
+        "symbolName": "main"
+      },
+      "metadata": {
+        "composeService": "payments",
+        "docstring": "Command payments runs the payments HTTP service.",
+        "entryPoint": "`func main` in package main",
+        "frameworks": "net/http",
+        "language": "Go",
+        "path": "payments/",
+        "size": "4 files · 158 lines"
+      }
+    },
+    {
+      "id": "web",
+      "containerId": "clients",
+      "label": "Web",
+      "subtitle": "Web client",
+      "techStack": "TypeScript · React",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "web/src/main.tsx",
+        "startLine": 9,
+        "endLine": 9,
+        "symbolName": "createRoot"
+      },
+      "metadata": {
+        "composeService": "web",
+        "entryPoint": "client mount point",
+        "frameworks": "React, Vite",
+        "language": "TypeScript",
+        "path": "web/",
+        "size": "4 files · 88 lines"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "data",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "techStack": "compose: db",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    },
+    {
+      "id": "redis",
+      "containerId": "data",
+      "label": "Redis",
+      "subtitle": "Cache",
+      "techStack": "compose: redis",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/cache.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway"
+      }
+    },
+    {
+      "id": "kafka",
+      "containerId": "data",
+      "label": "Kafka",
+      "subtitle": "Event bus",
+      "techStack": "compose: kafka",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "eventbus",
+        "topics": "order.placed",
+        "usedBy": "api-gateway, fulfillment"
+      }
+    },
+    {
+      "id": "stripe",
+      "containerId": "external",
+      "label": "Stripe",
+      "subtitle": "Payments API",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "payments/internal/charge/charge.go",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "payments"
+      }
+    },
+    {
+      "id": "sendgrid",
+      "containerId": "external",
+      "label": "SendGrid",
+      "subtitle": "Email delivery",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/notify.py",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "fulfillment"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "api-gateway--kafka",
+      "source": "api-gateway",
+      "target": "kafka",
+      "label": "publishes order.placed",
+      "edgeType": "event"
+    },
+    {
+      "id": "api-gateway--payments",
+      "source": "api-gateway",
+      "target": "payments",
+      "label": "HTTP",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "api-gateway--postgres",
+      "source": "api-gateway",
+      "target": "postgres",
+      "label": "writes orders",
+      "edgeType": "write"
+    },
+    {
+      "id": "api-gateway--redis",
+      "source": "api-gateway",
+      "target": "redis",
+      "label": "reads & writes",
+      "edgeType": "write"
+    },
+    {
+      "id": "fulfillment--postgres",
+      "source": "fulfillment",
+      "target": "postgres",
+      "label": "writes orders",
+      "edgeType": "write"
+    },
+    {
+      "id": "fulfillment--sendgrid",
+      "source": "fulfillment",
+      "target": "sendgrid",
+      "label": "sends email",
+      "edgeType": "sync"
+    },
+    {
+      "id": "kafka--fulfillment",
+      "source": "kafka",
+      "target": "fulfillment",
+      "label": "delivers order.placed",
+      "edgeType": "event"
+    },
+    {
+      "id": "ledger-audit--postgres",
+      "source": "ledger-audit",
+      "target": "postgres",
+      "label": "reads payments",
+      "edgeType": "read"
+    },
+    {
+      "id": "payments--postgres",
+      "source": "payments",
+      "target": "postgres",
+      "label": "writes payments",
+      "edgeType": "write"
+    },
+    {
+      "id": "payments--stripe",
+      "source": "payments",
+      "target": "stripe",
+      "label": "charges cards",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "web--api-gateway",
+      "source": "web",
+      "target": "api-gateway",
+      "label": "HTTP",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    }
+  ]
+}

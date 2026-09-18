@@ -1,0 +1,77 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "handle_order · Kafka topic order.placed",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.063
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "kafka",
+      "label": "Kafka",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    },
+    {
+      "id": "fulfillment",
+      "label": "Fulfillment",
+      "techStack": "Python",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/__main__.py",
+        "startLine": 22,
+        "endLine": 23,
+        "symbolName": "__main__"
+      }
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "kafka",
+      "target": "fulfillment",
+      "label": "delivers order.placed",
+      "edgeType": "event",
+      "isPrimaryPath": true,
+      "sequence": 1,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/consumer.py",
+        "startLine": 19,
+        "endLine": 29,
+        "symbolName": "run"
+      }
+    },
+    {
+      "id": "m2",
+      "source": "fulfillment",
+      "target": "postgres",
+      "label": "write orders",
+      "edgeType": "write",
+      "isPrimaryPath": true,
+      "sequence": 2,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/shipping.py",
+        "startLine": 14,
+        "endLine": 14
+      }
+    }
+  ]
+}

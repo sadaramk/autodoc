@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "diagramType": "component",
+  "title": "Fulfillment — components",
+  "subtitle": "Ships placed orders and notifies customers",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.163
+  },
+  "containers": [
+    {
+      "id": "fulfillment",
+      "label": "Fulfillment",
+      "boundaryType": "internal-service",
+      "roleDescription": "Background worker (Python)"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage",
+      "roleDescription": "Stateful infrastructure"
+    },
+    {
+      "id": "external",
+      "label": "Third-party services",
+      "boundaryType": "third-party",
+      "roleDescription": "Vendor APIs outside the trust boundary"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "fulfillment.main",
+      "containerId": "fulfillment",
+      "label": "Main",
+      "subtitle": "Entry point for the fulfillment worker proc…",
+      "techStack": "fulfillment/fulfillment/__main__.py",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/__main__.py",
+        "startLine": 22,
+        "endLine": 23,
+        "symbolName": "__main__"
+      },
+      "metadata": {
+        "docstring": "Entry point for the fulfillment worker process.",
+        "entryPoint": "yes",
+        "files": "fulfillment/fulfillment/__main__.py",
+        "symbols": "2"
+      }
+    },
+    {
+      "id": "fulfillment.consumer",
+      "containerId": "fulfillment",
+      "label": "Consumer",
+      "subtitle": "Kafka consumer for order events",
+      "techStack": "fulfillment/fulfillment/consumer.py",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/consumer.py",
+        "startLine": 11,
+        "endLine": 29,
+        "symbolName": "OrderConsumer"
+      },
+      "metadata": {
+        "docstring": "Kafka consumer for order events.",
+        "files": "fulfillment/fulfillment/consumer.py",
+        "symbols": "3"
+      }
+    },
+    {
+      "id": "fulfillment.notify",
+      "containerId": "fulfillment",
+      "label": "Notify",
+      "subtitle": "Customer notifications via SendGrid",
+      "techStack": "fulfillment/fulfillment/notify.py",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/notify.py",
+        "startLine": 9,
+        "endLine": 19,
+        "symbolName": "send_shipped_email"
+      },
+      "metadata": {
+        "docstring": "Customer notifications via SendGrid.",
+        "files": "fulfillment/fulfillment/notify.py",
+        "symbols": "1"
+      }
+    },
+    {
+      "id": "fulfillment.shipping",
+      "containerId": "fulfillment",
+      "label": "Shipping",
+      "subtitle": "Shipment creation and order status updates",
+      "techStack": "fulfillment/fulfillment/shipping.py",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/shipping.py",
+        "startLine": 9,
+        "endLine": 17,
+        "symbolName": "ship_order"
+      },
+      "metadata": {
+        "docstring": "Shipment creation and order status updates.",
+        "files": "fulfillment/fulfillment/shipping.py",
+        "symbols": "1"
+      }
+    },
+    {
+      "id": "postgres",
+      "containerId": "data",
+      "label": "PostgreSQL",
+      "subtitle": "Relational database",
+      "techStack": "compose: db",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "storage",
+        "usedBy": "api-gateway, fulfillment, ledger-audit, payments"
+      }
+    },
+    {
+      "id": "kafka",
+      "containerId": "data",
+      "label": "Kafka",
+      "subtitle": "Event bus",
+      "techStack": "compose: kafka",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/events.ts",
+        "startLine": 1,
+        "endLine": 1
+      },
+      "metadata": {
+        "category": "eventbus",
+        "topics": "order.placed",
+        "usedBy": "api-gateway, fulfillment"
+      }
+    },
+    {
+      "id": "sendgrid",
+      "containerId": "external",
+      "label": "SendGrid",
+      "subtitle": "Email delivery",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/notify.py",
+        "startLine": 5,
+        "endLine": 5
+      },
+      "metadata": {
+        "category": "thirdparty",
+        "usedBy": "fulfillment"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "fulfillment.main--fulfillment.consumer",
+      "source": "fulfillment.main",
+      "target": "fulfillment.consumer",
+      "edgeType": "sync"
+    },
+    {
+      "id": "fulfillment.main--fulfillment.notify",
+      "source": "fulfillment.main",
+      "target": "fulfillment.notify",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    },
+    {
+      "id": "fulfillment.main--fulfillment.shipping",
+      "source": "fulfillment.main",
+      "target": "fulfillment.shipping",
+      "edgeType": "sync"
+    },
+    {
+      "id": "fulfillment.shipping--postgres",
+      "source": "fulfillment.shipping",
+      "target": "postgres",
+      "label": "writes orders",
+      "edgeType": "write"
+    },
+    {
+      "id": "kafka--fulfillment.consumer",
+      "source": "kafka",
+      "target": "fulfillment.consumer",
+      "label": "delivers order.placed",
+      "edgeType": "event"
+    },
+    {
+      "id": "fulfillment.notify--sendgrid",
+      "source": "fulfillment.notify",
+      "target": "sendgrid",
+      "label": "sends email",
+      "edgeType": "sync",
+      "isPrimaryPath": true
+    }
+  ]
+}

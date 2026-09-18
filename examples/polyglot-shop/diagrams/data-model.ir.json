@@ -1,0 +1,193 @@
+{
+  "version": "1.1.0",
+  "diagramType": "entity-relationship",
+  "title": "Data model",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.088
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "order_items",
+      "label": "order_items",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 20,
+        "endLine": 20
+      },
+      "attributes": [
+        {
+          "name": "order_id",
+          "typeName": "UUID",
+          "key": "pk-fk",
+          "note": "→ orders.id"
+        },
+        {
+          "name": "sku",
+          "typeName": "TEXT",
+          "key": "pk-fk",
+          "note": "→ products.sku"
+        },
+        {
+          "name": "quantity",
+          "typeName": "INTEGER"
+        },
+        {
+          "name": "price_cents",
+          "typeName": "INTEGER"
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "label": "orders",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 10,
+        "endLine": 10
+      },
+      "attributes": [
+        {
+          "name": "id",
+          "typeName": "UUID",
+          "key": "pk"
+        },
+        {
+          "name": "total_cents",
+          "typeName": "INTEGER"
+        },
+        {
+          "name": "status",
+          "typeName": "TEXT"
+        },
+        {
+          "name": "items",
+          "typeName": "JSONB"
+        },
+        {
+          "name": "tracking_number",
+          "typeName": "TEXT",
+          "nullable": true
+        },
+        {
+          "name": "created_at",
+          "typeName": "TIMESTAMPTZ"
+        }
+      ]
+    },
+    {
+      "id": "payments",
+      "label": "payments",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/002_payments.sql",
+        "startLine": 3,
+        "endLine": 3
+      },
+      "attributes": [
+        {
+          "name": "id",
+          "typeName": "BIGSERIAL",
+          "key": "pk"
+        },
+        {
+          "name": "order_id",
+          "typeName": "UUID",
+          "key": "fk",
+          "note": "→ orders.id"
+        },
+        {
+          "name": "charge_id",
+          "typeName": "TEXT"
+        },
+        {
+          "name": "status",
+          "typeName": "TEXT"
+        },
+        {
+          "name": "amount_cents",
+          "typeName": "BIGINT"
+        },
+        {
+          "name": "created_at",
+          "typeName": "TIMESTAMPTZ"
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "label": "products",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 3,
+        "endLine": 3
+      },
+      "attributes": [
+        {
+          "name": "sku",
+          "typeName": "TEXT",
+          "key": "pk"
+        },
+        {
+          "name": "name",
+          "typeName": "TEXT"
+        },
+        {
+          "name": "price_cents",
+          "typeName": "INTEGER"
+        },
+        {
+          "name": "active",
+          "typeName": "BOOLEAN"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "rel-1",
+      "source": "orders",
+      "target": "order_items",
+      "label": "order_id",
+      "edgeType": "sync",
+      "cardinality": "1:n",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 21,
+        "endLine": 21
+      }
+    },
+    {
+      "id": "rel-2",
+      "source": "products",
+      "target": "order_items",
+      "label": "sku",
+      "edgeType": "sync",
+      "cardinality": "1:n",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 26,
+        "endLine": 26
+      }
+    },
+    {
+      "id": "rel-3",
+      "source": "orders",
+      "target": "payments",
+      "label": "order_id",
+      "edgeType": "sync",
+      "cardinality": "1:n",
+      "evidence": {
+        "filePath": "db/migrations/002_payments.sql",
+        "startLine": 13,
+        "endLine": 13
+      }
+    }
+  ]
+}

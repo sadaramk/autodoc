@@ -1,0 +1,95 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "POST /charges",
+  "subtitle": "createCharge charges the card through Stripe and records the attempt in the ledger.",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.075
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "api-gateway",
+      "label": "API Gateway",
+      "techStack": "TypeScript · Express",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/server.ts",
+        "startLine": 19,
+        "endLine": 24,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "payments",
+      "label": "Payments",
+      "techStack": "Go · net/http",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "payments/cmd/payments/main.go",
+        "startLine": 17,
+        "endLine": 30,
+        "symbolName": "main"
+      }
+    },
+    {
+      "id": "postgres",
+      "label": "PostgreSQL",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 1,
+        "endLine": 1
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "m1",
+      "source": "api-gateway",
+      "target": "payments",
+      "label": "POST /charges",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 1,
+      "payload": "chargeRequest",
+      "evidence": {
+        "filePath": "api-gateway/src/clients/payments.ts",
+        "startLine": 11,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "m2",
+      "source": "payments",
+      "target": "postgres",
+      "label": "write payments",
+      "edgeType": "write",
+      "sequence": 2,
+      "evidence": {
+        "filePath": "payments/internal/ledger/ledger.go",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "m3",
+      "source": "payments",
+      "target": "api-gateway",
+      "label": "201 chargeResponse",
+      "edgeType": "sync",
+      "isPrimaryPath": true,
+      "sequence": 3,
+      "reply": true,
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 46,
+        "endLine": 64,
+        "symbolName": "createCharge"
+      }
+    }
+  ]
+}

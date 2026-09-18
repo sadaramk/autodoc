@@ -1,0 +1,48 @@
+# Polyglot Shop
+
+> A small checkout platform used as the autodoc-engine demo repository.
+
+Architecture book generated from source by autodoc-engine. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
+
+## Pages
+
+- [Polyglot Shop](pages/01-overview.md): A small checkout platform used as the autodoc-engine demo repository.
+- [Architecture](pages/02-architecture.md): How the 5 deployables, 3 datastores and queues, and 2 external services connect.
+- [API Gateway](pages/03-containers-api-gateway.md): HTTP service built with TypeScript · Express.
+- [Fulfillment](pages/03-containers-fulfillment.md): Ships placed orders and notifies customers
+- [Ledger Audit](pages/03-containers-ledger-audit.md): Read-only reconciliation reports over the payments ledger
+- [Payments](pages/03-containers-payments.md): Command payments runs the payments HTTP service.
+- [Web](pages/03-containers-web.md): Web client built with TypeScript · React.
+- [Data & integrations](pages/04-data-and-integrations.md): Where state lives, who reads and writes it, which events flow where, and which vendors are called.
+- [Critical flows](pages/05-critical-flows.md): The paths that matter most, hop by hop, each pinned to the code that makes the call.
+- [Runtime & deployment](pages/05-runtime-and-deployment.md): Where the system runs: each declared environment, its workloads, ports, replicas and health checks, and how traffic enters.
+- [API Gateway API](pages/06-api-api-gateway.md): The contract of every express operation API Gateway serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+- [Ledger Audit API](pages/06-api-ledger-audit.md): The contract of every axum operation Ledger Audit serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+- [Payments API](pages/06-api-payments.md): The contract of every net/http operation Payments serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+- [Functional specification](pages/07-functional-specification.md): 5 functional requirements and 19 business rules as the code implements them, each traceable to the handler, rule or state change that realises it.
+- [Business requirements](pages/08-business-requirements.md): A business requirements document scaffolded from the implementation: what is built is measured, why and for whom is authored, and every unanswered question is listed.
+- [Evidence & unknowns](pages/09-evidence-and-unknowns.md): 135 of 135 citations verified. What was observed, what was only declared, and what static analysis can't see.
+
+## Diagrams (typed DiagramIR JSON)
+
+- [capabilities-api-gateway](diagrams/capabilities-api-gateway.ir.json): API Gateway — capabilities
+- [components-api-gateway](diagrams/components-api-gateway.ir.json): API Gateway — components
+- [components-fulfillment](diagrams/components-fulfillment.ir.json): Fulfillment — components
+- [components-ledger-audit](diagrams/components-ledger-audit.ir.json): Ledger Audit — components
+- [components-payments](diagrams/components-payments.ir.json): Payments — components
+- [components-web](diagrams/components-web.ir.json): Web — components
+- [containers](diagrams/containers.ir.json): Polyglot Shop — containers
+- [data-model](diagrams/data-model.ir.json): Data model
+- [flow-api-gateway-get-catalog](diagrams/flow-api-gateway-get-catalog.ir.json): GET /catalog
+- [flow-api-gateway-post-checkout](diagrams/flow-api-gateway-post-checkout.ir.json): POST /checkout
+- [flow-fulfillment-message-handle-order](diagrams/flow-fulfillment-message-handle-order.ir.json): handle_order · Kafka topic order.placed
+- [flow-ledger-audit-get-reports-daily](diagrams/flow-ledger-audit-get-reports-daily.ir.json): GET /reports/daily
+- [flow-ledger-audit-get-reports-daily-status](diagrams/flow-ledger-audit-get-reports-daily-status.ir.json): GET /reports/daily/{status}
+- [flow-payments-post-charges](diagrams/flow-payments-post-charges.ir.json): POST /charges
+- [lifecycle-orders-status](diagrams/lifecycle-orders-status.ir.json): orders.status lifecycle
+- [runtime-compose](diagrams/runtime-compose.ir.json): Polyglot Shop — runtime (compose)
+- [system-context](diagrams/system-context.ir.json): Polyglot Shop — system context
+
+## Optional
+
+- [Full text](llms-full.txt): every page concatenated

@@ -1,0 +1,96 @@
+{
+  "version": "1.1.0",
+  "diagramType": "lifecycle",
+  "title": "orders.status lifecycle",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.088
+  },
+  "containers": [],
+  "nodes": [
+    {
+      "id": "s-pending",
+      "label": "pending",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 13,
+        "endLine": 13
+      },
+      "stateKind": "initial"
+    },
+    {
+      "id": "s-paid",
+      "label": "paid",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 14,
+        "endLine": 14
+      },
+      "stateKind": "normal"
+    },
+    {
+      "id": "s-shipped",
+      "label": "shipped",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 14,
+        "endLine": 14
+      },
+      "stateKind": "terminal"
+    },
+    {
+      "id": "s-cancelled",
+      "label": "cancelled",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 14,
+        "endLine": 14
+      },
+      "stateKind": "terminal"
+    }
+  ],
+  "edges": [
+    {
+      "id": "t1",
+      "source": "s-pending",
+      "target": "s-paid",
+      "label": "markOrderPaid",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 30,
+        "endLine": 30
+      }
+    },
+    {
+      "id": "t2",
+      "source": "s-pending",
+      "target": "s-cancelled",
+      "label": "cancelOrder",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 35,
+        "endLine": 35
+      }
+    },
+    {
+      "id": "t3",
+      "source": "s-paid",
+      "target": "s-shipped",
+      "label": "ship_order",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/shipping.py",
+        "startLine": 14,
+        "endLine": 14
+      }
+    }
+  ]
+}

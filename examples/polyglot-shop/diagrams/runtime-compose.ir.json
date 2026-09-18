@@ -1,0 +1,306 @@
+{
+  "version": "1.1.0",
+  "diagramType": "container",
+  "title": "Polyglot Shop — runtime (compose)",
+  "subtitle": "docker-compose.yml",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
+    "generatedAt": "unversioned",
+    "visualDensityScore": 0.25
+  },
+  "containers": [
+    {
+      "id": "outside",
+      "label": "Outside",
+      "boundaryType": "client",
+      "roleDescription": "Traffic entering the environment"
+    },
+    {
+      "id": "runtime",
+      "label": "Docker Compose (repository root)",
+      "boundaryType": "trust-zone"
+    },
+    {
+      "id": "data",
+      "label": "Data & messaging",
+      "boundaryType": "storage"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "external",
+      "containerId": "outside",
+      "label": "Clients",
+      "subtitle": "Host ports",
+      "isKeyFocalPoint": false
+    },
+    {
+      "id": "w-web",
+      "containerId": "runtime",
+      "label": "web",
+      "subtitle": "runs Web",
+      "techStack": "built from source",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 2,
+        "endLine": 2
+      },
+      "metadata": {
+        "envVars": "1",
+        "ports": "5173→5173"
+      }
+    },
+    {
+      "id": "w-api-gateway",
+      "containerId": "runtime",
+      "label": "api-gateway",
+      "subtitle": "runs API Gateway",
+      "techStack": "built from source",
+      "isKeyFocalPoint": true,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 11,
+        "endLine": 11
+      },
+      "metadata": {
+        "envVars": "4",
+        "ports": "3000→3000"
+      }
+    },
+    {
+      "id": "w-payments",
+      "containerId": "runtime",
+      "label": "payments",
+      "subtitle": "runs Payments",
+      "techStack": "built from source",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 26,
+        "endLine": 26
+      },
+      "metadata": {
+        "envVars": "2"
+      }
+    },
+    {
+      "id": "w-fulfillment",
+      "containerId": "runtime",
+      "label": "fulfillment",
+      "subtitle": "runs Fulfillment",
+      "techStack": "built from source",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 34,
+        "endLine": 34
+      },
+      "metadata": {
+        "envVars": "3"
+      }
+    },
+    {
+      "id": "w-ledger-audit",
+      "containerId": "runtime",
+      "label": "ledger-audit",
+      "subtitle": "runs Ledger Audit",
+      "techStack": "built from source",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 44,
+        "endLine": 44
+      },
+      "metadata": {
+        "envVars": "1"
+      }
+    },
+    {
+      "id": "w-db",
+      "containerId": "data",
+      "label": "db",
+      "subtitle": "Relational database",
+      "techStack": "postgres:16",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 51,
+        "endLine": 51
+      },
+      "metadata": {
+        "envVars": "2"
+      }
+    },
+    {
+      "id": "w-redis",
+      "containerId": "data",
+      "label": "redis",
+      "subtitle": "Cache",
+      "techStack": "redis:7",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 57,
+        "endLine": 57
+      }
+    },
+    {
+      "id": "w-kafka",
+      "containerId": "data",
+      "label": "kafka",
+      "subtitle": "Event bus",
+      "techStack": "redpanda:v24.1.1",
+      "isKeyFocalPoint": false,
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 60,
+        "endLine": 60
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "link-1",
+      "source": "external",
+      "target": "w-web",
+      "label": "5173 → 5173",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 5,
+        "endLine": 5
+      }
+    },
+    {
+      "id": "link-2",
+      "source": "w-web",
+      "target": "w-api-gateway",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 9,
+        "endLine": 9
+      }
+    },
+    {
+      "id": "link-3",
+      "source": "external",
+      "target": "w-api-gateway",
+      "label": "3000 → 3000",
+      "edgeType": "sync",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 14,
+        "endLine": 14
+      }
+    },
+    {
+      "id": "link-4",
+      "source": "w-api-gateway",
+      "target": "w-redis",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 21,
+        "endLine": 21
+      }
+    },
+    {
+      "id": "link-5",
+      "source": "w-api-gateway",
+      "target": "w-kafka",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 22,
+        "endLine": 22
+      }
+    },
+    {
+      "id": "link-6",
+      "source": "w-api-gateway",
+      "target": "w-db",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "link-7",
+      "source": "w-api-gateway",
+      "target": "w-payments",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 24,
+        "endLine": 24
+      }
+    },
+    {
+      "id": "link-8",
+      "source": "w-payments",
+      "target": "w-db",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 32,
+        "endLine": 32
+      }
+    },
+    {
+      "id": "link-9",
+      "source": "w-fulfillment",
+      "target": "w-kafka",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 41,
+        "endLine": 41
+      }
+    },
+    {
+      "id": "link-10",
+      "source": "w-fulfillment",
+      "target": "w-db",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 42,
+        "endLine": 42
+      }
+    },
+    {
+      "id": "link-11",
+      "source": "w-ledger-audit",
+      "target": "w-db",
+      "label": "depends on",
+      "edgeType": "sync",
+      "style": "dashed",
+      "evidence": {
+        "filePath": "docker-compose.yml",
+        "startLine": 49,
+        "endLine": 49
+      }
+    }
+  ]
+}
