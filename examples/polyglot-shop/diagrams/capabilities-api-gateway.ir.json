@@ -5,9 +5,8 @@
   "subtitle": "2 operations in 2 capability groups: who calls each area and what it touches",
   "theme": "editorial-light",
   "metadata": {
-    "targetRepo": "/repo/tests/fixtures/polyglot-shop",
-    "commitHash": "e7b68ce276f2e4470e6daf110d740e81698c7f96",
-    "generatedAt": "2026-09-17T21:21:44-05:00",
+    "targetRepo": "/tmp/polyglot-shop",
+    "generatedAt": "unversioned",
     "visualDensityScore": 0.163
   },
   "containers": [

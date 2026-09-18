@@ -8,7 +8,7 @@ A small checkout platform used as the autodoc-engine demo repository.
 
 ## What it is
 
-A small checkout platform used as the autodoc-engine demo repository.  [`README.md:3`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/README.md#L3)
+A small checkout platform used as the autodoc-engine demo repository.  `README.md:3`
 
 Polyglot Shop builds [API Gateway](../pages/03-containers-api-gateway.md), [Fulfillment](../pages/03-containers-fulfillment.md), [Ledger Audit](../pages/03-containers-ledger-audit.md), [Payments](../pages/03-containers-payments.md) and [Web](../pages/03-containers-web.md) — deployables written mainly in TypeScript, Python, Go. State lives in **PostgreSQL**, **Redis** and **Kafka**. It calls **Stripe** and **SendGrid** outside its trust boundary.
 

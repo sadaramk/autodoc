@@ -20,14 +20,19 @@ build:
 	docker compose build autodoc
 
 # Regenerate the committed demonstration book in examples/polyglot-shop.
-# The example book ships in this repository, so it must be reproducible: the
-# container sees the fixture at a fixed path and without this repository's
-# `.git`, so the book doesn't move with our commits or anyone's checkout path.
+# The example book ships in this repository, so it must be reproducible on any
+# machine: a book records the repository root it was generated from and the
+# commit it was pinned to. The fixture is copied to a fixed path inside the
+# container, away from this repository's `.git`, so neither leaks into it.
+DEMO_IN_CONTAINER = docker compose run --rm --entrypoint sh autodoc -c \
+	'cp -R /repo/tests/fixtures/polyglot-shop /tmp/polyglot-shop && \
+	 autodoc $(1) /tmp/polyglot-shop --out /repo/examples/polyglot-shop'
+
 demo:
-	docker compose run --rm autodoc generate tests/fixtures/polyglot-shop --out examples/polyglot-shop
+	$(call DEMO_IN_CONTAINER,generate)
 
 demo-check:
-	docker compose run --rm autodoc check tests/fixtures/polyglot-shop --out examples/polyglot-shop
+	$(call DEMO_IN_CONTAINER,check)
 
 schema:
 	docker compose run --rm autodoc schema > schema/diagram-ir.schema.json

@@ -29,42 +29,42 @@ Roles, scopes and authentication the code requires, read from annotations, guard
 | Operations | authenticated | no auth found |
 |---|---|---|
 | [GET /catalog](../pages/06-api-api-gateway.md#op-get-catalog) |  | _none found_ |
-| [POST /checkout](../pages/06-api-api-gateway.md#op-post-checkout) | ✓ [`api-gateway/src/routes/checkout.ts:33`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L33) |  |
+| [POST /checkout](../pages/06-api-api-gateway.md#op-post-checkout) | ✓ `api-gateway/src/routes/checkout.ts:33` |  |
 
 ## GET /catalog
 
-GET /catalog — product list, cached in Redis for 60 seconds. Handled by `catalogRouter.get` [`api-gateway/src/routes/catalog.ts:8-11`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/catalog.ts#L8-L11) · _opaque_
+GET /catalog — product list, cached in Redis for 60 seconds. Handled by `catalogRouter.get` `api-gateway/src/routes/catalog.ts:8-11` · _opaque_
 
 - **Response 200** _type not declared_
 
 **Called by**
 
-- [Web](../pages/03-containers-web.md) in `fetchCatalog` [`web/src/api/client.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L23)
+- [Web](../pages/03-containers-web.md) in `fetchCatalog` `web/src/api/client.ts:23`
 
 Behaviour: [sequence diagram](../pages/05-critical-flows.md#flow-api-gateway-get-catalog)
 
 ## POST /checkout
 
-POST /checkout — the critical transaction path. Handled by `checkoutRouter.post` [`api-gateway/src/routes/checkout.ts:33-48`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L33-L48) · _partial_
+POST /checkout — the critical transaction path. Handled by `checkoutRouter.post` `api-gateway/src/routes/checkout.ts:33-48` · _partial_
 
 - **Request body** [CheckoutRequest](../pages/06-api-api-gateway.md#model-checkoutrequest)
 - **Response 201** [CheckoutPostResponse](../pages/06-api-api-gateway.md#model-checkoutpostresponse)
-- **Requires** authenticated: requireCustomer  [`api-gateway/src/routes/checkout.ts:33`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L33)
+- **Requires** authenticated: requireCustomer  `api-gateway/src/routes/checkout.ts:33`
 
 | CheckoutRequest field | Type | Required | Rules |
 |---|---|---|---|
-| `items` [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13) | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13) · Cart lines to buy. |
-| `paymentToken` [`api-gateway/src/routes/checkout.ts:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L22) | `string` | yes | at least 1 character [`api-gateway/src/routes/checkout.ts:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L22) · Card token issued by the payment form. |
-| `couponCode` [`api-gateway/src/routes/checkout.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L23) | `string` | no | at most 32 characters [`api-gateway/src/routes/checkout.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L23) |
+| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
+| `paymentToken` `api-gateway/src/routes/checkout.ts:22` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:22` · Card token issued by the payment form. |
+| `couponCode` `api-gateway/src/routes/checkout.ts:23` | `string` | no | at most 32 characters `api-gateway/src/routes/checkout.ts:23` |
 
 | Error | Message | Raised at |
 |---|---|---|
-| `400` | invalid checkout request | [`api-gateway/src/routes/checkout.ts:36`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L36) |
-| `402` | payment declined | [`api-gateway/src/routes/checkout.ts:43`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L43) |
+| `400` | invalid checkout request | `api-gateway/src/routes/checkout.ts:36` |
+| `402` | payment declined | `api-gateway/src/routes/checkout.ts:43` |
 
 **Called by**
 
-- [Web](../pages/03-containers-web.md) in `submitCheckout` [`web/src/api/client.ts:10`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/web/src/api/client.ts#L10) _reads undeclared: estimatedDelivery_
+- [Web](../pages/03-containers-web.md) in `submitCheckout` `web/src/api/client.ts:10` _reads undeclared: estimatedDelivery_
 
 Behaviour: [sequence diagram](../pages/05-critical-flows.md#flow-api-gateway-post-checkout)
 
@@ -72,35 +72,35 @@ Behaviour: [sequence diagram](../pages/05-critical-flows.md#flow-api-gateway-pos
 
 ### CheckoutPostResponse
 
-Declared [`api-gateway/src/routes/checkout.ts:47`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L47)
+Declared `api-gateway/src/routes/checkout.ts:47`
 
 | CheckoutPostResponse field | Type | Required | Rules |
 |---|---|---|---|
-| `orderId` [`api-gateway/src/routes/checkout.ts:47`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L47) | `unknown` | yes | — |
-| `status` [`api-gateway/src/routes/checkout.ts:47`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L47) | `"placed"` | yes | — |
+| `orderId` `api-gateway/src/routes/checkout.ts:47` | `unknown` | yes | — |
+| `status` `api-gateway/src/routes/checkout.ts:47` | `"placed"` | yes | — |
 
 ### CheckoutRequest
 
-Body of POST /checkout, validated before anything is persisted. Declared [`api-gateway/src/routes/checkout.ts:11-24`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L11-L24)
+Body of POST /checkout, validated before anything is persisted. Declared `api-gateway/src/routes/checkout.ts:11-24`
 
 | CheckoutRequest field | Type | Required | Rules |
 |---|---|---|---|
-| `items` [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13) | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13) · Cart lines to buy. |
-| `paymentToken` [`api-gateway/src/routes/checkout.ts:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L22) | `string` | yes | at least 1 character [`api-gateway/src/routes/checkout.ts:22`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L22) · Card token issued by the payment form. |
-| `couponCode` [`api-gateway/src/routes/checkout.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L23) | `string` | no | at most 32 characters [`api-gateway/src/routes/checkout.ts:23`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L23) |
+| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
+| `paymentToken` `api-gateway/src/routes/checkout.ts:22` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:22` · Card token issued by the payment form. |
+| `couponCode` `api-gateway/src/routes/checkout.ts:23` | `string` | no | at most 32 characters `api-gateway/src/routes/checkout.ts:23` |
 
 ### CheckoutRequestItem
 
-Declared [`api-gateway/src/routes/checkout.ts:13`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L13)
+Declared `api-gateway/src/routes/checkout.ts:13`
 
 | CheckoutRequestItem field | Type | Required | Rules |
 |---|---|---|---|
-| `sku` [`api-gateway/src/routes/checkout.ts:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L16) | `string` | yes | at least 1 character [`api-gateway/src/routes/checkout.ts:16`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L16) |
-| `quantity` [`api-gateway/src/routes/checkout.ts:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L17) | `number` | yes | must be an integer [`api-gateway/src/routes/checkout.ts:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L17); must be greater than 0 [`api-gateway/src/routes/checkout.ts:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L17); must be ≤ 99 [`api-gateway/src/routes/checkout.ts:17`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/routes/checkout.ts#L17) |
+| `sku` `api-gateway/src/routes/checkout.ts:16` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:16` |
+| `quantity` `api-gateway/src/routes/checkout.ts:17` | `number` | yes | must be an integer `api-gateway/src/routes/checkout.ts:17`; must be greater than 0 `api-gateway/src/routes/checkout.ts:17`; must be ≤ 99 `api-gateway/src/routes/checkout.ts:17` |
 
 ## Operational routes
 
 | Route | Why excluded | Code |
 |---|---|---|
-| `GET /healthz` | health / liveness probe | [`api-gateway/src/server.ts:14`](https://github.com/sadaramk/autodoc/blob/e7b68ce276f2e4470e6daf110d740e81698c7f96/tests/fixtures/polyglot-shop/api-gateway/src/server.ts#L14) |
+| `GET /healthz` | health / liveness probe | `api-gateway/src/server.ts:14` |
 
