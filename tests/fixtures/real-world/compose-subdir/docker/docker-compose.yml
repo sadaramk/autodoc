@@ -1,0 +1,22 @@
+services:
+  shop-server:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    ports:
+      - "2283:2283"
+    depends_on:
+      - database
+      - redis
+
+  shop-ml:
+    build:
+      context: ../ml
+    ports:
+      - "3003:3003"
+
+  database:
+    image: postgres:16
+
+  redis:
+    image: valkey/valkey:8

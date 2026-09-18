@@ -1,0 +1,25 @@
+services:
+  trainer-http:
+    build:
+      context: docker/app
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
+  trainer-grpc:
+    build:
+      context: docker/app
+    env_file:
+      - .env
+
+  trainings-http:
+    build:
+      context: docker/app
+    env_file:
+      - .env
+    ports:
+      - "3001:3000"
+
+  mysql:
+    image: mariadb:10

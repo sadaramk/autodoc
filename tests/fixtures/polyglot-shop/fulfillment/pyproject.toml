@@ -1,0 +1,13 @@
+[project]
+name = "fulfillment"
+version = "0.1.0"
+description = "Ships placed orders and notifies customers"
+requires-python = ">=3.11"
+dependencies = [
+    "confluent-kafka>=2.4",
+    "psycopg[binary]>=3.2",
+    "sendgrid>=6.11",
+]
+
+[project.scripts]
+fulfillment = "fulfillment.__main__:main"

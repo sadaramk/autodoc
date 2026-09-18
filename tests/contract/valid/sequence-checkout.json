@@ -1,0 +1,23 @@
+{
+  "version": "1.1.0",
+  "diagramType": "sequence",
+  "title": "Checkout",
+  "theme": "editorial-light",
+  "metadata": { "targetRepo": ".", "generatedAt": "2026-01-01T00:00:00Z" },
+  "containers": [],
+  "nodes": [
+    { "id": "web", "label": "Web", "isKeyFocalPoint": false },
+    { "id": "gateway", "label": "API Gateway", "isKeyFocalPoint": true },
+    { "id": "payments", "label": "Payments", "isKeyFocalPoint": false },
+    { "id": "kafka", "label": "Kafka", "isKeyFocalPoint": false }
+  ],
+  "edges": [
+    { "id": "m1", "source": "web", "target": "gateway", "label": "POST /api/checkout", "edgeType": "sync", "sequence": 1, "payload": "CheckoutRequest", "isPrimaryPath": true,
+      "evidence": { "filePath": "web/src/api/client.ts", "startLine": 9, "endLine": 19, "symbolName": "submitCheckout" } },
+    { "id": "m2", "source": "gateway", "target": "payments", "label": "POST /charges", "edgeType": "sync", "sequence": 2, "payload": "ChargeRequest" },
+    { "id": "m3", "source": "payments", "target": "gateway", "label": "201 Charge", "edgeType": "sync", "sequence": 3, "reply": true },
+    { "id": "m4", "source": "gateway", "target": "kafka", "label": "publish", "edgeType": "event", "sequence": 4, "payload": "order.placed" },
+    { "id": "m5", "source": "gateway", "target": "gateway", "label": "mark order paid", "edgeType": "sync", "sequence": 5 },
+    { "id": "m6", "source": "gateway", "target": "web", "label": "201 Order", "edgeType": "sync", "sequence": 6, "reply": true, "style": null }
+  ]
+}

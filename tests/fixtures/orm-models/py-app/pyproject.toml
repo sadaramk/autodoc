@@ -1,0 +1,4 @@
+[project]
+name = "orm-py-app"
+version = "0.1.0"
+dependencies = ["sqlalchemy>=2.0", "django>=5.0", "fastapi>=0.110"]

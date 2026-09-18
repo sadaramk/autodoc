@@ -1,0 +1,6 @@
+{
+  "name": "nest-orders",
+  "private": true,
+  "main": "dist/main.js",
+  "dependencies": { "@nestjs/common": "^10.3.0", "@nestjs/core": "^10.3.0", "class-validator": "^0.14.1" }
+}

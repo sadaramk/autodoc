@@ -1,0 +1,4 @@
+replicas: 2
+image:
+  repository: registry.example.com/acme/orders
+  tag: 1.4.2

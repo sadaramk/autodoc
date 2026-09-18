@@ -1,0 +1,5 @@
+micronaut:
+  application:
+    name: pets
+  server:
+    context-path: /v1

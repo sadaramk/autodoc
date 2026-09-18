@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "diagramType": "container",
+  "title": "Polyglot Shop",
+  "subtitle": "Container view of the checkout platform",
+  "theme": "editorial-light",
+  "metadata": {
+    "targetRepo": "tests/fixtures/polyglot-shop",
+    "commitHash": "0123456789abcdef0123456789abcdef01234567",
+    "generatedAt": "2026-09-16T12:00:00Z",
+    "visualDensityScore": 0.21
+  },
+  "containers": [
+    { "id": "clients", "label": "Clients", "boundaryType": "client", "roleDescription": "Browsers" },
+    { "id": "platform", "label": "Platform", "boundaryType": "trust-zone" },
+    { "id": "services", "label": "Services", "boundaryType": "internal-service" },
+    { "id": "stores", "label": "Storage", "boundaryType": "storage" },
+    { "id": "vendors", "label": "Vendors", "boundaryType": "third-party" }
+  ],
+  "nodes": [
+    { "id": "web", "containerId": "clients", "label": "Web", "techStack": "TypeScript", "isKeyFocalPoint": false },
+    {
+      "id": "api", "containerId": "platform", "label": "API Gateway", "subtitle": "Routes checkout",
+      "techStack": "Node.js", "isKeyFocalPoint": true,
+      "evidence": { "filePath": "api/src/server.ts", "startLine": 1, "endLine": 40, "symbolName": "createServer" }
+    },
+    { "id": "payments", "containerId": "services", "label": "Payments", "techStack": "Go", "isKeyFocalPoint": false },
+    { "id": "db", "containerId": "stores", "label": "Postgres", "isKeyFocalPoint": false },
+    { "id": "stripe", "containerId": "vendors", "label": "Stripe", "isKeyFocalPoint": false }
+  ],
+  "edges": [
+    { "id": "e1", "source": "web", "target": "api", "label": "HTTPS", "edgeType": "sync", "isPrimaryPath": true },
+    { "id": "e2", "source": "api", "target": "payments", "edgeType": "async", "style": "dashed" },
+    { "id": "e3", "source": "payments", "target": "db", "edgeType": "write" },
+    { "id": "e4", "source": "api", "target": "db", "edgeType": "read", "isPrimaryPath": false },
+    { "id": "e5", "source": "payments", "target": "stripe", "edgeType": "event" }
+  ]
+}

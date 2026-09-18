@@ -1,0 +1,9 @@
+zuul:
+  ignoredServices: '*'
+  routes:
+    account-service:
+      path: /accounts/**
+      serviceId: account-service
+    statistics-service:
+      path: /statistics/**
+      url: http://statistics-service:7000

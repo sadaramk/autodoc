@@ -1,0 +1,30 @@
+CREATE TABLE carts (
+  id UUID PRIMARY KEY,
+  status TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE TABLE orders (
+  id UUID PRIMARY KEY,
+  total_cents BIGINT NOT NULL
+);
+
+CREATE TABLE invoices (
+  id BIGSERIAL PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES orders (id)
+);
+
+CREATE TABLE stock (
+  sku TEXT PRIMARY KEY,
+  reserved INTEGER NOT NULL
+);
+
+CREATE TABLE stock_audit (
+  id BIGSERIAL PRIMARY KEY,
+  sku TEXT NOT NULL
+);
+
+CREATE TABLE samples (
+  id BIGSERIAL PRIMARY KEY,
+  value DOUBLE PRECISION NOT NULL
+);

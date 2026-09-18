@@ -1,0 +1,71 @@
+{
+  "version": "1.1.0",
+  "diagramType": "entity-relationship",
+  "title": "Orders data model",
+  "theme": "editorial-dark",
+  "metadata": {
+    "targetRepo": ".",
+    "generatedAt": "2026-01-01T00:00:00Z"
+  },
+  "containers": [
+    {
+      "id": "db",
+      "label": "PostgreSQL",
+      "boundaryType": "storage"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "orders",
+      "containerId": "db",
+      "label": "orders",
+      "isKeyFocalPoint": true,
+      "attributes": [
+        {
+          "name": "id",
+          "typeName": "uuid",
+          "key": "pk"
+        },
+        {
+          "name": "status",
+          "typeName": "text",
+          "note": "pending | paid | shipped"
+        },
+        {
+          "name": "shipped_at",
+          "typeName": "timestamptz",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "id": "order_items",
+      "containerId": "db",
+      "label": "order_items",
+      "isKeyFocalPoint": false,
+      "attributes": [
+        {
+          "name": "order_id",
+          "typeName": "uuid",
+          "key": "pk-fk",
+          "note": "\u2192 orders.id"
+        },
+        {
+          "name": "sku",
+          "typeName": "text",
+          "key": "pk"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "r1",
+      "source": "orders",
+      "target": "order_items",
+      "edgeType": "sync",
+      "cardinality": "one-to-many",
+      "label": "contains"
+    }
+  ]
+}

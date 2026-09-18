@@ -1,0 +1,8 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports:
+      - "9090:9090"
+  orders:
+    environment:
+      METRICS: "true"

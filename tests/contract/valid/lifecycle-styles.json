@@ -1,0 +1,19 @@
+{
+  "version": "1.0.0",
+  "diagramType": "lifecycle",
+  "title": "Order lifecycle",
+  "subtitle": null,
+  "theme": "editorial-light",
+  "metadata": { "targetRepo": ".", "commitHash": null, "generatedAt": "2026-09-16T12:00:00Z", "visualDensityScore": 0.1 },
+  "containers": [],
+  "nodes": [
+    { "id": "pending", "label": "Pending", "isKeyFocalPoint": false, "evidence": { "filePath": "src/order.rs", "startLine": 0, "endLine": 12 } },
+    { "id": "paid", "label": "Paid", "isKeyFocalPoint": true, "containerId": null },
+    { "id": "shipped", "label": "Shipped", "isKeyFocalPoint": false }
+  ],
+  "edges": [
+    { "id": "t1", "source": "pending", "target": "paid", "label": "pay", "edgeType": "sync", "style": "solid", "isPrimaryPath": true },
+    { "id": "t2", "source": "paid", "target": "shipped", "label": "ship", "edgeType": "async", "style": "solid" },
+    { "id": "t3", "source": "paid", "target": "pending", "label": "refund", "edgeType": "sync", "style": "dashed" }
+  ]
+}

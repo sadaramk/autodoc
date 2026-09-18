@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/server",
+    "crates/utils",
+    "crates/routes",
+    "crates/db_schema",
+    "crates/db_views/a",
+    "crates/db_views/b",
+    "crates/db_views/c",
+    "crates/db_views/d",
+    "crates/db_views/e",
+    "crates/db_views/f",
+]

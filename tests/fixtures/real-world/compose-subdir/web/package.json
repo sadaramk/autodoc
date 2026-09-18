@@ -1,0 +1,11 @@
+{
+  "name": "shop-web",
+  "private": true,
+  "dependencies": {
+    "@shop/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "svelte": "^5.0.0",
+    "typescript": "^5.5.4"
+  }
+}

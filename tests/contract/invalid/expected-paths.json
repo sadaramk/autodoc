@@ -1,0 +1,13 @@
+{
+  "containers-0-boundaryType-bad-enum.json": "$.containers[0].boundaryType",
+  "edges-0-edgeType-bad-enum.json": "$.edges[0].edgeType",
+  "edges-0-missing-edgeType.json": "$.edges[0]",
+  "metadata-missing-generatedAt.json": "$.metadata",
+  "nodes-0-isKeyFocalpoint-typo.json": "$.nodes[0].isKeyFocalpoint",
+  "nodes-1-evidence-endLine-negative.json": "$.nodes[1].evidence.endLine",
+  "nodes-1-evidence-startLine-float.json": "$.nodes[1].evidence.startLine",
+  "theme-bad-enum.json": "$.theme",
+  "version-2.0.0.json": "$.version",
+  "edges-0-cardinality-bad-enum.json": "$.edges[0].cardinality",
+  "nodes-0-attributes-0-key-bad-enum.json": "$.nodes[0].attributes[0].key"
+}

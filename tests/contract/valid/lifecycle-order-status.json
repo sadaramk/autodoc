@@ -1,0 +1,17 @@
+{
+  "version": "1.1.0",
+  "diagramType": "lifecycle",
+  "title": "Order status",
+  "theme": "editorial-light",
+  "metadata": { "targetRepo": ".", "generatedAt": "2026-01-01T00:00:00Z" },
+  "containers": [],
+  "nodes": [
+    { "id": "pending", "label": "pending", "isKeyFocalPoint": false, "stateKind": "initial" },
+    { "id": "paid", "label": "paid", "isKeyFocalPoint": true },
+    { "id": "shipped", "label": "shipped", "isKeyFocalPoint": false, "stateKind": "terminal" }
+  ],
+  "edges": [
+    { "id": "t1", "source": "pending", "target": "paid", "label": "charge succeeded", "edgeType": "sync" },
+    { "id": "t2", "source": "paid", "target": "shipped", "label": "ship_order", "edgeType": "event", "guard": "status = 'paid'" }
+  ]
+}

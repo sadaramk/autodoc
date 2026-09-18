@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.acme</groupId>
+  <artifactId>acme-cloud</artifactId>
+  <packaging>pom</packaging>
+  <modules>
+    <module>gateway</module>
+    <module>accounts</module>
+    <module>stats</module>
+    <module>config</module>
+    <module>common</module>
+  </modules>
+</project>

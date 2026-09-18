@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: inventory
+stock:
+  expiry:
+    cron: 0 0 3 * * *

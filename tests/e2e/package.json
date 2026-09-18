@@ -1,0 +1,13 @@
+{
+  "name": "@autodoc-engine/e2e",
+  "private": true,
+  "type": "module",
+  "description": "Browser journeys for the standalone interactive HTML output",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.20.3"
+  }
+}

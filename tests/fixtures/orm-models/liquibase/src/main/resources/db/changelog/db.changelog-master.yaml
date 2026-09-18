@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: changes/001-ledgers.xml
+      relativeToChangelogFile: true
+  - include:
+      file: changes/002-entries.yaml
+      relativeToChangelogFile: true

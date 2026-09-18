@@ -1,0 +1,9 @@
+[project]
+name = "app"
+version = "0.1.0"
+dependencies = [
+    "fastapi>=0.110",
+    "sqlmodel>=0.0.21",
+    "psycopg[binary]>=3.1",
+    "emails>=0.6",
+]

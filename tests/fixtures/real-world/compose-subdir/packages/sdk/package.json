@@ -1,0 +1,7 @@
+{
+  "name": "@shop/sdk",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

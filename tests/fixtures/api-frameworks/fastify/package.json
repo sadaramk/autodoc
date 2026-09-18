@@ -1,0 +1,6 @@
+{
+  "name": "fastify-notes",
+  "private": true,
+  "main": "dist/server.js",
+  "dependencies": { "fastify": "^4.28.1" }
+}

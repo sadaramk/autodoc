@@ -1,0 +1,17 @@
+services:
+  orders:
+    build: ./orders
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://orders:pw@db:5432/orders
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+  db:
+    image: postgres:16
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

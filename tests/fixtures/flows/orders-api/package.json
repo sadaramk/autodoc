@@ -1,0 +1,12 @@
+{
+  "name": "orders-api",
+  "version": "1.0.0",
+  "description": "Order intake API",
+  "main": "src/server.ts",
+  "dependencies": {
+    "express": "^4.19.0",
+    "kafkajs": "^2.2.4",
+    "node-cron": "^3.0.3",
+    "pg": "^8.11.0"
+  }
+}

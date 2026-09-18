@@ -1,0 +1,19 @@
+services:
+  vote:
+    build: ./vote
+    ports:
+      - "8080:80"
+    depends_on:
+      - redis
+
+  worker:
+    build: ./worker
+    depends_on:
+      - redis
+      - db
+
+  redis:
+    image: redis:alpine
+
+  db:
+    image: postgres:15

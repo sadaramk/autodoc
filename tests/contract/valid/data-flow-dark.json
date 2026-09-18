@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "diagramType": "data-flow",
+  "title": "Order events",
+  "theme": "editorial-dark",
+  "metadata": { "targetRepo": "git@github.com:acme/shop.git", "generatedAt": "2026-09-16T12:00:00Z" },
+  "containers": [{ "id": "bus", "label": "Event Bus", "boundaryType": "internal-service" }],
+  "nodes": [
+    {
+      "id": "producer", "containerId": "bus", "label": "Order Producer", "isKeyFocalPoint": false,
+      "metadata": { "docstring": "Publishes order.created", "language": "python" }
+    },
+    { "id": "consumer", "label": "Fulfillment", "isKeyFocalPoint": false, "metadata": {} }
+  ],
+  "edges": [{ "id": "flow", "source": "producer", "target": "consumer", "label": "order.created", "edgeType": "event" }]
+}

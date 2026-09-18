@@ -1,0 +1,14 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+ws_utils = { path = "../utils" }
+db_views_a = { path = "../db_views/a" }
+db_views_b = { path = "../db_views/b" }
+db_views_c = { path = "../db_views/c" }
+db_views_d = { path = "../db_views/d" }
+db_views_e = { path = "../db_views/e" }
+db_views_f = { path = "../db_views/f" }

@@ -1,0 +1,22 @@
+services:
+  config:
+    image: acme/acme-cloud-config
+  gateway:
+    image: acme/acme-cloud-gateway
+    ports:
+      - "80:4000"
+    depends_on:
+      - config
+  account-service:
+    image: acme/acme-cloud-accounts
+    depends_on:
+      - config
+      - account-mongodb
+  statistics-service:
+    image: acme/acme-cloud-stats
+    depends_on:
+      - config
+  account-mongodb:
+    image: mongo:7
+  rabbitmq:
+    image: rabbitmq:3-management

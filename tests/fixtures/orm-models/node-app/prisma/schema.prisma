@@ -1,0 +1,29 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique @db.VarChar(255)
+  name  String?
+  posts Post[]
+
+  @@map("users")
+}
+
+model Post {
+  id       Int        @id @default(autoincrement())
+  title    String
+  status   PostStatus @default(DRAFT)
+  authorId Int        @map("author_id")
+  author   User       @relation(fields: [authorId], references: [id])
+
+  @@map("posts")
+}

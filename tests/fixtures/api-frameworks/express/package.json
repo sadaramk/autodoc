@@ -1,0 +1,7 @@
+{
+  "name": "express-users",
+  "private": true,
+  "main": "dist/app.js",
+  "scripts": { "start": "node dist/app.js" },
+  "dependencies": { "express": "^4.19.2", "zod": "^3.23.8" }
+}

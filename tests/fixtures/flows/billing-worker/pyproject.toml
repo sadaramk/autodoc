@@ -1,0 +1,5 @@
+[project]
+name = "billing-worker"
+version = "1.0.0"
+description = "Invoices every new order"
+dependencies = ["confluent-kafka>=2.3", "psycopg>=3.1"]

@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "diagramType": "system-context",
+  "title": "Minimal",
+  "theme": "editorial-light",
+  "metadata": { "targetRepo": ".", "generatedAt": "2026-01-01T00:00:00Z" },
+  "containers": [],
+  "nodes": [{ "id": "app", "label": "App", "isKeyFocalPoint": true }],
+  "edges": []
+}
