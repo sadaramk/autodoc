@@ -208,3 +208,35 @@ fn configured_schedules_built_events_and_email_are_followed() {
     let kept = flow(&r, "flow:inventory:schedule:reconcile");
     assert_eq!(kept.trigger.label, "cron 0 0 * * * *");
 }
+
+/// Go's CQRS and hexagonal layouts dispatch through struct fields and ports.
+/// `h.app.Queries.AllTrainings.Handle` names no function: `Handle` is declared on
+/// every handler in the service, so a trace by name stops at the HTTP handler and
+/// the request flow is lost. Walking the field chain to a type, and a port to its
+/// one adapter, is what carries the flow through to the store.
+#[test]
+fn go_traces_a_request_through_field_chains_and_ports() {
+    let (root, r) = behaviour("real-world/go-hexagonal");
+
+    let get = flow(&r, "flow:go-hexagonal:GET /trainings");
+    let names: Vec<&str> = get.functions.iter().map(|f| f.as_str()).collect();
+    assert!(
+        names.iter().any(|f| f.ends_with(":Handle")),
+        "the query handler should be reached through h.app.Queries.AllTrainings: {names:?}"
+    );
+
+    // The port resolves to its single adapter, which is what touches Firestore.
+    let post = flow(&r, "flow:go-hexagonal:POST /trainings");
+    let reached: Vec<&str> = post.functions.iter().map(|f| f.as_str()).collect();
+    assert!(
+        reached.iter().any(|f| f.ends_with(":AddTraining")),
+        "the Repository port should resolve to TrainingsFirestoreRepository: {reached:?}"
+    );
+
+    let write = post
+        .steps
+        .iter()
+        .find(|s| s.kind == StepKind::Write || s.to.to_lowercase().contains("firestore"))
+        .unwrap_or_else(|| panic!("no store step in {:?}", shape(post)));
+    assert_cites(&root, write, "trainings");
+}

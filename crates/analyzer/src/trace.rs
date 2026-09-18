@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::{ApiModel, Operation};
 use crate::catalog::InfraCategory;
 use crate::data::DataModel;
-use crate::extract::SymbolKind;
+use crate::extract::{Receiver, SymbolKind, TypeDef};
 use crate::scan::{EvidenceRef, InfraSummary, Relationship};
 use crate::source::SourceIndex;
 use autodoc_ir::EdgeType;
@@ -152,6 +152,8 @@ struct Func<'a> {
     name: String,
     start: u32,
     end: u32,
+    /// The type this method hangs off, when it is a method.
+    receiver: Option<Receiver>,
 }
 
 enum Effect<'a> {
@@ -174,6 +176,13 @@ enum Effect<'a> {
     Event {
         event_type: String,
     },
+    /// A call on a field that holds an infrastructure client.
+    Store {
+        infra: String,
+        write: bool,
+        label: String,
+        evidence: EvidenceRef,
+    },
 }
 
 struct Tracer<'a> {
@@ -184,6 +193,12 @@ struct Tracer<'a> {
     relationships: &'a [Relationship],
     /// Function symbols per unit: name → definitions.
     functions: BTreeMap<&'a str, BTreeMap<&'a str, Vec<Func<'a>>>>,
+    /// Method bodies per unit, keyed by the type they hang off and their name.
+    methods: BTreeMap<&'a str, BTreeMap<(String, String), Vec<Func<'a>>>>,
+    /// Named types per unit, for walking a receiver expression to its type.
+    types: BTreeMap<&'a str, BTreeMap<String, TypeDef>>,
+    /// Fields that hold an infrastructure client: (type, field) → infra id.
+    infra_fields: BTreeMap<&'a str, BTreeMap<(String, String), String>>,
     /// All symbols per file, for innermost-enclosing lookups.
     spans: BTreeMap<&'a str, Vec<(u32, u32, &'a str)>>,
     /// Interface bodies per file: methods declared there have no implementation.
@@ -200,9 +215,35 @@ pub fn trace(
     relationships: &[Relationship],
 ) -> Vec<Flow> {
     let mut functions: BTreeMap<&str, BTreeMap<&str, Vec<Func>>> = BTreeMap::new();
+    let mut methods: BTreeMap<&str, BTreeMap<(String, String), Vec<Func>>> = BTreeMap::new();
+    let mut types: BTreeMap<&str, BTreeMap<String, TypeDef>> = BTreeMap::new();
+    let mut infra_fields: BTreeMap<&str, BTreeMap<(String, String), String>> = BTreeMap::new();
     let mut spans: BTreeMap<&str, Vec<(u32, u32, &str)>> = BTreeMap::new();
     let mut interfaces: BTreeMap<&str, Vec<(u32, u32)>> = BTreeMap::new();
     for f in &index.files {
+        for t in &f.facts.types {
+            types.entry(f.unit).or_default().entry(t.name.clone()).or_insert_with(|| t.clone());
+            // A field typed from an infrastructure package is a handle on it:
+            // `client *firestore.Client` makes `r.client.…` a Firestore call.
+            for field in t.fields.iter().filter(|x| !x.name.is_empty()) {
+                let Some(q) = &field.qualifier else { continue };
+                let Some(imp) = f.facts.imports.iter().find(|i| {
+                    let pkg = crate::catalog::import_package(&i.specifier);
+                    pkg == q || i.specifier.rsplit('/').next() == Some(q.as_str())
+                }) else {
+                    continue;
+                };
+                let pkg = crate::catalog::import_package(&imp.specifier);
+                if let Some(kind) = crate::catalog::infra_for_package(pkg) {
+                    if infra.iter().any(|i| i.id == kind.id()) {
+                        infra_fields
+                            .entry(f.unit)
+                            .or_default()
+                            .insert((t.name.clone(), field.name.clone()), kind.id().to_string());
+                    }
+                }
+            }
+        }
         for s in f.facts.symbols.iter().filter(|s| s.kind == SymbolKind::Interface) {
             interfaces.entry(f.path).or_default().push((s.start_line, s.end_line));
         }
@@ -215,12 +256,37 @@ pub fn trace(
                 name: s.name.clone(),
                 start: s.start_line,
                 end: s.end_line,
+                receiver: s.receiver.clone(),
             });
+            if let Some(r) = &s.receiver {
+                methods.entry(f.unit).or_default().entry((r.type_name.clone(), s.name.clone())).or_default().push(
+                    Func {
+                        path: f.path,
+                        name: s.name.clone(),
+                        start: s.start_line,
+                        end: s.end_line,
+                        receiver: s.receiver.clone(),
+                    },
+                );
+            }
             spans.entry(f.path).or_default().push((s.start_line, s.end_line, s.name.as_str()));
         }
     }
     let entries = crate::entry::discover(index, infra, relationships);
-    let tracer = Tracer { index, api, data, infra, relationships, functions, spans, interfaces, entries };
+    let tracer = Tracer {
+        index,
+        api,
+        data,
+        infra,
+        relationships,
+        functions,
+        methods,
+        types,
+        infra_fields,
+        spans,
+        interfaces,
+        entries,
+    };
 
     let called: BTreeSet<&str> = api.client_calls.iter().filter_map(|c| c.operation.as_deref()).collect();
     let mut flows: Vec<Flow> = api
@@ -386,8 +452,13 @@ impl<'a> Tracer<'a> {
         notes: &mut Vec<String>,
         functions: &mut Vec<String>,
     ) -> Option<String> {
-        let handler =
-            Func { path: e.handler.path, name: e.handler.name.clone(), start: e.handler.start, end: e.handler.end };
+        let handler = Func {
+            path: e.handler.path,
+            name: e.handler.name.clone(),
+            start: e.handler.start,
+            end: e.handler.end,
+            receiver: self.receiver_at(e.handler.path, e.handler.start),
+        };
         let mut visiting = BTreeSet::new();
         let mut seen = BTreeSet::new();
         let mut w = Walk { visiting: &mut visiting, remote_depth: 0, seen: &mut seen, notes, functions };
@@ -593,14 +664,25 @@ impl<'a> Tracer<'a> {
         let ev = &op.handler.evidence;
         let path = self.index.files.iter().find(|f| f.path == ev.file_path).map(|f| f.path).unwrap_or("");
         if ev.end_line > ev.start_line {
-            return Func { path, name: op.handler.name.clone(), start: ev.start_line, end: ev.end_line };
+            return Func {
+                path,
+                name: op.handler.name.clone(),
+                start: ev.start_line,
+                end: ev.end_line,
+                receiver: self.receiver_at(path, ev.start_line),
+            };
         }
         // A registration line only: find the named function in that file, then in the unit.
         let by_name = self.functions.get(op.unit.as_str()).and_then(|m| m.get(op.handler.name.as_str()));
-        by_name
-            .and_then(|defs| defs.iter().find(|d| d.path == path).or_else(|| defs.first()))
-            .cloned()
-            .unwrap_or(Func { path, name: op.handler.name.clone(), start: ev.start_line, end: ev.end_line })
+        by_name.and_then(|defs| defs.iter().find(|d| d.path == path).or_else(|| defs.first())).cloned().unwrap_or(
+            Func {
+                path,
+                name: op.handler.name.clone(),
+                start: ev.start_line,
+                end: ev.end_line,
+                receiver: self.receiver_at(path, ev.start_line),
+            },
+        )
     }
 
     fn expand_operation(
@@ -650,6 +732,26 @@ impl<'a> Tracer<'a> {
                     if let Some(ci) = client {
                         effects.push((call.line, Effect::Remote { call: ci, site: Some(call.line) }));
                         continue;
+                    }
+                    if let Some(e) = self.store_call(unit, func, call) {
+                        let write = matches!(e, Effect::Store { write: true, .. });
+                        let same =
+                            effects.iter().position(|(l, x)| *l == call.line && matches!(x, Effect::Store { .. }));
+                        match same {
+                            // `…Collection("x").Set(v)` reads as a lookup and a
+                            // write on one line; the write is what happened.
+                            Some(i) if write => effects[i] = (call.line, e),
+                            Some(_) => {}
+                            None => effects.push((call.line, e)),
+                        }
+                        continue;
+                    }
+                    // A call through a field chain names the type that owns the body.
+                    if let Some(t) = self.resolve_method(unit, func, &call.callee) {
+                        if !(t.path == func.path && t.start == func.start) {
+                            effects.push((call.line, Effect::Local(t.clone())));
+                            continue;
+                        }
                     }
                     let Some(defs) = self.functions.get(unit).and_then(|m| m.get(call.name.as_str())) else { continue };
                     // Interface declarations have no body: `service.create()` runs the implementation.
@@ -703,6 +805,12 @@ impl<'a> Tracer<'a> {
             for ev in file.facts.events.iter().filter(|ev| ev.kind == "publish" && owns(func.path, ev.line)) {
                 effects.push((ev.line, Effect::Event { event_type: ev.event_type.clone() }));
             }
+        }
+        // The data model reads the query itself, so it names the table and the
+        // operation exactly. Where it already speaks for this function, the
+        // weaker reading of the client call would only repeat it, less precisely.
+        if accessed {
+            effects.retain(|(_, e)| !matches!(e, Effect::Store { .. }));
         }
         effects.sort_by_key(|(line, e)| (*line, matches!(e, Effect::Local(_)) as u8));
 
@@ -790,6 +898,19 @@ impl<'a> Tracer<'a> {
                         },
                     });
                 }
+                Effect::Store { infra, write, label, evidence } => {
+                    steps.push(Step {
+                        from: unit.to_string(),
+                        to: infra,
+                        kind: if write { StepKind::Write } else { StepKind::Read },
+                        label,
+                        payload: None,
+                        operation: None,
+                        within: Some(func.name.clone()),
+                        asynchronous: false,
+                        evidence,
+                    });
+                }
                 Effect::Relation { rel, evidence } => {
                     let r = &self.relationships[rel];
                     let kind = match r.edge_type {
@@ -812,6 +933,133 @@ impl<'a> Tracer<'a> {
                 }
             }
         }
+    }
+
+    /// The receiver of the method whose body starts at `start` in `path`.
+    fn receiver_at(&self, path: &str, start: u32) -> Option<Receiver> {
+        let f = self.index.files.iter().find(|f| f.path == path)?;
+        f.facts.symbols.iter().find(|s| s.start_line == start && s.receiver.is_some())?.receiver.clone()
+    }
+
+    /// Resolve a call written through a field chain to the body that runs.
+    ///
+    /// Go's CQRS and hexagonal layouts dispatch through struct fields —
+    /// `h.app.Queries.AllTrainings.Handle(ctx, …)` — and through ports, which are
+    /// interfaces implemented by one adapter. Both defeat resolution by bare name:
+    /// `Handle` is declared on every handler in the service. Walk the receiver
+    /// expression to a type instead, then take that type's method.
+    fn resolve_method(&self, unit: &str, from: &Func<'a>, callee: &str) -> Option<&Func<'a>> {
+        let mut segs = callee.split('.').collect::<Vec<_>>();
+        let method = segs.pop()?;
+        if segs.is_empty() {
+            return None;
+        }
+        let types = self.types.get(unit)?;
+
+        // The chain is rooted in the enclosing method's receiver (`h` in `h.app…`).
+        let recv = from.receiver.as_ref()?;
+        if recv.var.as_deref() != Some(segs[0]) {
+            return None;
+        }
+        let mut current = recv.type_name.clone();
+        for seg in &segs[1..] {
+            current = self.field_type(types, &current, seg)?;
+        }
+        self.method_on(unit, types, &current, method)
+    }
+
+    /// The type of `field` on `ty`, following embedded fields.
+    ///
+    /// A type may embed itself (`type Node struct { *Node }`) or embed in a
+    /// cycle, so the search is bounded and never revisits a type.
+    fn field_type(&self, types: &BTreeMap<String, TypeDef>, ty: &str, field: &str) -> Option<String> {
+        let mut seen = BTreeSet::new();
+        field_type_seen(types, ty, field, &mut seen, 0)
+    }
+
+    /// The body of `method` on `ty`, resolving a port to its single adapter.
+    fn method_on(&self, unit: &str, types: &BTreeMap<String, TypeDef>, ty: &str, method: &str) -> Option<&Func<'a>> {
+        let by_type = self.methods.get(unit)?;
+        if let Some(fs) = by_type.get(&(ty.to_string(), method.to_string())) {
+            if let Some(f) = fs.iter().find(|f| !self.in_interface(f.path, f.start)) {
+                return Some(f);
+            }
+        }
+        // Go pairs an exported handler type with the unexported struct that
+        // implements it (`AllTrainingsHandler` ↔ `allTrainingsHandler`), often
+        // through a decorator, so the exported name carries no body of its own.
+        let twin = by_type
+            .iter()
+            .filter(|((t, m), _)| m == method && t != ty && t.eq_ignore_ascii_case(ty))
+            .map(|(_, fs)| fs)
+            .collect::<Vec<_>>();
+        if let [fs] = twin[..] {
+            if let Some(f) = fs.iter().find(|f| !self.in_interface(f.path, f.start)) {
+                return Some(f);
+            }
+        }
+        // A port: usable only when exactly one type in the unit implements it.
+        let def = types.get(ty)?;
+        if !def.is_interface || def.methods.is_empty() {
+            return None;
+        }
+        let mut impls = types.values().filter(|c| {
+            !c.is_interface && def.methods.iter().all(|m| by_type.contains_key(&(c.name.clone(), m.clone())))
+        });
+        let only = impls.next()?;
+        if impls.next().is_some() {
+            return None;
+        }
+        by_type.get(&(only.name.clone(), method.to_string()))?.iter().find(|f| !self.in_interface(f.path, f.start))
+    }
+
+    /// A call whose receiver chain roots in a field holding an infrastructure
+    /// client, cited at the line that makes it rather than at the dependency
+    /// that declares it.
+    fn store_call(&self, unit: &str, from: &Func<'a>, call: &crate::extract::Call) -> Option<Effect<'a>> {
+        let fields = self.infra_fields.get(unit)?;
+        let recv = from.receiver.as_ref()?;
+        let mut segs = call.callee.split('.');
+        if segs.next()? != recv.var.as_deref()? {
+            return None;
+        }
+        let field = segs.next()?;
+        let infra = fields.get(&(recv.type_name.clone(), field.to_string()))?;
+        let method = call.callee.rsplit('.').next()?;
+        // The collection or bucket named on the same line says what is touched.
+        let target = self
+            .index
+            .files
+            .iter()
+            .find(|f| f.path == from.path)
+            .and_then(|f| f.facts.strings.iter().find(|s| s.line == call.line))
+            .map(|s| s.value.clone());
+        let write = is_store_write(method);
+        // `Collection("trainings")` only names a handle; whether it is read or
+        // written is decided by the caller, so the step states what it reaches
+        // rather than claiming an operation the line does not show.
+        let label = match (is_store_handle(method), &target) {
+            (true, Some(t)) => t.clone(),
+            (true, None) => method.to_string(),
+            (false, t) => {
+                format!("{} {}", if write { "write" } else { "read" }, t.clone().unwrap_or_else(|| method.to_string()))
+            }
+        };
+        Some(Effect::Store {
+            infra: infra.clone(),
+            write,
+            label,
+            evidence: EvidenceRef {
+                file_path: from.path.to_string(),
+                start_line: call.line,
+                end_line: call.line,
+                // The call line is the evidence; naming the enclosing function
+                // here would claim the symbol sits on this line, which it need
+                // not. The step already records what it is `within`.
+                symbol_name: None,
+                note: None,
+            },
+        })
     }
 
     fn in_interface(&self, path: &str, line: u32) -> bool {
@@ -852,6 +1100,67 @@ struct Walk<'w> {
     seen: &'w mut BTreeSet<(String, u32)>,
     notes: &'w mut Vec<String>,
     functions: &'w mut Vec<String>,
+}
+
+/// The type of `field` on `ty`, following embedded fields without revisiting one.
+fn field_type_seen(
+    types: &BTreeMap<String, TypeDef>,
+    ty: &str,
+    field: &str,
+    seen: &mut BTreeSet<String>,
+    depth: usize,
+) -> Option<String> {
+    if depth > MAX_EMBED_DEPTH || !seen.insert(ty.to_string()) {
+        return None;
+    }
+    let def = types.get(ty)?;
+    if let Some(f) = def.fields.iter().find(|f| f.name == field) {
+        return Some(f.type_name.clone());
+    }
+    // An embedded field promotes its own fields onto the outer type.
+    def.fields
+        .iter()
+        .filter(|f| f.name.is_empty())
+        .find_map(|f| field_type_seen(types, &f.type_name, field, seen, depth + 1))
+}
+
+/// Embedded types nest a few levels in practice; beyond that a chain is a cycle.
+const MAX_EMBED_DEPTH: usize = 8;
+
+/// Store SDKs name their mutations consistently enough to tell a write from a read.
+fn is_store_write(method: &str) -> bool {
+    const WRITES: &[&str] = &[
+        "set",
+        "put",
+        "add",
+        "create",
+        "insert",
+        "update",
+        "delete",
+        "remove",
+        "write",
+        "save",
+        "commit",
+        "upsert",
+        "apply",
+        "push",
+        "send",
+        "store",
+        "runtransaction",
+        "batch",
+        "bulk",
+        "flush",
+    ];
+    let m = method.to_ascii_lowercase();
+    WRITES.iter().any(|w| m == *w || m.starts_with(w))
+}
+
+/// Methods that return a handle rather than perform an operation.
+fn is_store_handle(method: &str) -> bool {
+    const HANDLES: &[&str] =
+        &["collection", "doc", "document", "ref", "database", "bucket", "table", "index", "key", "topic", "queue"];
+    let m = method.to_ascii_lowercase();
+    HANDLES.contains(&m.as_str())
 }
 
 fn entry_key(e: &crate::entry::Entry) -> String {

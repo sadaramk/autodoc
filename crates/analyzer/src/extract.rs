@@ -34,6 +34,47 @@ pub struct Symbol {
     pub exported: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub doc: Option<String>,
+    /// For a method, the type it hangs off and the name it binds the value to:
+    /// Go `func (h HttpServer) Get(…)` gives `("h", "HttpServer")`. Lets a call
+    /// through a field chain be resolved to the body that actually runs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub receiver: Option<Receiver>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Receiver {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub var: Option<String>,
+    pub type_name: String,
+}
+
+/// A named type and the types of its fields, so a receiver expression such as
+/// `h.app.Queries.AllTrainings` can be walked to the type that owns the method.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct TypeDef {
+    pub name: String,
+    pub line: u32,
+    pub is_interface: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub fields: Vec<Field>,
+    /// Method names an interface declares; empty for a struct.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub methods: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Field {
+    /// Empty for an embedded field, whose name is its type.
+    pub name: String,
+    /// Bare type name: pointers, slices and package qualifiers stripped.
+    pub type_name: String,
+    /// The package the type came from (`firestore` in `*firestore.Client`),
+    /// which is what identifies a field as a handle on infrastructure.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub qualifier: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -110,6 +151,9 @@ pub struct FileFacts {
     pub package: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub annotations: Vec<Annotation>,
+    /// Named types and their field types (Go structs and interfaces).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub types: Vec<TypeDef>,
     /// In-process application events (Spring `publishEvent` / `@EventListener`,
     /// Spring Modulith `@ApplicationModuleListener`, Micronaut events).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -219,7 +263,15 @@ impl<'a> Extractor<'a> {
         if name.is_empty() {
             return;
         }
-        self.facts.symbols.push(Symbol { name, kind, start_line: line(node), end_line: end_line(node), exported, doc });
+        self.facts.symbols.push(Symbol {
+            name,
+            kind,
+            start_line: line(node),
+            end_line: end_line(node),
+            exported,
+            doc,
+            receiver: None,
+        });
     }
 
     fn push_string(&mut self, node: Node, raw: &str) {
@@ -1230,6 +1282,11 @@ impl<'a> Extractor<'a> {
                     });
                 }
                 self.push_symbol(n, name, kind, exported, doc);
+                if let Some(r) = self.go_receiver(n) {
+                    if let Some(last) = self.facts.symbols.last_mut() {
+                        last.receiver = Some(r);
+                    }
+                }
             }
             "type_spec" => {
                 let name = self.field_text(n, "name").unwrap_or_default();
@@ -1238,6 +1295,9 @@ impl<'a> Extractor<'a> {
                     Some("interface_type") => SymbolKind::Interface,
                     _ => SymbolKind::TypeAlias,
                 };
+                if let Some(t) = n.child_by_field_name("type") {
+                    self.go_type_def(&name, n, t);
+                }
                 // Doc comments attach to the enclosing `type` declaration.
                 let decl = n.parent().filter(|p| p.kind() == "type_declaration").unwrap_or(n);
                 let doc = self.leading_comments(decl, &["//"]);
@@ -1262,6 +1322,78 @@ impl<'a> Extractor<'a> {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// `func (h *HttpServer) Get(…)` → the bound name and the bare type.
+    fn go_receiver(&self, n: Node) -> Option<Receiver> {
+        let list = n.child_by_field_name("receiver")?;
+        let mut c = list.walk();
+        let param = list.named_children(&mut c).find(|p| p.kind() == "parameter_declaration")?;
+        let type_name = go_bare_type(self.text(param.child_by_field_name("type")?));
+        if type_name.is_empty() {
+            return None;
+        }
+        Some(Receiver { var: param.child_by_field_name("name").map(|v| self.text(v).to_string()), type_name })
+    }
+
+    /// Record a struct's field types, or an interface's method names.
+    fn go_type_def(&mut self, name: &str, spec: Node, ty: Node) {
+        if name.is_empty() {
+            return;
+        }
+        let mut def = TypeDef {
+            name: name.to_string(),
+            line: line(spec),
+            is_interface: false,
+            fields: Vec::new(),
+            methods: Vec::new(),
+        };
+        match ty.kind() {
+            "struct_type" => {
+                let Some(list) = ty.named_child(0).filter(|l| l.kind() == "field_declaration_list") else { return };
+                let mut c = list.walk();
+                for f in list.named_children(&mut c).filter(|f| f.kind() == "field_declaration") {
+                    let Some(t) = f.child_by_field_name("type") else { continue };
+                    let raw = self.text(t);
+                    let type_name = go_bare_type(raw);
+                    if type_name.is_empty() {
+                        continue;
+                    }
+                    let qualifier = go_type_qualifier(raw);
+                    let mut names = f.walk();
+                    let declared: Vec<String> =
+                        f.children_by_field_name("name", &mut names).map(|v| self.text(v).to_string()).collect();
+                    if declared.is_empty() {
+                        // Embedded field: promoted, and named by its own type.
+                        def.fields.push(Field { name: String::new(), type_name, qualifier });
+                    } else {
+                        for n in declared {
+                            def.fields.push(Field {
+                                name: n,
+                                type_name: type_name.clone(),
+                                qualifier: qualifier.clone(),
+                            });
+                        }
+                    }
+                }
+            }
+            "interface_type" => {
+                def.is_interface = true;
+                let mut c = ty.walk();
+                for m in ty.named_children(&mut c) {
+                    // The node is `method_spec` or `method_elem` depending on grammar version.
+                    if m.kind().starts_with("method_") {
+                        if let Some(nm) = m.child_by_field_name("name") {
+                            def.methods.push(self.text(nm).to_string());
+                        }
+                    }
+                }
+            }
+            _ => return,
+        }
+        if !def.fields.is_empty() || !def.methods.is_empty() {
+            self.facts.types.push(def);
         }
     }
 
@@ -1404,6 +1536,29 @@ pub fn unquote(raw: &str) -> String {
     s.to_string()
 }
 
+/// The package a Go type expression is qualified by: `*firestore.Client` → `firestore`.
+pub(crate) fn go_type_qualifier(t: &str) -> Option<String> {
+    let bare = t.trim().trim_start_matches(['*', '&', '[', ']', ' ']);
+    let head = bare.split(['[', '{', '(']).next().unwrap_or(bare);
+    let (pkg, _) = head.rsplit_once('.')?;
+    let pkg = pkg.rsplit('.').next().unwrap_or(pkg).trim();
+    (!pkg.is_empty() && pkg.chars().all(|c| c.is_alphanumeric() || c == '_')).then(|| pkg.to_string())
+}
+
+/// Reduce a Go type expression to its bare name: `*pkg.Type`, `[]pkg.Type`,
+/// `map[string]Type` and `Type[T]` all yield `Type`.
+pub(crate) fn go_bare_type(t: &str) -> String {
+    let mut s = t.trim();
+    // A map's value type is what a field of that type holds.
+    if let Some(rest) = s.strip_prefix("map[") {
+        s = rest.split_once(']').map(|(_, v)| v).unwrap_or(rest);
+    }
+    let s = s.trim_start_matches(['*', '&', '[', ']', ' ']).trim();
+    let s = s.split(['[', '{', '(']).next().unwrap_or(s);
+    let s = s.rsplit('.').next().unwrap_or(s);
+    s.trim().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1432,6 +1587,28 @@ mod tests {
         assert!(f.strings.iter().any(|s| s.value == "SELECT 1" && s.line == 8));
         assert!(f.calls.iter().any(|c| c.name == "split"));
         assert!(f.calls.iter().any(|c| c.name == "println"));
+    }
+
+    #[test]
+    fn go_records_receivers_struct_fields_and_interface_methods() {
+        let src = "package ports\n\ntype Application struct {\n\tQueries Queries\n}\n\ntype Queries struct {\n\tAllTrainings AllTrainingsHandler\n\tRepo         *db.TrainingRepo\n}\n\ntype Repository interface {\n\tGetTraining(ctx context.Context, id string) (Training, error)\n}\n\ntype HttpServer struct {\n\tapp app.Application\n}\n\nfunc (h HttpServer) GetTrainings(w http.ResponseWriter) {\n\th.app.Queries.AllTrainings.Handle(ctx)\n}\n";
+        let f = run(Grammar::Go, Language::Go, "internal/ports/http.go", src);
+
+        let by_name = |n: &str| f.types.iter().find(|t| t.name == n).cloned().unwrap();
+        let queries = by_name("Queries");
+        let fields: Vec<(&str, &str)> =
+            queries.fields.iter().map(|x| (x.name.as_str(), x.type_name.as_str())).collect();
+        // The pointer and the package qualifier are stripped: the bare type is what carries methods.
+        assert_eq!(fields, vec![("AllTrainings", "AllTrainingsHandler"), ("Repo", "TrainingRepo")]);
+        assert_eq!(by_name("HttpServer").fields[0].type_name, "Application");
+
+        let repo = by_name("Repository");
+        assert!(repo.is_interface);
+        assert_eq!(repo.methods, vec!["GetTraining"]);
+
+        let m = f.symbols.iter().find(|s| s.name == "GetTrainings").unwrap();
+        let r = m.receiver.as_ref().unwrap();
+        assert_eq!((r.var.as_deref(), r.type_name.as_str()), (Some("h"), "HttpServer"));
     }
 
     #[test]
