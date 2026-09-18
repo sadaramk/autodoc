@@ -34,6 +34,10 @@ pub struct Symbol {
     pub exported: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub doc: Option<String>,
+    /// Bare type names of the declared parameters, so a call dispatched by
+    /// message type can be resolved to the handler that takes it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub params: Vec<String>,
     /// For a method, the type it hangs off and the name it binds the value to:
     /// Go `func (h HttpServer) Get(…)` gives `("h", "HttpServer")`. Lets a call
     /// through a field chain be resolved to the body that actually runs.
@@ -98,6 +102,10 @@ pub struct Call {
     /// Full callee text, truncated.
     pub callee: String,
     pub line: u32,
+    /// Explicit type arguments of a generic call: `Send[*CreateOrder, *Res]`
+    /// names the message a bus is dispatching.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub type_args: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -270,6 +278,7 @@ impl<'a> Extractor<'a> {
             end_line: end_line(node),
             exported,
             doc,
+            params: Vec::new(),
             receiver: None,
         });
     }
@@ -289,7 +298,8 @@ impl<'a> Extractor<'a> {
         if name.is_empty() || name.len() > 64 {
             return;
         }
-        self.facts.calls.push(Call { name, callee: full.chars().take(80).collect(), line: line(node) });
+        let type_args = self.go_type_args(node);
+        self.facts.calls.push(Call { name, callee: full.chars().take(80).collect(), line: line(node), type_args });
     }
 
     /// Contiguous comment siblings immediately above `node`.
@@ -694,7 +704,12 @@ impl<'a> Extractor<'a> {
                         });
                     }
                 }
-                self.facts.calls.push(Call { name, callee: callee.chars().take(80).collect(), line: line(n) });
+                self.facts.calls.push(Call {
+                    name,
+                    callee: callee.chars().take(80).collect(),
+                    line: line(n),
+                    type_args: Vec::new(),
+                });
             }
             _ => {}
         }
@@ -1057,7 +1072,12 @@ impl<'a> Extractor<'a> {
                 self.facts.events.push(EventFact { kind: "publish".into(), event_type: ty, line: line(n), method });
             }
         }
-        self.facts.calls.push(Call { name, callee: full.chars().take(80).collect(), line: line(n) });
+        self.facts.calls.push(Call {
+            name,
+            callee: full.chars().take(80).collect(),
+            line: line(n),
+            type_args: Vec::new(),
+        });
     }
 
     /// Type constructed in the first argument: `publishEvent(OrderCompleted(id))`.
@@ -1282,10 +1302,11 @@ impl<'a> Extractor<'a> {
                     });
                 }
                 self.push_symbol(n, name, kind, exported, doc);
-                if let Some(r) = self.go_receiver(n) {
-                    if let Some(last) = self.facts.symbols.last_mut() {
-                        last.receiver = Some(r);
-                    }
+                let receiver = self.go_receiver(n);
+                let params = self.go_params(n);
+                if let Some(last) = self.facts.symbols.last_mut() {
+                    last.receiver = receiver;
+                    last.params = params;
                 }
             }
             "type_spec" => {
@@ -1335,6 +1356,25 @@ impl<'a> Extractor<'a> {
             return None;
         }
         Some(Receiver { var: param.child_by_field_name("name").map(|v| self.text(v).to_string()), type_name })
+    }
+
+    /// Bare type names of the declared parameters, in order.
+    fn go_params(&self, n: Node) -> Vec<String> {
+        let Some(list) = n.child_by_field_name("parameters") else { return Vec::new() };
+        let mut c = list.walk();
+        list.named_children(&mut c)
+            .filter(|p| p.kind() == "parameter_declaration")
+            .filter_map(|p| p.child_by_field_name("type"))
+            .map(|t| go_bare_type(self.text(t)))
+            .filter(|t| !t.is_empty())
+            .collect()
+    }
+
+    /// Explicit type arguments of a generic call: `Send[*CreateOrder, *Res]`.
+    fn go_type_args(&self, call: Node) -> Vec<String> {
+        let Some(list) = call.child_by_field_name("type_arguments") else { return Vec::new() };
+        let mut c = list.walk();
+        list.named_children(&mut c).map(|t| go_bare_type(self.text(t))).filter(|t| !t.is_empty()).collect()
     }
 
     /// Record a struct's field types, or an interface's method names.
@@ -1609,6 +1649,19 @@ mod tests {
         let m = f.symbols.iter().find(|s| s.name == "GetTrainings").unwrap();
         let r = m.receiver.as_ref().unwrap();
         assert_eq!((r.var.as_deref(), r.type_name.as_str()), (Some("h"), "HttpServer"));
+    }
+
+    #[test]
+    fn go_records_parameter_types_and_generic_call_arguments() {
+        let src = "package orders\n\nfunc (c *CreateOrderHandler) Handle(ctx context.Context, command *CreateOrder) (*dtos.Response, error) {\n\treturn nil, nil\n}\n\nfunc handler(c echo.Context) error {\n\tresult, err := mediatr.Send[*commandsV1.CreateOrder, *dtos.CreateOrderResponseDto](ctx, command)\n\treturn err\n}\n";
+        let f = run(Grammar::Go, Language::Go, "internal/orders/handler.go", src);
+
+        let handle = f.symbols.iter().find(|s| s.name == "Handle").unwrap();
+        // The receiver is not a parameter; the message the handler takes is.
+        assert_eq!(handle.params, vec!["Context", "CreateOrder"]);
+
+        let send = f.calls.iter().find(|c| c.name == "Send").unwrap();
+        assert_eq!(send.type_args, vec!["CreateOrder", "CreateOrderResponseDto"]);
     }
 
     #[test]

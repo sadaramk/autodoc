@@ -199,6 +199,9 @@ struct Tracer<'a> {
     types: BTreeMap<&'a str, BTreeMap<String, TypeDef>>,
     /// Fields that hold an infrastructure client: (type, field) → infra id.
     infra_fields: BTreeMap<&'a str, BTreeMap<(String, String), String>>,
+    /// Methods keyed by a parameter type, for dispatch that names the message
+    /// rather than the handler: `mediatr.Send[*CreateOrder](…)`.
+    handlers: BTreeMap<&'a str, BTreeMap<String, Vec<Func<'a>>>>,
     /// All symbols per file, for innermost-enclosing lookups.
     spans: BTreeMap<&'a str, Vec<(u32, u32, &'a str)>>,
     /// Interface bodies per file: methods declared there have no implementation.
@@ -218,6 +221,7 @@ pub fn trace(
     let mut methods: BTreeMap<&str, BTreeMap<(String, String), Vec<Func>>> = BTreeMap::new();
     let mut types: BTreeMap<&str, BTreeMap<String, TypeDef>> = BTreeMap::new();
     let mut infra_fields: BTreeMap<&str, BTreeMap<(String, String), String>> = BTreeMap::new();
+    let mut handlers: BTreeMap<&str, BTreeMap<String, Vec<Func>>> = BTreeMap::new();
     let mut spans: BTreeMap<&str, Vec<(u32, u32, &str)>> = BTreeMap::new();
     let mut interfaces: BTreeMap<&str, Vec<(u32, u32)>> = BTreeMap::new();
     for f in &index.files {
@@ -258,6 +262,18 @@ pub fn trace(
                 end: s.end_line,
                 receiver: s.receiver.clone(),
             });
+            // A method that takes a message type is a candidate handler for it.
+            if s.receiver.is_some() {
+                for t in s.params.iter().filter(|t| !GENERIC_PARAM_TYPES.contains(&t.as_str())) {
+                    handlers.entry(f.unit).or_default().entry(t.clone()).or_default().push(Func {
+                        path: f.path,
+                        name: s.name.clone(),
+                        start: s.start_line,
+                        end: s.end_line,
+                        receiver: s.receiver.clone(),
+                    });
+                }
+            }
             if let Some(r) = &s.receiver {
                 methods.entry(f.unit).or_default().entry((r.type_name.clone(), s.name.clone())).or_default().push(
                     Func {
@@ -283,6 +299,7 @@ pub fn trace(
         methods,
         types,
         infra_fields,
+        handlers,
         spans,
         interfaces,
         entries,
@@ -746,6 +763,13 @@ impl<'a> Tracer<'a> {
                         }
                         continue;
                     }
+                    // A bus dispatches by message type: `Send[*CreateOrder](…)`
+                    // names the command, and the handler is the method that
+                    // takes it. The registration site never has to be read.
+                    if let Some(t) = self.dispatched_handler(unit, func, call) {
+                        effects.push((call.line, Effect::Local(t.clone())));
+                        continue;
+                    }
                     // A call through a field chain names the type that owns the body.
                     if let Some(t) = self.resolve_method(unit, func, &call.callee) {
                         if !(t.path == func.path && t.start == func.start) {
@@ -941,6 +965,24 @@ impl<'a> Tracer<'a> {
         f.facts.symbols.iter().find(|s| s.start_line == start && s.receiver.is_some())?.receiver.clone()
     }
 
+    /// The handler a message-typed dispatch reaches, when exactly one method
+    /// takes that message.
+    fn dispatched_handler(&self, unit: &str, from: &Func<'a>, call: &crate::extract::Call) -> Option<&Func<'a>> {
+        let by_message = self.handlers.get(unit)?;
+        for arg in &call.type_args {
+            let Some(candidates) = by_message.get(arg) else { continue };
+            let bodies: Vec<&Func> = candidates
+                .iter()
+                .filter(|f| !self.in_interface(f.path, f.start))
+                .filter(|f| !(f.path == from.path && f.start == from.start))
+                .collect();
+            if let [only] = bodies[..] {
+                return Some(only);
+            }
+        }
+        None
+    }
+
     /// Resolve a call written through a field chain to the body that runs.
     ///
     /// Go's CQRS and hexagonal layouts dispatch through struct fields —
@@ -1123,6 +1165,10 @@ fn field_type_seen(
         .filter(|f| f.name.is_empty())
         .find_map(|f| field_type_seen(types, &f.type_name, field, seen, depth + 1))
 }
+
+/// Types that say nothing about which message a handler takes.
+const GENERIC_PARAM_TYPES: &[&str] =
+    &["Context", "context", "error", "string", "int", "int64", "bool", "T", "R", "any", "interface"];
 
 /// Embedded types nest a few levels in practice; beyond that a chain is a cycle.
 const MAX_EMBED_DEPTH: usize = 8;

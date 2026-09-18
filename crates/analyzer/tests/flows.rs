@@ -240,3 +240,25 @@ fn go_traces_a_request_through_field_chains_and_ports() {
         .unwrap_or_else(|| panic!("no store step in {:?}", shape(post)));
     assert_cites(&root, write, "trainings");
 }
+
+/// A command bus dispatches by message type: `mediatr.Send[*CreateOrder](…)`
+/// names the command, not the handler, so a trace by call name stops at the
+/// endpoint. The handler is the one method that takes that message.
+#[test]
+fn go_traces_a_request_through_a_command_bus() {
+    let (root, r) = behaviour("real-world/go-hexagonal");
+
+    let flow = flow(&r, "flow:go-hexagonal:POST /orders");
+    let reached: Vec<&str> = flow.functions.iter().map(|f| f.as_str()).collect();
+    assert!(
+        reached.iter().any(|f| f.ends_with(":Handle")),
+        "the bus should reach CreateOrderHandler.Handle: {reached:?}"
+    );
+
+    let write = flow
+        .steps
+        .iter()
+        .find(|s| s.kind == StepKind::Write)
+        .unwrap_or_else(|| panic!("no write in {:?}", shape(flow)));
+    assert_cites(&root, write, "orders");
+}
