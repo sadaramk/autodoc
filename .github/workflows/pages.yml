@@ -48,7 +48,7 @@ jobs:
 
       - name: Assemble the site
         run: |
-          cp docs/*.html docs/style.css site/
+          cp docs/*.html docs/style.css docs/robots.txt docs/sitemap.xml site/
           touch site/.nojekyll
           du -sh site site/examples/*
 
