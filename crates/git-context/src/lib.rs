@@ -87,12 +87,40 @@ pub fn web_base(remote: &str) -> Option<String> {
     forge.contains(&host).then(|| format!("https://{hostpath}"))
 }
 
+/// Configuration a repository can set to make git run a command of its choosing.
+///
+/// The repository being documented is untrusted input, and `.git/config` travels
+/// with a tarball, a vendored copy or an archive — anything but a fresh clone.
+/// `core.fsmonitor` alone turns `git status` into arbitrary code execution as the
+/// user running autodoc, so every invocation overrides these keys: `-c` beats
+/// repository configuration.
+const NO_EXEC: &[&str] = &[
+    "-c",
+    "core.fsmonitor=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "core.pager=cat",
+    "-c",
+    "core.sshCommand=false",
+    "-c",
+    "core.alternateRefsCommand=",
+    "-c",
+    "diff.external=",
+    "-c",
+    "uploadpack.packObjectsHook=",
+    "-c",
+    "protocol.ext.allow=never",
+];
+
 fn git(dir: &Path, args: &[&str]) -> Result<String, GitError> {
     let out = Command::new("git")
         .arg("-C")
         .arg(dir)
+        .args(NO_EXEC)
         .args(args)
         .env("GIT_TERMINAL_PROMPT", "0")
+        .env("GIT_OPTIONAL_LOCKS", "0")
         .output()
         .map_err(|_| GitError::GitMissing)?;
     if out.status.success() {
@@ -154,7 +182,8 @@ fn strip_repo_prefix(prefix: &str, path: &str) -> Option<String> {
 /// Line ranges (new-side, 1-based inclusive) touched in `file` between
 /// `commit` and the working tree.
 pub fn changed_ranges(ctx: &RepoContext, commit: &str, file: &str) -> Result<Vec<(u32, u32)>, GitError> {
-    let out = git(&ctx.root, &["diff", "--no-color", "--unified=0", commit, "--", file])?;
+    let out =
+        git(&ctx.root, &["diff", "--no-color", "--no-textconv", "--no-ext-diff", "--unified=0", commit, "--", file])?;
     Ok(parse_hunks(&out))
 }
 
@@ -215,7 +244,8 @@ pub fn tracked_at_head(ctx: &RepoContext, file: &str) -> bool {
 
 /// Files (relative to root) changed since `commit`, including the working tree.
 pub fn changed_files_since(ctx: &RepoContext, commit: &str) -> Result<Vec<String>, GitError> {
-    let out = git(&ctx.root, &["diff", "--name-only", "--relative", commit, "--", "."])?;
+    let out =
+        git(&ctx.root, &["diff", "--name-only", "--no-textconv", "--no-ext-diff", "--relative", commit, "--", "."])?;
     Ok(out.lines().map(str::to_string).collect())
 }
 
@@ -288,7 +318,16 @@ pub fn resolve_in_repo(root: &Path, file: &str) -> Option<PathBuf> {
             return None;
         }
     }
-    Some(root.join(rel))
+    let path = root.join(rel);
+    // Counting components is not enough: a symlinked directory inside the
+    // repository resolves outside it, and the file's contents are quoted into
+    // the book as a snippet. A book is often committed and published, so this
+    // is how `~/.aws/credentials` would end up on a web page.
+    let (Ok(top), Ok(real)) = (root.canonicalize(), path.canonicalize()) else {
+        // Nothing to read yet; the caller reports it missing.
+        return Some(path);
+    };
+    real.starts_with(&top).then_some(path)
 }
 
 /// Verifies one piece of evidence against the working tree and, when the
@@ -401,7 +440,11 @@ impl<'a> Verifier<'a> {
 fn diff_ranges(root: &Path, base: Option<&str>) -> ChangedRanges {
     let mut map: ChangedRanges = HashMap::new();
     if let Some(base) = base {
-        let out = git(root, &["diff", "--no-color", "--unified=0", "--relative", base, "--", "."]).unwrap_or_default();
+        let out = git(
+            root,
+            &["diff", "--no-color", "--no-textconv", "--no-ext-diff", "--unified=0", "--relative", base, "--", "."],
+        )
+        .unwrap_or_default();
         let mut current: Option<String> = None;
         for line in out.lines() {
             if let Some(path) = line.strip_prefix("+++ ") {

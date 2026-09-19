@@ -356,7 +356,13 @@ fn generate(
     json: bool,
 ) -> Result<ExitCode> {
     let cfg = Config::discover(path)?;
-    let out = out.unwrap_or_else(|| path.join(&cfg.output.dir));
+    let out = match out {
+        Some(explicit) => explicit,
+        None => {
+            crate::config::confined(&cfg.output.dir)?;
+            path.join(&cfg.output.dir)
+        }
+    };
     let opts = book_options(&cfg, accent.as_deref(), theme, include_tests)?;
     let report = autodoc_book::generate(path, &out, &opts)?;
     if json {
@@ -369,7 +375,13 @@ fn generate(
 
 fn check(path: &Path, out: Option<PathBuf>, json: bool) -> Result<ExitCode> {
     let cfg = Config::discover(path)?;
-    let out = out.unwrap_or_else(|| path.join(&cfg.output.dir));
+    let out = match out {
+        Some(explicit) => explicit,
+        None => {
+            crate::config::confined(&cfg.output.dir)?;
+            path.join(&cfg.output.dir)
+        }
+    };
     let opts = book_options(&cfg, None, None, false)?;
     let report = autodoc_book::check(path, &out, &opts)?;
     if json {

@@ -77,3 +77,53 @@ fn untracked_files_and_unknown_commits_are_flagged() {
     assert_eq!(bogus.state, EvidenceState::Stale);
     assert!(bogus.detail.contains("not in this repository"));
 }
+
+/// A repository's own `.git/config` can name a command for git to run —
+/// `core.fsmonitor` turns an innocent `git status` into arbitrary execution as
+/// whoever ran autodoc. Config travels with a tarball, an archive or a vendored
+/// copy, and documenting code you did not write is the whole point of the tool,
+/// so every invocation must override the keys that can execute something.
+#[test]
+fn a_repository_cannot_make_git_run_its_own_command() {
+    let dir = init_repo();
+    let p = dir.path();
+    let marker = p.join("EXECUTED");
+    let payload = format!("touch {}; false", marker.display());
+
+    for key in ["core.fsmonitor", "diff.external"] {
+        sh(p, &["config", key, &payload]);
+    }
+    std::fs::write(p.join("svc/src/lib.rs"), "fn f1() {}\nfn changed() {}\n").unwrap();
+
+    // Everything the analyzer does against a repository, on the hostile config.
+    let ctx = repo_context(p);
+    let _ = ctx.head_commit.clone();
+    let _ = tracked_at_head(&ctx, "svc/src/lib.rs");
+    let _ = changed_files_since(&ctx, "HEAD");
+    let _ = changed_ranges(&ctx, "HEAD", "svc/src/lib.rs");
+    let _ = commit_describing(&ctx, Some("docs".into()));
+
+    assert!(!marker.exists(), "a repository's git config executed a command of its choosing");
+}
+
+/// A citation can name a path that stays inside the repository by spelling but
+/// leaves it through a symlinked directory. The verifier quotes the file it
+/// finds into the book as a snippet, and books get committed and published, so
+/// resolution has to end inside the repository and not merely look like it.
+#[test]
+fn a_symlinked_directory_cannot_lead_evidence_out_of_the_repository() {
+    let dir = init_repo();
+    let p = dir.path();
+    let outside = dir.path().parent().unwrap().join("outside-secrets");
+    std::fs::create_dir_all(&outside).unwrap();
+    std::fs::write(outside.join("credentials"), "aws_secret_access_key = hunter2\n").unwrap();
+
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(&outside, p.join("vendor")).unwrap();
+    #[cfg(not(unix))]
+    return;
+
+    assert!(resolve_in_repo(p, "svc/src/lib.rs").is_some(), "an ordinary path still resolves");
+    assert_eq!(resolve_in_repo(p, "vendor/credentials"), None, "a symlink led evidence out of the repository");
+    assert_eq!(resolve_in_repo(p, "../outside-secrets/credentials"), None, "plain traversal is still refused");
+}
