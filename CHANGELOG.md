@@ -8,6 +8,54 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-19
+
+A security release. Upgrade if you point autodoc at a repository you did not
+write — which is what it is for.
+
+### Security
+
+- **A scanned repository could make git run a command of its choosing.** git
+  executes `core.fsmonitor` from a repository's own `.git/config`, so
+  `autodoc generate` on a prepared repository was arbitrary code execution as
+  the user running it. Every invocation now overrides the configuration keys
+  that can execute something, and diffs run `--no-textconv --no-ext-diff`. A
+  clone does not carry the source repository's config, so this reached you
+  through an archive, a tarball or a vendored copy.
+- **Evidence could be read from outside the repository through a symlinked
+  directory.** Counting `..` components is not enough — `vendor -> /etc`
+  resolves outside while spelling like an ordinary path — and the verifier
+  quotes what it finds into the book as a snippet. Resolution must now end
+  inside the repository.
+- **A repository's own `autodoc.toml` could choose where autodoc writes.** An
+  absolute `output.dir` discarded the base path. A configured output directory
+  must be relative and inside the repository; `--out` is unrestricted.
+
+### Fixed
+
+- A `// indirect` dependency in a `go.mod` no longer implies architecture. The
+  parser stripped the comment before it could read the marker, so transitive
+  dependencies became direct ones: Caddy was documented as connecting to
+  PostgreSQL and MySQL and MinIO to MongoDB, none of which appears in their
+  source.
+- A table `CHECK` is attached to the column it names rather than the first one
+  whose name is a substring of the expression — `CHECK (valid_until > …)` was
+  documented as a constraint on `id`.
+- A string is only read as a query when the word after `FROM` names a table, so
+  "Select a workspace from the list" no longer produces database read edges.
+- An operational route is recognised only when it describes the service, not a
+  resource: `/dashboards/{id}/metrics` is functionality and was being dropped
+  from the API contract.
+- Three slices stepped past a delimiter by one byte, or took a fixed byte
+  prefix, and split multibyte characters. One aborted the run; one silently
+  discarded the entire data model.
+
+### Changed
+
+- The README is a landing page rather than a manual: 265 lines to 96, leading
+  with a generated book. The reference material moved to `HEURISTICS.md` and
+  `CONTRIBUTING.md`, and `SECURITY.md` now describes the real trust boundary.
+
 ## [0.2.1] - 2026-09-19
 
 ### Fixed
@@ -122,7 +170,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/sadaramk/autodoc/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/sadaramk/autodoc/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sadaramk/autodoc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sadaramk/autodoc/releases/tag/v0.1.0
