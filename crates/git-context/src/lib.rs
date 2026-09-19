@@ -184,6 +184,31 @@ pub fn commit_exists(ctx: &RepoContext, commit: &str) -> bool {
     git(&ctx.root, &["cat-file", "-e", &format!("{commit}^{{commit}}")]).is_ok()
 }
 
+/// The last commit that changed anything outside `exclude`, relative to the
+/// repository root.
+///
+/// A book records the commit it describes, and committing the book itself would
+/// otherwise move that commit — leaving the documentation permanently one commit
+/// behind, and `check` failing however many times it is regenerated. What the
+/// documentation describes is the last commit that touched something it reads.
+pub fn commit_describing(ctx: &RepoContext, exclude: Option<String>) -> Option<String> {
+    let head = ctx.head_commit.clone();
+    let specs: Vec<String> = exclude
+        .iter()
+        .flat_map(|e| e.split(','))
+        .map(str::trim)
+        .filter(|r| !r.is_empty() && !r.starts_with(".."))
+        .map(|r| format!(":(exclude){}", r.trim_end_matches('/')))
+        .collect();
+    if specs.is_empty() {
+        return head;
+    }
+    let mut args: Vec<&str> = vec!["log", "-1", "--format=%H", "--", "."];
+    args.extend(specs.iter().map(String::as_str));
+    // An empty result means every commit so far only touched what is excluded.
+    git_opt(&ctx.root, &args).filter(|c| !c.is_empty()).or(head)
+}
+
 pub fn tracked_at_head(ctx: &RepoContext, file: &str) -> bool {
     git(&ctx.root, &["cat-file", "-e", &format!("HEAD:./{file}")]).is_ok()
 }

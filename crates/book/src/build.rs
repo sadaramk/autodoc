@@ -63,6 +63,15 @@ const LIBRARY_LINK_LIMIT: usize = 25;
 
 /// `curated` maps diagram id → IR text found on disk that differs from what
 /// the previous run generated; those are rendered as-is instead of redrafted.
+/// The book's own directory, relative to the repository root, when it sits
+/// inside it — the part of the tree the documentation does not describe.
+fn book_dir_in_repo(ctx: &autodoc_git::RepoContext, out_dir: &Path) -> Option<String> {
+    let top = ctx.git_root.as_ref()?;
+    let out = out_dir.canonicalize().unwrap_or_else(|_| out_dir.to_path_buf());
+    let rel = out.strip_prefix(top).ok()?;
+    Some(rel.to_string_lossy().replace('\\', "/")).filter(|r| !r.is_empty())
+}
+
 pub fn build(
     repo: &Path,
     out_dir: &Path,
@@ -83,7 +92,13 @@ pub fn build(
     let root = PathBuf::from(&report.repo.root);
     // One git snapshot for every citation and every figure in this build.
     let cache = std::sync::Arc::new(autodoc_git::EvidenceCache::default());
-    let ctx = cache.context(&root);
+    let mut ctx = cache.context(&root);
+    // The book records the commit it describes, not HEAD. Committing the book
+    // moves HEAD, and pinning to that would leave the documentation one commit
+    // behind itself for ever: `check` would fail however often it was
+    // regenerated, which is exactly the loop CI runs.
+    ctx.head_commit = autodoc_git::commit_describing(&ctx, book_dir_in_repo(&ctx, out_dir));
+    let ctx = ctx;
     let commit_date = ctx.head_commit.as_deref().and_then(|c| autodoc_git::commit_date(&ctx, c));
     let draft_opts = DraftOptions {
         theme: opts.theme,

@@ -8,6 +8,15 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- `autodoc check` can pass in CI. A book recorded `HEAD`, so committing the book
+  moved the commit it claimed to describe and left it stale from birth: the check
+  failed however many times the book was regenerated, and there was no way out of
+  the loop. A book now records the last commit that changed something it
+  describes, so committing it — or any commit that touches nothing documented —
+  leaves the check green, while a change to cited code still turns it red.
+
 ## [0.2.0] - 2026-09-19
 
 ### Added

@@ -600,7 +600,11 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
             root: root.display().to_string(),
             name: repo_name.clone(),
             is_git: ctx.is_git(),
-            commit_hash: ctx.head_commit.clone(),
+            // The commit the scan describes, which is not HEAD when the output
+            // directory lives in the repository: committing generated
+            // documentation moves HEAD without changing anything described,
+            // and pinning to it would leave the output stale from birth.
+            commit_hash: describing_commit(&ctx, opts),
             branch: ctx.branch.clone(),
             remote_url: ctx.remote_url.clone(),
             dirty_files: ctx.dirty_files.clone(),
@@ -829,6 +833,26 @@ fn parse_files(root: &Path, paths: &[(PathBuf, Grammar, Language)]) -> Vec<FileR
         }
     });
     out
+}
+
+/// The last commit that touched something the scan looked at, ignoring the
+/// directories it was told to skip (the book's own output among them).
+fn describing_commit(ctx: &autodoc_git::RepoContext, opts: &ScanOptions) -> Option<String> {
+    let Some(top) = ctx.git_root.as_ref() else { return ctx.head_commit.clone() };
+    let excluded: Vec<String> = opts
+        .ignore_dirs
+        .iter()
+        .filter_map(|d| {
+            let d = d.canonicalize().unwrap_or_else(|_| d.clone());
+            let rel = d.strip_prefix(top).ok()?.to_string_lossy().replace('\\', "/");
+            (!rel.is_empty()).then_some(rel)
+        })
+        .collect();
+    match excluded.as_slice() {
+        [] => ctx.head_commit.clone(),
+        // One exclusion is the common case; git takes several just as well.
+        many => autodoc_git::commit_describing(ctx, Some(many.join(","))),
+    }
 }
 
 pub fn slug(s: &str) -> String {

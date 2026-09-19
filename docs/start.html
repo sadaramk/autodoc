@@ -53,6 +53,16 @@ open docs/architecture/index.html</code></pre>
     is the point: documentation that is wrong should fail the build rather than mislead a reader.
   </p>
   <pre><code>autodoc check /path/to/your/repo --out docs/architecture</code></pre>
+  <p>Commit the book alongside the code it documents, and run the check on every push:</p>
+  <pre><code>- name: Architecture documentation is current
+  run: |
+    cargo build --release -p autodoc-cli
+    ./target/release/autodoc check . --out docs/architecture</code></pre>
+  <p>
+    Committing the book does not invalidate it, and neither does a commit that changes nothing it
+    describes: a book records the commit it documents rather than <code>HEAD</code>. The check goes red
+    when the code it cites moves, and green again once the book is regenerated.
+  </p>
   <blockquote>
     <p>
       Citations are pinned to a commit and verified against it. A citation whose lines have changed is

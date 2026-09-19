@@ -113,6 +113,19 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
     let o = autodoc(&["check", "."], &repo);
     assert!(o.status.success(), "{}", text(&o));
 
+    // 2b. Committing the book is the first thing CI does with it, and it moves
+    // HEAD without changing anything the book describes. Pinning to HEAD left
+    // the documentation a commit behind itself and `check` red however often it
+    // was regenerated — the loop had no exit.
+    git(&repo, &["add", "docs"]);
+    git(&repo, &["commit", "-qm", "add generated documentation"]);
+    let o = autodoc(&["check", "."], &repo);
+    assert!(o.status.success(), "committing the book must not invalidate it: {}", text(&o));
+
+    git(&repo, &["commit", "-q", "--allow-empty", "-m", "unrelated"]);
+    let o = autodoc(&["check", "."], &repo);
+    assert!(o.status.success(), "a commit touching nothing documented must not invalidate it: {}", text(&o));
+
     // 3. A hand-edited diagram survives regeneration and is rendered.
     let ir_path = out.join("diagrams/containers.ir.json");
     let edited =
