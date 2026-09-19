@@ -27,7 +27,11 @@ impl<'a> Builder<'a> {
         let report = self.report;
         for env in self.environments() {
             let d = draft_topology_ir(report, env, draft);
-            if d.ir.nodes.len() >= 2 {
+            // Workloads that reach nothing and are reached by nothing are an
+            // inventory, and the table below already lists them with their
+            // image, ports and configuration. A figure earns its place when
+            // something connects — a port published, a dependency, a link.
+            if d.ir.nodes.len() >= 2 && !d.ir.edges.is_empty() {
                 self.add_figure(&figure_id(env), d, curated, validate);
             }
         }

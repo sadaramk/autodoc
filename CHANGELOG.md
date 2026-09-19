@@ -48,6 +48,11 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- A runtime figure is drawn only when something in the environment connects.
+  A Compose file of development tooling produced a picture of disconnected
+  boxes, and five orphan-node validation errors with it, while the workloads
+  table beside it already listed every one with its image, ports and
+  configuration.
 - An API page whose operations show no authentication now says what that means.
   A column of "none found" down a security-relevant field reads as "these are
   open", and what a gateway, a service mesh or a shared server package applies
