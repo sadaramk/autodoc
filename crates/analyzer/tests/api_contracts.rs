@@ -742,3 +742,37 @@ fn plain_scans_skip_behaviour() {
     let report = scan(&fixture("polyglot-shop"), &ScanOptions::default()).unwrap();
     assert!(report.api.is_none());
 }
+
+/// gorilla/mux builder chains put the path in its own link rather than in the
+/// route call's arguments, so the registration reads as no route at all: MinIO's
+/// entire S3 surface went undocumented while its metrics router did not. The
+/// handler is behind a middleware wrapper, and routes that share a method and
+/// path are told apart only by the query they match on.
+#[test]
+fn go_mux_builder_chains_register_routes() {
+    let api = api_of(&fixture("real-world/go-mux-builder"));
+    let ops = &api.operations;
+    let by = |m: &str, p: &str, sel: Option<&str>| {
+        ops.iter().find(|o| o.method == m && o.path == p && o.selector.as_deref() == sel).unwrap_or_else(|| {
+            panic!(
+                "{m} {p}{} missing; have {:?}",
+                sel.map(|s| format!(" ?{s}")).unwrap_or_default(),
+                ops.iter().map(|o| format!("{} {} {:?}", o.method, o.path, o.selector)).collect::<Vec<_>>()
+            )
+        })
+    };
+
+    // The subrouter prefixes resolve, so the path is whole.
+    let get = by("GET", "/{bucket}/{object}", None);
+    assert_eq!(get.handler.name, "GetObjectHandler", "the wrapper is not the handler");
+    assert!(!get.path_partial, "both subrouter prefixes are literal");
+
+    // Same method and path: only the query distinguishes them.
+    let tagging = by("GET", "/{bucket}/{object}", Some("tagging"));
+    assert_eq!(tagging.handler.name, "GetObjectTaggingHandler");
+    assert_ne!(get.id, tagging.id, "routes differing only by query must not collide");
+
+    assert_eq!(by("HEAD", "/{bucket}/{object}", None).handler.name, "HeadObjectHandler");
+    assert_eq!(by("PUT", "/{bucket}/{object}", None).handler.name, "PutObjectHandler");
+    assert_eq!(by("GET", "/", None).handler.name, "ListBucketsHandler");
+}

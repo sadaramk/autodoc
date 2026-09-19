@@ -82,6 +82,7 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
         }
         for fi in 0..u.files.len() {
             collect_routes(&u, fi, h);
+            collect_builder_routes(&u, fi, h);
         }
     }
 }
@@ -350,6 +351,211 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
     }
 }
 
+/// Drop whitespace, so a chain broken across lines reads as one expression.
+fn squeeze(s: &str) -> String {
+    s.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+/// A `*mux.Router` the function receives, not rebound by a `range` loop.
+fn is_root_router(code: &str, name: &str) -> bool {
+    let flat = squeeze(code);
+    let bound_by_loop = flat.contains(&format!(",{name}:=range")) || flat.contains(&format!("for{name}:=range"));
+    !bound_by_loop && (flat.contains(&format!("{name}*mux.Router")) || flat.contains(&format!("{name}mux.Router")))
+}
+
+/// Look through a middleware wrapper to the handler it decorates:
+/// `s3APIMiddleware(api.HeadObjectHandler, flag)` serves HeadObject, and naming
+/// the wrapper would give every route in the router the same handler and the
+/// same documentation.
+fn unwrap_middleware(code: &str, span: (usize, usize)) -> (usize, usize) {
+    let mut span = span;
+    for _ in 0..4 {
+        let Some(rel) = code[span.0..span.1].find('(') else { break };
+        let open = span.0 + rel;
+        let Some(close) = matching(code, open) else { break };
+        if close >= span.1 {
+            break;
+        }
+        let inner = split_args(code, open + 1, close)
+            .into_iter()
+            .find(|&(a, b)| code[a..b].trim_end_matches(')').trim().ends_with("Handler"));
+        match inner {
+            Some(next) if next != span => span = next,
+            _ => break,
+        }
+    }
+    span
+}
+
+/// gorilla/mux, or one of the forks that keep its API: MinIO serves its whole
+/// S3 surface through `github.com/minio/mux`, so matching the canonical import
+/// path alone would document none of it.
+fn imports_mux(text: &str) -> bool {
+    text.contains("/mux\"") || text.contains("/mux/v")
+}
+
+/// gorilla/mux routers reached through `Subrouter()`, and the prefix each one
+/// carries: `api := r.PathPrefix("/v1").Subrouter()` → `api` serves `/v1`.
+///
+/// `None` marks a router whose prefix could not be resolved — it was built in a
+/// loop, or from a slice — so routes on it are reported with a partial path
+/// rather than as though they sat at the root.
+fn mux_subrouters(u: &Unit, src: &Src) -> HashMap<String, Option<String>> {
+    let code = &src.code;
+    let mut out: HashMap<String, Option<String>> = HashMap::new();
+    // Several passes: a subrouter may be defined from one declared after it.
+    for _ in 0..4 {
+        for (rs, ms, open) in method_calls(code, &["NewRouter", "Subrouter"]) {
+            let Some(close) = matching(code, open) else { continue };
+            let before = code[..rs].trim_end();
+            let Some(lhs) = before.strip_suffix(":=").or_else(|| before.strip_suffix('=')) else { continue };
+            let Some((ns, ne)) = ident_before(code, lhs.len()) else { continue };
+            let name = src.slice(ns, ne).to_string();
+            // The code view blanks string contents, so a prefix literal has to
+            // be read from the text; a chain may also wrap across lines.
+            let recv = squeeze(src.slice(rs, ms - 1));
+            let resolved = if code[ms..].starts_with("NewRouter") {
+                Some(String::new())
+            } else {
+                mux_prefix_of(u, code, &recv, &out)
+            };
+            // An unresolved entry may become resolvable on a later pass, but a
+            // resolved one never degrades.
+            match out.get(&name) {
+                Some(Some(_)) => {}
+                _ => {
+                    out.insert(name, resolved);
+                }
+            }
+            let _ = close;
+        }
+    }
+    out
+}
+
+/// The prefix a receiver expression serves, or `None` when it cannot be known.
+fn mux_prefix_of(u: &Unit, code: &str, recv: &str, known: &HashMap<String, Option<String>>) -> Option<String> {
+    let recv = recv.trim();
+    if let Some(found) = known.get(recv) {
+        return found.clone();
+    }
+    // A router the function is handed serves everything, unless the name is
+    // rebound by a loop — MinIO registers the same routes against a slice of
+    // subrouters that way, and each carries a prefix this cannot know.
+    if !recv.contains('.') && is_root_router(code, recv) {
+        return Some(String::new());
+    }
+    // `<base>.PathPrefix("/x")` — resolvable only when the base is.
+    let (base, rest) = recv.split_once(".PathPrefix(")?;
+    let arg = rest.strip_suffix(')')?;
+    let base_prefix = mux_prefix_of(u, code, base, known)?;
+    let literal = string_lit(arg).or_else(|| u.consts.get(arg.trim()).cloned())?;
+    Some(join_path(&base_prefix, &literal))
+}
+
+/// gorilla/mux builder chains: `r.Methods("PUT").Path("/x").HandlerFunc(h).Queries("k", "")`.
+///
+/// The path is not an argument of the route call here — it is a separate link in
+/// the chain — so the registration reads as no route at all and a whole API can
+/// go undocumented. MinIO registers its entire S3 surface this way.
+fn collect_builder_routes(u: &Unit, fi: usize, h: &mut Harvest) {
+    let f = u.files[fi];
+    let src = &f.src;
+    let code = &src.code;
+    if !imports_mux(&src.text) {
+        return;
+    }
+    let subrouters = mux_subrouters(u, src);
+
+    for (rs, ms, open) in method_calls(code, &["Methods", "Path", "PathPrefix"]) {
+        let Some(close) = matching(code, open) else { continue };
+        let recv = squeeze(src.slice(rs, ms - 1));
+        // Only the head of a chain; the later links are reached from it.
+        if recv.ends_with(')') || is_client_receiver(&recv) {
+            continue;
+        }
+        let name_len = code[ms..].bytes().take_while(|&b| is_ident(b)).count();
+        let head = (code[ms..ms + name_len].to_string(), open, close);
+        let mut chain = vec![head];
+        chain.extend(super::ts::call_chain(code, close + 1));
+
+        let mut methods: Vec<String> = Vec::new();
+        let mut path: Option<(String, bool)> = None;
+        let mut queries: Vec<String> = Vec::new();
+        let mut handler_at: Option<(usize, usize)> = None;
+        for (name, o, c) in &chain {
+            let args = split_args(code, o + 1, *c);
+            match name.as_str() {
+                "Methods" => {
+                    for &(s, e) in &args {
+                        if let Some(m) = string_lit(src.slice(s, e)).or_else(|| status_method(src.slice(s, e))) {
+                            methods.push(m.to_uppercase());
+                        }
+                    }
+                }
+                "Path" | "PathPrefix" => {
+                    if let Some(&(s, e)) = args.first() {
+                        let (p, partial) = eval_path(u, src, s, e);
+                        if !p.is_empty() {
+                            path = Some((p, partial || name == "PathPrefix"));
+                        }
+                    }
+                }
+                // `Queries("uploads", "")` is what tells two routes on the same
+                // method and path apart, exactly as Spring's `params` does.
+                "Queries" => {
+                    for &(s, e) in args.iter().step_by(2) {
+                        if let Some(k) = string_lit(src.slice(s, e)) {
+                            queries.push(k);
+                        }
+                    }
+                }
+                "HandlerFunc" | "Handler" => handler_at = args.first().copied(),
+                _ => {}
+            }
+        }
+        let (Some((path, mut partial)), Some(raw_handler)) = (path, handler_at) else { continue };
+        let (hs, he) = unwrap_middleware(code, raw_handler);
+        if !path.starts_with('/') {
+            continue;
+        }
+        let prefix = match mux_prefix_of(u, code, &recv, &subrouters) {
+            Some(p) => p,
+            None => {
+                partial = true;
+                String::new()
+            }
+        };
+        if methods.is_empty() {
+            methods.push("ANY".into());
+        }
+        let framework = framework_of(f);
+        let selector = (!queries.is_empty()).then(|| queries.join(", "));
+        for method in &methods {
+            let mut op = new_op(
+                u.unit,
+                framework,
+                method,
+                join_path(&prefix, &path),
+                SymbolRef { name: String::new(), evidence: src.ev(hs) },
+                src.ev_range(rs, *chain.last().map(|(_, _, c)| c).unwrap_or(&close), None),
+            );
+            op.path_partial = partial;
+            if let Some(sel) = &selector {
+                op.id = format!("{}?{sel}", op.id);
+                op.selector = Some(sel.clone());
+            }
+            let mut d = Draft { op, request_declared: false, response_declared: false };
+            let mut synth = Vec::new();
+            handler(u, fi, (hs, he), &mut d, &mut synth);
+            h.ops.push(d);
+            for m in synth {
+                h.model(m);
+            }
+        }
+    }
+}
+
 fn status_method(expr: &str) -> Option<String> {
     let last = expr.trim().rsplit('.').next()?;
     last.strip_prefix("Method").map(|m| m.to_uppercase())
@@ -365,7 +571,7 @@ fn framework_of(f: &Loaded) -> &'static str {
         "fiber"
     } else if t.contains("github.com/go-chi/chi") {
         "chi"
-    } else if t.contains("github.com/gorilla/mux") {
+    } else if imports_mux(t) {
         "gorilla"
     } else {
         "net/http"

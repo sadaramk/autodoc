@@ -10,6 +10,14 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- gorilla/mux builder chains register routes: `r.Methods("PUT").Path("/x").HandlerFunc(h)`
+  puts the path in its own link rather than in the route call's arguments, so the
+  registration read as no route at all. MinIO's entire S3 surface was undocumented
+  while its metrics router was not — its book goes from 5 operations to 187. The
+  handler is taken from behind its middleware wrapper, `Queries(…)` distinguishes
+  routes that share a method and path, and forks that keep the API (MinIO ships
+  its own) are recognised. A `Subrouter()` prefix resolves when it can be known
+  and the path is reported as partial when it cannot.
 - Command-bus dispatch is resolved by the message type: `mediatr.Send[*CreateOrder,
   *Res](ctx, command)` names the command rather than the handler, so a CQRS
   service produced no request flow at all. The handler is taken to be the one
