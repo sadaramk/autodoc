@@ -8,6 +8,8 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-19
+
 ### Fixed
 
 - `autodoc check` can pass in CI. A book recorded `HEAD`, so committing the book
@@ -120,6 +122,7 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/sadaramk/autodoc/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sadaramk/autodoc/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/sadaramk/autodoc/releases/tag/v0.1.0
