@@ -241,7 +241,11 @@ fn assigned_from_accessor(body: &str, accessors: &BTreeMap<String, Option<String
 
 fn trailing_identifier(s: &str) -> String {
     let t = s.trim_end();
-    let start = t.rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '$')).map(|i| i + 1).unwrap_or(0);
+    let start = t
+        .char_indices()
+        .rev()
+        .find(|(_, c)| !(c.is_alphanumeric() || *c == '_' || *c == '$'))
+        .map_or(0, |(i, c)| i + c.len_utf8());
     t[start..].to_string()
 }
 

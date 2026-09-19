@@ -6,6 +6,19 @@ use crate::source::line_ref;
 
 /// Blanks out `--` and `/* */` comments and string contents are kept, so
 /// byte offsets (and therefore line numbers) stay aligned with the source.
+/// First `max` bytes of `s`, ending on a character boundary. SQL arrives raw
+/// from the repository, so a fixed byte prefix can split a multibyte character.
+fn head_bytes(s: &str, max: usize) -> &str {
+    if s.len() <= max {
+        return s;
+    }
+    let mut end = max;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    &s[..end]
+}
+
 fn strip_comments(text: &str) -> String {
     let b = text.as_bytes();
     let mut out = Vec::with_capacity(b.len());
@@ -230,7 +243,7 @@ pub fn parse_file(path: &str, text: &str, out: &mut SqlOutput) {
     let clean = strip_comments(text);
     for stmt in statements(&clean) {
         let (start, body) = stmt;
-        let upper = words_upper(&body[..body.len().min(120)]);
+        let upper = words_upper(head_bytes(body, 120));
         if upper.starts_with("CREATE TABLE")
             || upper.starts_with("CREATE UNLOGGED TABLE")
             || upper.starts_with("CREATE TEMP")
@@ -395,7 +408,25 @@ fn create_table(path: &str, text: &str, start: usize, body: &str, out: &mut SqlO
                 });
             }
             let expr = constraint_body.trim_start()[5..].trim().to_string();
-            if let Some(col) = entity.columns.iter_mut().find(|c| expr.to_lowercase().contains(&c.name)) {
+            // A substring match attaches the constraint to the wrong column:
+            // `valid_until` contains `id`, and `id` is usually the first column.
+            // Match whole identifiers, and take the one the expression names first.
+            let lower = expr.to_lowercase();
+            let mentioned = |name: &str| {
+                lower.match_indices(name).find(|(i, _)| {
+                    let before = lower[..*i].chars().next_back();
+                    let after = lower[i + name.len()..].chars().next();
+                    let boundary = |c: Option<char>| !c.is_some_and(|c| c.is_alphanumeric() || c == '_');
+                    boundary(before) && boundary(after)
+                })
+            };
+            if let Some(col) = entity
+                .columns
+                .iter_mut()
+                .filter_map(|c| mentioned(&c.name.clone()).map(|(i, _)| (i, c)))
+                .min_by_key(|(i, _)| *i)
+                .map(|(_, c)| c)
+            {
                 col.constraints.push(format!("CHECK {expr}"));
             }
         } else if cu.starts_with("EXCLUDE") || cu.starts_with("LIKE ") {

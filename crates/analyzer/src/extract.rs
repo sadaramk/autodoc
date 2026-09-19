@@ -827,8 +827,13 @@ impl<'a> Extractor<'a> {
                 text.match_indices(".class")
                     .filter_map(|(i, _)| {
                         let before = &text[..i];
-                        let start =
-                            before.rfind(|c: char| !(c.is_alphanumeric() || c == '_' || c == '.')).map_or(0, |x| x + 1);
+                        // `rfind` gives the delimiter's first byte; stepping one
+                        // byte past it lands inside a multibyte character.
+                        let start = before
+                            .char_indices()
+                            .rev()
+                            .find(|(_, c)| !(c.is_alphanumeric() || *c == '_' || *c == '.'))
+                            .map_or(0, |(i, c)| i + c.len_utf8());
                         let ty = simple_type(&before[start..]);
                         (!ty.is_empty()).then_some(ty)
                     })

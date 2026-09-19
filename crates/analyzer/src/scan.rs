@@ -855,6 +855,19 @@ fn describing_commit(ctx: &autodoc_git::RepoContext, opts: &ScanOptions) -> Opti
     }
 }
 
+/// Whether what follows `FROM` reads as a table rather than English. "Select a
+/// workspace from the list" satisfies a naive SELECT/FROM test and was counted
+/// as a query against every SQL store the unit declares.
+fn names_a_table(upper: &str) -> bool {
+    const DETERMINERS: &[&str] =
+        &["THE", "A", "AN", "THIS", "THAT", "THESE", "THOSE", "YOUR", "MY", "OUR", "THEIR", "ITS", "HIS", "HER"];
+    upper
+        .split(" FROM ")
+        .skip(1)
+        .filter_map(|rest| rest.split_whitespace().next())
+        .any(|word| !DETERMINERS.contains(&word.trim_matches(|c: char| !c.is_alphanumeric())))
+}
+
 pub fn slug(s: &str) -> String {
     let mut out = String::new();
     for c in s.chars() {
@@ -1178,7 +1191,7 @@ const CLIENT_CONFIG_PREFIXES: &[&str] = &[
 
 fn detect_infra(ui: usize, unit: &Unit, files: &[FileRec], out: &mut BTreeMap<(usize, InfraKind), InfraUse>) {
     if let Some(m) = &unit.manifest {
-        for d in m.dependencies.iter().filter(|d| !d.dev) {
+        for d in m.dependencies.iter().filter(|d| !d.dev && !d.indirect) {
             if let Some(kind) = catalog::infra_for_package(&d.name) {
                 out.entry((ui, kind)).or_default().manifest_evidence.push(line_evidence(
                     &m.file,
@@ -1214,7 +1227,7 @@ fn detect_infra(ui: usize, unit: &Unit, files: &[FileRec], out: &mut BTreeMap<(u
         for s in f.facts.strings.iter().filter(|_| !migration) {
             let upper = s.value.to_uppercase();
             let write = SQL_WRITE.iter().any(|k| upper.contains(k)) || is_sql_update(&upper);
-            let read = upper.contains("SELECT ") && upper.contains(" FROM ");
+            let read = upper.contains("SELECT ") && upper.contains(" FROM ") && names_a_table(&upper);
             if !(write || read) {
                 continue;
             }
@@ -2292,7 +2305,7 @@ fn infer_http_links(units: &[Unit], files: &[FileRec], rels: &mut RelBuilder) {
 fn link_workspace_libraries(units: &[Unit], files: &[FileRec], rels: &mut RelBuilder) {
     for u in units {
         let Some(m) = &u.manifest else { continue };
-        for d in m.dependencies.iter().filter(|d| !d.dev) {
+        for d in m.dependencies.iter().filter(|d| !d.dev && !d.indirect) {
             let target = units.iter().find(|t| {
                 t.id != u.id
                     && t.manifest.as_ref().is_some_and(|tm| same_ecosystem(tm.kind, m.kind))

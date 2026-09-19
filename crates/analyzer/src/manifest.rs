@@ -28,6 +28,10 @@ pub struct Dependency {
     /// Local path dependency (workspace sibling).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
+    /// Transitively required, not used by this module directly: `// indirect`
+    /// in a `go.mod`. Like `dev`, it never implies architecture.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub indirect: bool,
     /// Test/build-only dependency: informs tooling detection, never architecture.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub dev: bool,
@@ -123,6 +127,7 @@ fn parse_cargo(text: &str) -> Option<Manifest> {
             let real = spec.get("package").and_then(|p| p.as_str()).unwrap_or(name);
             m.dependencies.push(Dependency {
                 dev: table != "dependencies",
+                indirect: false,
                 name: real.to_string(),
                 line: line_of(text, name),
                 path: spec.get("path").and_then(|p| p.as_str()).map(str::to_string),
@@ -149,6 +154,7 @@ fn parse_package_json(text: &str) -> Option<Manifest> {
                 line: line_of(text, name),
                 path,
                 dev: table == "devDependencies",
+                indirect: false,
             });
         }
     }
@@ -163,6 +169,8 @@ fn parse_go_mod(text: &str) -> Manifest {
     let mut m = blank(ManifestKind::GoMod, Language::Go);
     let mut in_require = false;
     for (i, raw) in text.lines().enumerate() {
+        // The marker lives in the comment, so read it before stripping.
+        let indirect = raw.contains("// indirect");
         let l = raw.split("//").next().unwrap_or("").trim();
         let line = i as u32 + 1;
         if let Some(module) = l.strip_prefix("module ") {
@@ -173,14 +181,20 @@ fn parse_go_mod(text: &str) -> Manifest {
             in_require = false;
         } else if let Some(dep) = l.strip_prefix("require ").or(in_require.then_some(l)) {
             if let Some(name) = dep.split_whitespace().next().filter(|n| n.contains('.')) {
-                m.dependencies.push(Dependency { name: name.to_string(), line, path: None, dev: false });
+                m.dependencies.push(Dependency { name: name.to_string(), line, path: None, dev: false, indirect });
             }
         } else if let Some(rep) = l.strip_prefix("replace ") {
             if let Some((from, to)) = rep.split_once("=>") {
                 let to = to.trim();
                 if to.starts_with('.') {
                     let from = from.split_whitespace().next().unwrap_or("").to_string();
-                    m.dependencies.push(Dependency { name: from, line, path: Some(to.to_string()), dev: false });
+                    m.dependencies.push(Dependency {
+                        name: from,
+                        line,
+                        path: Some(to.to_string()),
+                        dev: false,
+                        indirect: false,
+                    });
                 }
             }
         }
@@ -201,12 +215,24 @@ fn parse_pyproject(text: &str) -> Option<Manifest> {
     if let Some(deps) = project.and_then(|p| p.get("dependencies")).and_then(|d| d.as_array()) {
         for d in deps.iter().filter_map(|d| d.as_str()) {
             let name = requirement_name(d);
-            m.dependencies.push(Dependency { line: line_of(text, &name), name, path: None, dev: false });
+            m.dependencies.push(Dependency {
+                line: line_of(text, &name),
+                name,
+                path: None,
+                dev: false,
+                indirect: false,
+            });
         }
     }
     if let Some(deps) = poetry.and_then(|p| p.get("dependencies")).and_then(|d| d.as_table()) {
         for name in deps.keys().filter(|k| *k != "python") {
-            m.dependencies.push(Dependency { name: name.clone(), line: line_of(text, name), path: None, dev: false });
+            m.dependencies.push(Dependency {
+                name: name.clone(),
+                line: line_of(text, name),
+                path: None,
+                dev: false,
+                indirect: false,
+            });
         }
     }
     Some(m)
@@ -219,7 +245,13 @@ fn parse_requirements(text: &str) -> Manifest {
         if l.is_empty() || l.starts_with('-') {
             continue;
         }
-        m.dependencies.push(Dependency { name: requirement_name(l), line: i as u32 + 1, path: None, dev: false });
+        m.dependencies.push(Dependency {
+            name: requirement_name(l),
+            line: i as u32 + 1,
+            path: None,
+            dev: false,
+            indirect: false,
+        });
     }
     m
 }
@@ -255,7 +287,13 @@ fn parse_pom(text: &str) -> Option<Manifest> {
     if let Some(parent) = child(project, "parent") {
         // A parent POM declares the framework for its children (spring-boot-starter-parent).
         if let (Some(g), Some(a)) = (text_of(parent, "groupId"), text_of(parent, "artifactId")) {
-            m.dependencies.push(Dependency { name: format!("{g}:{a}"), line: line_at(parent), path: None, dev: false });
+            m.dependencies.push(Dependency {
+                name: format!("{g}:{a}"),
+                line: line_at(parent),
+                path: None,
+                dev: false,
+                indirect: false,
+            });
         }
     }
     if let Some(deps) = child(project, "dependencies") {
@@ -267,6 +305,7 @@ fn parse_pom(text: &str) -> Option<Manifest> {
                 line: line_at(d),
                 path: None,
                 dev: matches!(scope.as_str(), "test" | "provided"),
+                indirect: false,
             });
         }
     }
@@ -275,7 +314,13 @@ fn parse_pom(text: &str) -> Option<Manifest> {
             if let Some(a) = text_of(p, "artifactId") {
                 let g = text_of(p, "groupId").unwrap_or_else(|| "org.apache.maven.plugins".into());
                 // Build plugins identify the runtime (spring-boot-maven-plugin, quarkus-maven-plugin).
-                m.dependencies.push(Dependency { name: format!("{g}:{a}"), line: line_at(p), path: None, dev: true });
+                m.dependencies.push(Dependency {
+                    name: format!("{g}:{a}"),
+                    line: line_at(p),
+                    path: None,
+                    dev: true,
+                    indirect: false,
+                });
             }
         }
     }
@@ -324,7 +369,7 @@ fn parse_gradle(root: &Path, dir: &str, text: &str) -> Manifest {
                 .or_else(|| line.strip_prefix("apply plugin:"))
                 .and_then(first_quoted);
             if let Some(p) = plugin {
-                m.dependencies.push(Dependency { name: p, line: i as u32 + 1, path: None, dev: true });
+                m.dependencies.push(Dependency { name: p, line: i as u32 + 1, path: None, dev: true, indirect: false });
             }
             continue;
         };
@@ -339,6 +384,7 @@ fn parse_gradle(root: &Path, dir: &str, text: &str) -> Manifest {
                     line: i as u32 + 1,
                     path: Some(format!("{}{rel}", "../".repeat(depth))),
                     dev,
+                    indirect: false,
                 });
             }
             continue;
@@ -346,7 +392,13 @@ fn parse_gradle(root: &Path, dir: &str, text: &str) -> Manifest {
         if let Some(coord) = first_quoted(rest) {
             let mut parts = coord.split(':');
             if let (Some(g), Some(a)) = (parts.next(), parts.next()) {
-                m.dependencies.push(Dependency { name: format!("{g}:{a}"), line: i as u32 + 1, path: None, dev });
+                m.dependencies.push(Dependency {
+                    name: format!("{g}:{a}"),
+                    line: i as u32 + 1,
+                    path: None,
+                    dev,
+                    indirect: false,
+                });
             }
         }
     }
@@ -406,14 +458,17 @@ mod tests {
     fn go_mod_require_block_and_replace() {
         let m = parse_go_mod("module github.com/acme/pay\n\ngo 1.22\n\nrequire (\n\tgithub.com/stripe/stripe-go/v76 v76.0.0\n\tgithub.com/jackc/pgx/v5 v5.5.0 // indirect\n)\nrequire golang.org/x/sync v0.1.0\nreplace github.com/acme/core => ../core\n");
         assert_eq!(m.name.as_deref(), Some("github.com/acme/pay"));
-        let names: Vec<_> = m.dependencies.iter().map(|d| (d.name.as_str(), d.line)).collect();
+        // `// indirect` means another module needs it, not this one — it is no
+        // evidence that this code talks to a database, so it is recorded and
+        // flagged rather than treated as a direct dependency.
+        let names: Vec<_> = m.dependencies.iter().map(|d| (d.name.as_str(), d.line, d.indirect)).collect();
         assert_eq!(
             names,
             vec![
-                ("github.com/stripe/stripe-go/v76", 6),
-                ("github.com/jackc/pgx/v5", 7),
-                ("golang.org/x/sync", 9),
-                ("github.com/acme/core", 10)
+                ("github.com/stripe/stripe-go/v76", 6, false),
+                ("github.com/jackc/pgx/v5", 7, true),
+                ("golang.org/x/sync", 9, false),
+                ("github.com/acme/core", 10, false)
             ]
         );
     }

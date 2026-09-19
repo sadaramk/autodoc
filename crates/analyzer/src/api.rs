@@ -448,6 +448,13 @@ const OPERATIONAL_SEGMENTS: &[&str] = &["metrics", "pprof", "debug", "healthz", 
 fn excluded_reason(path: &str) -> Option<&'static str> {
     let segs: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     let last = segs.last()?.to_lowercase();
+    // An operational route answers for the service as a whole, so it never hangs
+    // off one resource: `/metrics` reports on the process, `/dashboards/{id}/metrics`
+    // reports on a dashboard and is functionality.
+    let about_one_resource = segs[..segs.len() - 1].iter().any(|s| s.contains('{') || s.starts_with(':'));
+    if about_one_resource {
+        return None;
+    }
     if let Some(marker) = segs.iter().find(|s| OPERATIONAL_SEGMENTS.contains(&s.to_lowercase().as_str())) {
         return Some(match marker.to_lowercase().as_str() {
             "metrics" => "metrics endpoint",
@@ -456,11 +463,6 @@ fn excluded_reason(path: &str) -> Option<&'static str> {
         });
     }
     if !PROBES.contains(&last.as_str()) && !segs.first().is_some_and(|f| matches!(*f, "docs" | "swagger")) {
-        return None;
-    }
-    // A probe answers for the service, so it never hangs off one resource:
-    // `/health` is a probe, `/patients/{id}/health` is the patient's health.
-    if segs[..segs.len() - 1].iter().any(|s| s.contains('{') || s.starts_with(':')) {
         return None;
     }
     Some(match last.as_str() {
@@ -837,6 +839,9 @@ mod tests {
         // A probe answers for the service, not for one resource.
         assert_eq!(excluded_reason("/patients/{id}/health"), None);
         assert_eq!(excluded_reason("/api/v1/health"), Some("health / liveness probe"));
+        // …and the same holds for the markers that match anywhere in the path.
+        assert_eq!(excluded_reason("/api/v1/dashboards/{id}/metrics"), None);
+        assert_eq!(excluded_reason("/devices/:id/debug"), None);
         assert!(excluded_reason("/api/v1/utils/health-check").is_some());
         assert!(excluded_reason("/api/v1/healthy-items").is_none());
         assert!(excluded_reason("/docs/oauth2-redirect").is_some());
