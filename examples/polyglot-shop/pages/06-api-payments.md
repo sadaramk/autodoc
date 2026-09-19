@@ -9,6 +9,9 @@ The contract of every net/http operation Payments serves: parameters with their 
 > [!NOTE]
 > **Contract coverage** — 1 of 1 operation declare request and response types; 0 partially; 0 not at all (the handler reads the request at runtime).
 
+> [!WARNING]
+> **Authentication not detected** — No authentication requirement was recognised on any of these operations. What a gateway, a service mesh, or a shared server package applies before the request arrives is not visible in this service's code, so this is not evidence that the operations are public — check how the service is deployed.
+
 ## Operations
 
 | Method | Path | Request | Response | Auth | Contract |

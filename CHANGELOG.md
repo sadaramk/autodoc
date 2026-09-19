@@ -48,6 +48,14 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- An API page whose operations show no authentication now says what that means.
+  A column of "none found" down a security-relevant field reads as "these are
+  open", and what a gateway, a service mesh or a shared server package applies
+  before the request arrives is not visible in the service's own code.
+- An operational route is recognised wherever its marker sits in the path, so
+  `/v2/metrics/bucket` and `/debug/vars` are no longer documented as
+  functionality; and a trailing `health` no longer excludes
+  `/patients/{id}/health`, which is a resource, not a probe.
 - Source files above the size limit are named on the evidence page instead of
   being skipped silently, which had let a repository with large generated or
   vendored sources produce documentation that was confidently incomplete.

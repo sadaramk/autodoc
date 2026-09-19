@@ -396,6 +396,18 @@ impl<'a> Builder<'a> {
             )));
         }
         blocks.push(Block::Callout { tone: "note".into(), title: "Contract coverage".into(), inl: coverage });
+        // A column of "none found" down a security-relevant field reads as "these
+        // are open". Authentication applied outside the service is not visible
+        // here, so say what the absence means before the table says it.
+        if !ops.is_empty() && ops.iter().all(|o| o.auth.is_empty()) {
+            blocks.push(Block::Callout {
+                tone: "warning".into(),
+                title: "Authentication not detected".into(),
+                inl: vec![Inline::text(
+                    "No authentication requirement was recognised on any of these operations. What a gateway, a service mesh, or a shared server package applies before the request arrives is not visible in this service's code, so this is not evidence that the operations are public — check how the service is deployed.",
+                )],
+            });
+        }
         blocks
     }
 
