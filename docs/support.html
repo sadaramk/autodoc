@@ -80,9 +80,12 @@
 
   <h2>Known gaps</h2>
   <ul>
-    <li>Dispatch through a mediator or command bus keyed by message type (<code>mediatr.Send[*CreateOrder]</code>) is not yet resolved to its handler, so those request flows stop at the endpoint.</li>
     <li>Authentication applied by middleware, rather than per route, is not attributed to the operations it protects.</li>
-    <li>A port with several implementations in one service is left unresolved rather than guessed.</li>
+    <li>A port with several implementations is left unresolved rather than guessed. Which one a service
+      uses is often decided by dependency-injection wiring at startup, which is not in the source — so a
+      request flow through such a port stops at the port.</li>
+    <li>A call into a library the service links is not followed, so work a shared package does on the
+      service's behalf does not appear as a step in its flows.</li>
   </ul>
   <p>
     Something missing or wrong for your stack is worth an issue — the
