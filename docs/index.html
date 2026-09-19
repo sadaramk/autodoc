@@ -73,6 +73,14 @@
     <li><strong>Business requirements</strong> — what the code implements, with the intent it cannot know marked <em>needs input</em> rather than guessed.</li>
   </ul>
 
+  <h2>Proven on real repositories</h2>
+  <p>
+    Besides its own fixtures, autodoc is run against public codebases of different shapes — etcd, MinIO,
+    Caddy, Spring PetClinic, PiggyMetrics, wild-workouts and others. Each thing it got wrong became a fix
+    and a regression fixture, and the results are written down rather than summarised:
+    <a href="https://github.com/sadaramk/autodoc/blob/main/HEURISTICS.md">what each repository exposed →</a>
+  </p>
+
   <h2>Run it on your own repository</h2>
   <pre><code>git clone https://github.com/sadaramk/autodoc
 cd autodoc
