@@ -8,6 +8,20 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The draw.io export places shapes where autodoc's own layout puts them, with
+  the boundaries and sizes from the book. It previously left the layout to
+  draw.io, which produced crossed edges and labels printed over one another
+  because its flow layouts do not respect boundary groups — and its `width` /
+  `height` directives were written without the `@` that makes them read a
+  column, so every shape was auto-sized to its label. Verified by importing the
+  exported file into draw.io.
+- Edge labels carry a background, so several edges leaving one service no longer
+  print their labels over each other.
+- No `link` column is emitted when nothing resolves to a URL, rather than an
+  empty link on every shape.
+
 ## [0.2.6] - 2026-09-20
 
 ### Added

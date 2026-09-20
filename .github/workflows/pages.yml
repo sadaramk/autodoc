@@ -49,6 +49,9 @@ jobs:
       - name: Assemble the site
         run: |
           cp docs/*.html docs/style.css docs/robots.txt docs/sitemap.xml site/
+          # The pages are copied to the site root, so images they reference have
+          # to sit beside them rather than one directory up.
+          cp -R media site/media
           touch site/.nojekyll
           du -sh site site/examples/*
 

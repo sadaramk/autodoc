@@ -567,13 +567,30 @@ fn journey_export_carries_evidence_into_drawio() {
     assert!(o.status.success(), "{}", text(&o));
 
     // The directives draw.io needs to make shapes rather than one text blob.
-    for want in ["# label: %label%", "# style: %style%", "# link: url", "# layout: ", "# connect: {"] {
+    for want in ["# label: %label%", "# style: %style%", "# link: url", "# connect: {"] {
+        assert!(csv.contains(want), "CSV needs {want:?}:\n{csv}");
+    }
+    // Positions come from autodoc's layout, so draw.io must not run its own.
+    // `width`/`height` need the `@` form: with a bare column name draw.io
+    // silently ignores them and auto-sizes every shape to its label, which is
+    // how the first version of this shipped.
+    for want in ["# layout: none", "# left: left", "# top: top", "# width: @width", "# height: @height"] {
         assert!(csv.contains(want), "CSV needs {want:?}:\n{csv}");
     }
 
     let row =
         csv.lines().find(|l| l.starts_with("api-gateway,")).unwrap_or_else(|| panic!("a row for the gateway:\n{csv}"));
     assert!(row.contains("api-gateway/src/server.ts:"), "file:line travels as shape data: {row}");
+    // Geometry: the gateway is a real box, not a zero-sized one.
+    let cols: Vec<&str> = row.split(',').collect();
+    let head: Vec<&str> = csv.lines().find(|l| l.starts_with("id,")).unwrap().split(',').collect();
+    for name in ["left", "top", "width", "height"] {
+        let i = head.iter().position(|h| *h == name).unwrap_or_else(|| panic!("a {name} column: {head:?}"));
+        let v: i64 = cols[i].parse().unwrap_or_else(|_| panic!("{name} is a number, got {:?}", cols[i]));
+        if name == "width" || name == "height" {
+            assert!(v > 0, "{name} must be a real size, got {v}");
+        }
+    }
     // Evidence paths are relative to the scanned root. Building the link from the
     // directory holding the IR prepended `docs/architecture/diagrams` to every
     // one of them — a link to the right path in the wrong place.

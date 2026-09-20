@@ -71,10 +71,19 @@ autodoc export docs/architecture/diagrams/containers.ir.json
 # → containers.drawio.csv · draw.io: Extras → Insert → Advanced → CSV
 ```
 
-Real shapes with a layout applied, not a flattened image — and the evidence travels: every shape
-carries its `file:line` as shape data and links to the line it came from, so a diagram pasted into a
-slide can still be checked. One way, deliberately: the source stays authoritative about the
-architecture, and the drawing is yours.
+![The exported containers diagram open in draw.io](media/drawio.png)
+
+*[That exact file](examples/polyglot-shop/diagrams/containers.drawio.csv) — paste it into draw.io to
+get this.*
+
+Real shapes you can move, with the boundaries, sizes and positions autodoc already worked out, so it
+arrives looking like the figure it came from rather than as a knot for draw.io to untangle. The
+evidence travels too: every shape carries its `file:line` as shape data (right-click → Edit Data) and
+links to the line it came from, so a diagram pasted into a slide can still be checked. Edge labels
+are placed by draw.io and may want nudging.
+
+One way, deliberately: the source stays authoritative about the architecture, and the drawing is
+yours.
 
 [![A request flow with every hop cited](media/flows.png)](https://sadaramk.github.io/autodoc/examples/piggymetrics/#/flows)
 

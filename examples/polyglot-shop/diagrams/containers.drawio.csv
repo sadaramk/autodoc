@@ -1,0 +1,40 @@
+# Polyglot Shop — containers — exported from autodoc, one way.
+# Import with Extras → Insert → Advanced → CSV. Evidence travels as shape data:
+# right-click a shape → Edit Data to see the file and line it came from.
+#
+# label: %label%
+# style: %style%
+# namespace: autodoc-
+# identity: id
+# parent: parent
+# parentstyle: rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;
+# left: left
+# top: top
+# width: @width
+# height: @height
+# layout: none
+# connect: {"from":"edge1","to":"id","invert":true,"label":"publishes order.placed","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge2","to":"id","invert":true,"label":"HTTP","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge3","to":"id","invert":true,"label":"writes orders","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge4","to":"id","invert":true,"label":"reads & writes","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge5","to":"id","invert":true,"label":"sends email","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge6","to":"id","invert":true,"label":"delivers order.placed","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge7","to":"id","invert":true,"label":"reads payments","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge8","to":"id","invert":true,"label":"writes payments","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# connect: {"from":"edge9","to":"id","invert":true,"label":"charges cards","style":"edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;"}
+# ignore: id,style,parent,left,top,width,height,edge1,edge2,edge3,edge4,edge5,edge6,edge7,edge8,edge9
+id,label,style,left,top,width,height,parent,tech,evidence,edge1,edge2,edge3,edge4,edge5,edge6,edge7,edge8,edge9
+clients,Clients,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,48,416,236,160,,,,,,,,,,,,
+platform,Polyglot Shop platform,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,395,216,236,560,,,,,,,,,,,,
+data,Data & messaging,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1038,152,236,408,,,,,,,,,,,,
+external,Third-party services,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1038,616,236,224,,,,,,,,,,,,
+api-gateway,API Gateway,rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#4f46e5;fontColor=#0f172a;strokeWidth=2;align=center;verticalAlign=middle;,20,44,196,96,platform,TypeScript · Express,api-gateway/src/server.ts:19-24,kafka,payments,postgres,redis,,,,,
+fulfillment,Fulfillment,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,320,196,96,platform,Python,fulfillment/fulfillment/__main__.py:22-23,,,postgres,,sendgrid,,,,
+ledger-audit,Ledger Audit,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,444,196,96,platform,Rust · Axum,ledger-audit/src/main.rs:10-21,,,,,,,postgres,,
+payments,Payments,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,196,196,96,platform,Go · net/http,payments/cmd/payments/main.go:17-30,,,,,,,,postgres,stripe
+web,Web,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,44,196,96,clients,TypeScript · React,web/src/main.tsx:9,,api-gateway,,,,,,,
+postgres,PostgreSQL,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,44,196,96,data,compose: db,api-gateway/src/db.ts:1,,,,,,,,,
+redis,Redis,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,168,196,96,data,compose: redis,api-gateway/src/cache.ts:1,,,,,,,,,
+kafka,Kafka,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,292,196,96,data,compose: kafka,api-gateway/src/events.ts:1,,,,,,fulfillment,,,
+stripe,Stripe,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,44,196,66,external,,payments/internal/charge/charge.go:5,,,,,,,,,
+sendgrid,SendGrid,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,138,196,66,external,,fulfillment/fulfillment/notify.py:5,,,,,,,,,

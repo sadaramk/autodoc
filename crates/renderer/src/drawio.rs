@@ -17,6 +17,10 @@
 
 use autodoc_ir::{DiagramIR, EdgeStyle, EdgeType, Evidence};
 
+use std::collections::BTreeMap;
+
+use crate::layout::{self, Rect};
+
 /// A CSV field: quoted when it has to be, escaped the way RFC 4180 says.
 fn field(v: &str) -> String {
     // draw.io splits on commas and honours double quotes; a newline inside a
@@ -37,6 +41,12 @@ fn evidence_ref(e: &Evidence) -> String {
     }
 }
 
+/// `left,top,width,height`, rounded: draw.io parses these as numbers and a long
+/// fraction only makes the file harder to read.
+fn geometry(r: &Rect) -> Vec<String> {
+    [r.x, r.y, r.w, r.h].iter().map(|v| format!("{}", v.round() as i64)).collect()
+}
+
 /// draw.io needs an identifier it can use in `connect`; ours may hold anything.
 fn safe_id(id: &str) -> String {
     id.chars().map(|c| if c.is_ascii_alphanumeric() || c == '-' || c == '_' { c } else { '-' }).collect()
@@ -55,14 +65,28 @@ fn shape_style(focal: bool) -> String {
 fn edge_style(e: &autodoc_ir::Edge) -> String {
     let dashed = matches!(e.style, Some(EdgeStyle::Dashed)) || matches!(e.edge_type, EdgeType::Async);
     let color = if e.is_primary_path == Some(true) { "#4f46e5" } else { "#64748b" };
+    // A white label background, or several edges leaving one node print their
+    // labels over each other and over the node's own name.
     format!(
-        "edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor={color};dashed={};endArrow=blockThin;endFill=1;",
+        "edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor={color};dashed={};endArrow=blockThin;\
+         endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;",
         u8::from(dashed)
     )
 }
 
 /// The diagram as a draw.io CSV import, with evidence on every shape.
 pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -> String {
+    let l = layout::layout(ir, crate::svg::title_metrics(ir));
+    let at: BTreeMap<&str, Rect> = l
+        .nodes
+        .iter()
+        .map(|n| (n.id.as_str(), n.rect))
+        .chain(l.containers.iter().map(|c| (c.id.as_str(), c.rect)))
+        .collect();
+    // An empty `link` column would put an empty link on every shape, which
+    // reads as a broken one. The directive is only worth emitting when at least
+    // one node actually resolves to a URL.
+    let links = ir.nodes.iter().filter_map(|n| n.evidence.as_ref()).any(|e| permalink(e).is_some());
     let mut out = String::new();
     out.push_str(&format!("# {} — exported from autodoc, one way.\n", ir.title));
     out.push_str("# Import with Extras → Insert → Advanced → CSV. Evidence travels as shape data:\n");
@@ -80,14 +104,21 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
                       verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;\n",
         );
     }
-    out.push_str("# link: url\n");
-    out.push_str("# width: auto\n");
-    out.push_str("# height: auto\n");
-    out.push_str("# padding: 16\n");
-    out.push_str("# nodespacing: 40\n");
-    out.push_str("# levelspacing: 80\n");
-    out.push_str("# edgespacing: 40\n");
-    out.push_str("# layout: horizontalflow\n");
+    if links {
+        out.push_str("# link: url\n");
+    }
+    // Positions come from autodoc's own layout, not from draw.io's. Asking
+    // draw.io to lay this out produced crossed edges and labels printed over one
+    // another, because its flow layouts do not respect the boundary groups the
+    // model has. The book's layout already places these boxes well, so the
+    // exported diagram looks like the figure it came from.
+    // `left`/`top` name a column; `width`/`height` need `@` or draw.io ignores
+    // them and auto-sizes every shape to its label.
+    out.push_str("# left: left\n");
+    out.push_str("# top: top\n");
+    out.push_str("# width: @width\n");
+    out.push_str("# height: @height\n");
+    out.push_str("# layout: none\n");
     // draw.io matches a `connect` rule against a column rather than a row, so
     // edges cannot be listed one by one: outgoing edges become one column per
     // distinct label and style, each holding the targets it points at.
@@ -110,16 +141,31 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     }
     // `tech` and `evidence` are deliberately not ignored: they become the shape's
     // data, which is the whole point of exporting rather than screenshotting.
-    let mut ignored = vec!["id", "style", "parent", "url"];
+    let mut ignored = vec!["id", "style", "parent", "left", "top", "width", "height"];
+    if links {
+        ignored.push("url");
+    }
     let cols: Vec<&str> = edge_columns.iter().map(|(_, c)| c.as_str()).collect();
     ignored.extend(cols);
     out.push_str(&format!("# ignore: {}\n", ignored.join(",")));
 
-    let mut header = vec!["id".to_string(), "label".to_string(), "style".to_string()];
+    let mut header = vec![
+        "id".to_string(),
+        "label".to_string(),
+        "style".to_string(),
+        "left".to_string(),
+        "top".to_string(),
+        "width".to_string(),
+        "height".to_string(),
+    ];
     if !ir.containers.is_empty() {
         header.push("parent".into());
     }
-    header.extend(["tech".to_string(), "evidence".to_string(), "url".to_string()]);
+    header.push("tech".into());
+    header.push("evidence".into());
+    if links {
+        header.push("url".into());
+    }
     for (_, col) in &edge_columns {
         header.push(col.clone());
     }
@@ -128,13 +174,19 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
 
     // Boundaries first: a parent has to exist before a child names it.
     for c in &ir.containers {
+        let r = at.get(c.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 240.0, h: 160.0 });
         let mut row = vec![
             field(&safe_id(&c.id)),
             field(&c.label),
             field("rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;"),
         ];
+        row.extend(geometry(&r));
         row.push(String::new()); // a boundary has no parent
-        row.extend([String::new(), String::new(), String::new()]);
+        row.push(String::new()); // tech
+        row.push(String::new()); // evidence
+        if links {
+            row.push(String::new());
+        }
         for _ in &edge_columns {
             row.push(String::new());
         }
@@ -144,13 +196,21 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
 
     for n in &ir.nodes {
         let mut row = vec![field(&safe_id(&n.id)), field(&n.label), field(&shape_style(n.is_key_focal_point))];
+        // A child's position is relative to its parent in draw.io, so a node
+        // inside a boundary is offset by that boundary's origin.
+        let r = at.get(n.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 160.0, h: 60.0 });
+        let parent = n.container_id.as_deref().filter(|_| !ir.containers.is_empty());
+        let origin = parent.and_then(|c| at.get(c)).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 0.0, h: 0.0 });
+        row.extend(geometry(&Rect { x: r.x - origin.x, y: r.y - origin.y, w: r.w, h: r.h }));
         if !ir.containers.is_empty() {
-            row.push(field(&n.container_id.as_deref().map(safe_id).unwrap_or_default()));
+            row.push(field(&parent.map(safe_id).unwrap_or_default()));
         }
         row.push(field(n.tech_stack.as_deref().unwrap_or("")));
         let ev = n.evidence.as_ref();
         row.push(field(&ev.map(evidence_ref).unwrap_or_default()));
-        row.push(field(&ev.and_then(permalink).unwrap_or_default()));
+        if links {
+            row.push(field(&ev.and_then(permalink).unwrap_or_default()));
+        }
         for (key, _) in &edge_columns {
             let (style, label) = key.split_once('\u{1}').unwrap_or((key.as_str(), ""));
             let targets: Vec<String> = ir

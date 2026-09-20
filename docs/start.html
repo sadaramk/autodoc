@@ -70,10 +70,24 @@ open docs/architecture/index.html</code></pre>
   </p>
   <pre><code>autodoc export docs/architecture/diagrams/containers.ir.json</code></pre>
   <p>
-    Every shape carries its <code>file:line</code> as shape data (right-click → Edit Data) and links to
-    the line it came from, so a diagram pasted into a slide can still be checked. One way,
-    deliberately: reading a drawing back would mean deciding whether the file or the source is right
-    about the architecture, and the source is. The drawing is yours.
+    <img src="media/drawio.png" alt="The exported containers diagram open in draw.io"
+         style="width:100%;border:1px solid var(--rule, #e2e8f0);border-radius:6px">
+  </p>
+  <p class="meta">
+    The
+    <a href="https://github.com/sadaramk/autodoc/blob/main/examples/polyglot-shop/diagrams/containers.drawio.csv">exact
+    file</a> behind that screenshot. Paste it into draw.io to get the same diagram.
+  </p>
+  <p>
+    The shapes arrive with the boundaries, sizes and positions autodoc already worked out, so the
+    diagram looks like the figure it came from rather than a knot for draw.io to untangle. Every shape
+    carries its <code>file:line</code> as shape data (right-click → Edit Data) and links to the line it
+    came from, so a diagram pasted into a slide can still be checked. Edge labels are placed by draw.io
+    and may want nudging.
+  </p>
+  <p>
+    One way, deliberately: reading a drawing back would mean deciding whether the file or the source is
+    right about the architecture, and the source is. The drawing is yours.
   </p>
 
   <h2>Keep it honest in CI</h2>
