@@ -137,6 +137,7 @@ finding became a fix and a regression fixture. The results, and the heuristics b
 ## Documentation
 
 [Getting started](https://sadaramk.github.io/autodoc/start.html) ·
+[Roadmap](ROADMAP.md) ·
 [How it works](https://sadaramk.github.io/autodoc/how.html) ·
 [What it reads](https://sadaramk.github.io/autodoc/support.html) ·
 [Heuristics and limits](HEURISTICS.md) ·
