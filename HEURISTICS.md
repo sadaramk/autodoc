@@ -80,6 +80,8 @@ became a fix plus a regression fixture in `tests/fixtures/real-world/`.
 | ThreeDotsLabs/wild-workouts-go-ddd-example (Go services, gRPC, shared `.env`) | trainings → trainer and trainings → users over gRPC; Firestore and MySQL | `env_file` ignored; `trainer-grpc` not mapped to `trainer`; a library using `chi` classified as a service |
 | immich-app/immich (TypeScript monorepo + Python ML, compose in `docker/`) | web → server → machine-learning; Postgres, Redis | compose outside the root missed; docs and e2e helper packages shown as containers; Vite-only packages classified as web clients; README subtitle picked up badge HTML |
 | LemmyNet/lemmy (40-crate Rust workspace) | server → grouped crates → Postgres | libraries depending on Actix classified as services; density compaction dropped the `server` binary; transitive pruning over grouped-library cycles orphaned it |
+| caddyserver/caddy (Go, one module, ~40 packages) | one service, no API page | a bare `p = "/"` inside one function was read as a unit-wide constant, so every `.Post(p, …)` looked like a route: the book documented `POST /` "handled by `int64`", which is an outbound FastCGI client call. Fixture: `api-frameworks/go-chi/internal/api/fcgi.go` |
+| spring-projects/spring-petclinic (Spring MVC, server-rendered) | 2 REST operations, 15 view handlers named as excluded | seventeen `@GetMapping`/`@PostMapping` annotations produced two documented operations under "the contract of every operation this service serves", and nothing said where the other fifteen went |
 
 Scans took 0.1–0.8 s (debug build) for 90–750 parsed files.
 

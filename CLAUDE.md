@@ -29,6 +29,25 @@ Two things are worth doing locally before pushing regardless, because CI cannot
 tell you what they mean: `make demo-check` when analyzer or book output changes,
 and reverting your fix to confirm the new test actually fails without it.
 
+## Cutting a release
+
+A tag builds and publishes; nothing is uploaded by hand.
+
+1. Move `## [Unreleased]` in `CHANGELOG.md` down to `## [x.y.z] - <date>` and add the
+   compare link at the bottom. The release workflow reads that section for the notes
+   and **fails** if it is missing.
+2. Bump `version` in the root `Cargo.toml`, then `cargo build` so `Cargo.lock` follows
+   (the release builds with `--locked`).
+3. `make demo` — the generator version is embedded in the examples, so they change.
+4. Bump the `sadaramk/autodoc@vx.y.z` references in `README.md` and `docs/start.html`
+   when the release adds a subcommand the snippets use.
+5. Commit, `git tag -a vx.y.z`, push both. `release.yml` builds five targets, each of
+   which generates and checks a book before it is uploaded, and attaches
+   `SHA256SUMS` and `install.sh`.
+
+The action in `action.yml` downloads the **last release**, not the current commit, so
+the CI job that exercises it must only use subcommands that release already has.
+
 ## Critical journeys
 
 Each must pass before merge.
@@ -64,3 +83,5 @@ Each must pass before merge.
 - JVM support (`extract.rs` Java, `manifest.rs` Maven/Gradle, `jvm.rs`, `catalog.rs`): `real_world_shapes.rs::spring_*`,
   `api_contracts.rs`, `data_model.rs`, then spot-check piggymetrics / thingsboard / spring-modulith examples.
 - `analyzer` heuristics: `crates/analyzer/tests/fixtures.rs`, journeys 1–4, then `make demo` to refresh examples.
+- `diff` / `export`: `crates/cli/tests/journeys.rs::journey_diff_*`, `journey_export_*`. Both compare
+  against real output, so a wrong-but-plausible change shows up as a changed string, not a panic.
