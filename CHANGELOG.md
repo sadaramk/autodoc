@@ -8,6 +8,23 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `autodoc diff [PATH] --base REV [--head REV]` reports what changed
+  architecturally between two revisions: services, connections, routes, request
+  and response shapes, authentication requirements, tables and columns. Markdown
+  for a PR comment, `--json` for a bot, `--exit-code` to gate a merge. Both
+  revisions are read in throwaway worktrees, so the caller's working tree is
+  never touched.
+- A request or response whose model keeps its name but changes shape is reported
+  by its fields. An inline response literal is given a generated name, so
+  comparing names alone said nothing when a field was added.
+
+### Changed
+
+- Workflows use `actions/checkout@v7`, `setup-node@v7`, `upload-artifact@v7` and
+  `download-artifact@v8`; the v4 line runs on a deprecated Node.
+
 ## [0.2.5] - 2026-09-20
 
 Two themes: the book no longer claims more than it read, and installing autodoc

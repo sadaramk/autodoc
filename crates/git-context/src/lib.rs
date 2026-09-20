@@ -238,6 +238,50 @@ pub fn commit_describing(ctx: &RepoContext, exclude: Option<String>) -> Option<S
     git_opt(&ctx.root, &args).filter(|c| !c.is_empty()).or(head)
 }
 
+/// Resolve a revision (`main`, `HEAD~3`, a tag, a short hash) to a full commit.
+pub fn resolve_rev(root: &Path, rev: &str) -> Option<String> {
+    git_opt(root, &["rev-parse", "--verify", &format!("{rev}^{{commit}}")])
+}
+
+/// A detached worktree of `root` at `rev`, removed when dropped.
+///
+/// Comparing two revisions means reading both, and `git stash` / `git checkout`
+/// in place would fight the user's working tree. A worktree leaves it alone.
+/// Checkout runs under the same hardened configuration as every other call, so a
+/// repository that carries a `post-checkout` hook does not get to run it.
+pub struct Worktree {
+    repo: PathBuf,
+    path: PathBuf,
+}
+
+impl Worktree {
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for Worktree {
+    fn drop(&mut self) {
+        let path = self.path.display().to_string();
+        let _ = git(&self.repo, &["worktree", "remove", "--force", &path]);
+        // `remove` leaves the directory behind if it was already gone from the
+        // administrative list; the temporary parent goes either way.
+        let _ = std::fs::remove_dir_all(&self.path);
+        let _ = git(&self.repo, &["worktree", "prune"]);
+    }
+}
+
+/// Check `rev` out into a fresh worktree under `parent`.
+pub fn worktree_at(root: &Path, rev: &str, parent: &Path) -> Result<Worktree, GitError> {
+    let root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+    let commit = resolve_rev(&root, rev)
+        .ok_or_else(|| GitError::Command { args: format!("rev-parse {rev}"), stderr: "no such revision".into() })?;
+    let path = parent.join(short(&commit));
+    let path_str = path.display().to_string();
+    git(&root, &["worktree", "add", "--detach", "--quiet", &path_str, &commit])?;
+    Ok(Worktree { repo: root, path })
+}
+
 pub fn tracked_at_head(ctx: &RepoContext, file: &str) -> bool {
     git(&ctx.root, &["cat-file", "-e", &format!("HEAD:./{file}")]).is_ok()
 }

@@ -141,6 +141,24 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// What changed architecturally between two revisions. Markdown for a PR comment.
+    Diff {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Revision to compare against, such as `main` or `origin/main`.
+        #[arg(long, default_value = "HEAD~1")]
+        base: String,
+        /// Revision to compare. Defaults to the working tree's HEAD.
+        #[arg(long, default_value = "HEAD")]
+        head: String,
+        #[arg(long)]
+        include_tests: bool,
+        #[arg(long)]
+        json: bool,
+        /// Exit 1 when anything changed, so a pipeline can require a review.
+        #[arg(long)]
+        exit_code: bool,
+    },
     /// Fail (exit 1) when the book is out of date or cites stale code. For CI.
     Check {
         #[arg(default_value = ".")]
@@ -263,6 +281,9 @@ fn run(cli: Cli) -> Result<ExitCode> {
         Command::Generate { path, out, accent, theme, include_tests, json } => {
             generate(&path, out, accent, theme, include_tests, json)
         }
+        Command::Diff { path, base, head, include_tests, json, exit_code } => {
+            diff(&path, &base, &head, include_tests, json, exit_code)
+        }
         Command::Check { path, out, json } => check(&path, out, json),
         Command::Verify { refs, repo, commit, json } => {
             let items = refs
@@ -371,6 +392,41 @@ fn generate(
         print!("{}", report::book(&report));
     }
     Ok(ExitCode::SUCCESS)
+}
+
+/// Scan two revisions in throwaway worktrees and report what the architecture
+/// model disagrees about.
+///
+/// Worktrees rather than the directory in place: comparing revisions must not
+/// touch the caller's working tree, and in CI the checkout is the thing being
+/// tested.
+fn diff(path: &Path, base: &str, head: &str, include_tests: bool, json: bool, exit_code: bool) -> Result<ExitCode> {
+    let ctx = autodoc_git::repo_context(path);
+    let git_root =
+        ctx.git_root.clone().with_context(|| format!("{} is not inside a git repository", path.display()))?;
+    let prefix = ctx.prefix.clone();
+    let tmp = tempfile::tempdir().context("cannot create a temporary directory for the comparison")?;
+
+    let opts = autodoc_analyzer::ScanOptions { behavior: true, include_tests, ..Default::default() };
+    let scan_at = |rev: &str| -> Result<autodoc_analyzer::ScanReport> {
+        let wt = autodoc_git::worktree_at(&git_root, rev, tmp.path())
+            .with_context(|| format!("cannot read revision `{rev}`"))?;
+        let root = if prefix.is_empty() { wt.path().to_path_buf() } else { wt.path().join(&prefix) };
+        let report = autodoc_analyzer::scan(&root, &opts).with_context(|| format!("cannot scan `{rev}`"))?;
+        Ok(report)
+    };
+    let before = scan_at(base)?;
+    let after = scan_at(head)?;
+
+    let mut d = autodoc_analyzer::diff::diff(&before, &after);
+    d.base = base.to_string();
+    d.head = head.to_string();
+    if json {
+        println!("{}", serde_json::to_string_pretty(&d)?);
+    } else {
+        print!("{}", autodoc_analyzer::diff::markdown(&d));
+    }
+    Ok(if exit_code && !d.is_empty() { ExitCode::from(1) } else { ExitCode::SUCCESS })
 }
 
 fn check(path: &Path, out: Option<PathBuf>, json: bool) -> Result<ExitCode> {

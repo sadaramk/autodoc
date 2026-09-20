@@ -7,6 +7,7 @@ pub mod capability;
 pub mod catalog;
 pub mod compose;
 pub mod data;
+pub mod diff;
 pub mod domains;
 pub mod draft;
 mod entry;

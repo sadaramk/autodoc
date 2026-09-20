@@ -19,6 +19,7 @@ autodoc-validator.workspace = true
 autodoc-renderer.workspace = true
 autodoc-mcp.workspace = true
 autodoc-book.workspace = true
+tempfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 clap.workspace = true

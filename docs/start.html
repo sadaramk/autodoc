@@ -82,6 +82,38 @@ open docs/architecture/index.html</code></pre>
     describes: a book records the commit it documents rather than <code>HEAD</code>. The check goes red
     when the code it cites moves, and green again once the book is regenerated.
   </p>
+
+  <h2>Review what a change does</h2>
+  <p>
+    <code>check</code> answers "is the documentation still true?". A pull request asks a different
+    question — what does this change? — and two rendered books do not answer it: they diff as text, so
+    a reordered table reads as a change and one new route reads as five.
+  </p>
+  <pre><code>autodoc diff . --base origin/main</code></pre>
+  <p>
+    <code>diff</code> reads both revisions in throwaway worktrees, so it never touches your working
+    tree, and compares the models rather than the pages:
+  </p>
+  <blockquote>
+    <p><strong>API operations</strong></p>
+    <ul>
+      <li>added <strong>payments GET /charges/{id}</strong></li>
+      <li>
+        changed <strong>api-gateway POST /checkout</strong> — response gains <code>trackingUrl</code>;
+        success status <code>201</code> → <code>202</code>; no authentication requirement is recognised
+        any more
+      </li>
+    </ul>
+  </blockquote>
+  <p>
+    Services, connections, routes, request and response shapes, authentication, tables and columns.
+    Markdown by default so it can be posted as a comment, <code>--json</code> for a bot, and
+    <code>--exit-code</code> to make an architecture change require a review:
+  </p>
+  <pre><code>- uses: sadaramk/autodoc@v0.2.5
+  with:
+    command: diff
+    args: --base ${{ github.event.pull_request.base.sha }}</code></pre>
   <blockquote>
     <p>
       Citations are pinned to a commit and verified against it. A citation whose lines have changed is

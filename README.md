@@ -44,6 +44,26 @@ Exits 1 when regenerating would change the book, or when a citation no longer ma
 Committing the book does not invalidate it, and neither does a commit that changes nothing it
 describes: a book records the commit it documents rather than `HEAD`.
 
+## Review what a change does to the architecture
+
+```yaml
+- uses: sadaramk/autodoc@v0.2.5
+  with:
+    command: diff
+    args: --base ${{ github.event.pull_request.base.sha }}
+```
+
+It scans both revisions and compares the models rather than the rendered pages, so a reordered table
+is not a change and a new route is one line:
+
+> **API operations**
+> - added **payments GET /charges/{id}**
+> - changed **api-gateway POST /checkout** — response gains `trackingUrl`; success status `201` →
+>   `202`; no authentication requirement is recognised any more
+
+Routes, request and response types, authentication, tables, columns, services and the connections
+between them. Markdown by default for a PR comment, `--json` for a bot, `--exit-code` to gate.
+
 [![A request flow with every hop cited](media/flows.png)](https://sadaramk.github.io/autodoc/examples/piggymetrics/#/flows)
 
 *Each hop in a request flow is pinned to the line that makes the call.*
@@ -72,6 +92,7 @@ Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
 | `autodoc render IR [-o OUT] [--format html\|svg] [--accent indigo\|coral\|#hex] [--repo PATH]` | Validate, verify evidence, render. Nothing is written if validation fails. |
 | `autodoc generate [PATH] [--out DIR] [--include-tests] [--json]` | Write the architecture book. Rewrites only changed files; keeps hand-edited diagram IR. |
 | `autodoc check [PATH] [--out DIR] [--json]` | Exit 1 when regenerating would change the book or a citation is stale. |
+| `autodoc diff [PATH] [--base REV] [--head REV] [--json] [--exit-code]` | What changed architecturally between two revisions, as a PR comment. |
 | `autodoc verify FILE:LINE[-END]... [--repo PATH] [--commit SHA]` | Check evidence for drift. Exit 1 unless all verified. |
 | `autodoc schema` | Print the DiagramIR JSON Schema. |
 | `autodoc serve` | MCP server over stdio. |

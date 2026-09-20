@@ -14,7 +14,7 @@ jobs:
     name: rustfmt, clippy, tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Same toolchain as the Docker image, so lints agree everywhere.
       - uses: dtolnay/rust-toolchain@1.91.0
         with:
@@ -28,8 +28,8 @@ jobs:
     name: IR contract (zod)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - run: npm ci
@@ -41,10 +41,10 @@ jobs:
     name: Interactive pages (Playwright)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.91.0
       - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - run: cargo build --release -p autodoc-cli
@@ -57,17 +57,33 @@ jobs:
         env:
           AUTODOC_BIN: ${{ github.workspace }}/target/release/autodoc
         run: npx playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-results
           path: tests/e2e/test-results/
 
+  action:
+    name: The published action runs
+    runs-on: ubuntu-latest
+    steps:
+      # Full history: `diff` compares two revisions.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      # Exercises the action in this repository as a consumer would use it —
+      # it downloads the binary from the last release, so it proves the release
+      # assets, the checksum check and the entrypoint, not this commit's build.
+      - uses: ./
+        with:
+          command: diff
+          args: --base ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+
   example:
     name: Example book is up to date
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Through Docker, like `make demo`: the container sees the fixture at a fixed
       # path and without this repository's `.git`, so the committed book is
       # reproducible on any machine and doesn't move with our commits.

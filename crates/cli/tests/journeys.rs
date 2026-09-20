@@ -457,3 +457,96 @@ fn an_empty_repository_is_refused_rather_than_documented() {
     assert!(text.contains("Rust, TypeScript, Go, Python, Java, Kotlin"), "names what it reads: {text}");
     assert!(!out.exists(), "no half-book is left behind: {text}");
 }
+
+/// A pull request asks what a change does to the architecture, which a book
+/// cannot answer: two rendered books diff as text, so a reordered table reads as
+/// a change and a new route reads as five. `autodoc diff` compares the models.
+#[test]
+fn journey_diff_reports_what_changed_between_two_revisions() {
+    let (_tmp, repo) = shop_repo();
+
+    // An unchanged range is the common case in CI and has to say so plainly.
+    let o = autodoc(&["diff", ".", "--base", "HEAD", "--head", "HEAD"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(text(&o).contains("Architecture unchanged"), "{}", text(&o));
+
+    // Add a route that takes a new query parameter and drops authentication,
+    // and a column on an entity: the three things a reviewer most wants named.
+    let handler = repo.join("payments/internal/httpapi/handler.go");
+    let src = std::fs::read_to_string(&handler).unwrap();
+    std::fs::write(
+        &handler,
+        src.replace(
+            "\tmux.HandleFunc(\"POST /charges\", h.createCharge)\n",
+            "\tmux.HandleFunc(\"POST /charges\", h.createCharge)\n\tmux.HandleFunc(\"GET /charges/{id}\", h.getCharge)\n",
+        )
+        .replace(
+            "// createCharge charges",
+            "// getCharge returns one charge attempt.\nfunc (h *Handler) getCharge(w http.ResponseWriter, r *http.Request) {\n\tw.WriteHeader(http.StatusOK)\n}\n\n// createCharge charges",
+        ),
+    )
+    .unwrap();
+    git(&repo, &["commit", "-aqm", "read a charge"]);
+
+    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    let out = text(&o);
+    assert!(o.status.success(), "{out}");
+    assert!(out.contains("### Architecture changes"), "{out}");
+    assert!(out.contains("added **payments GET /charges/{id}**"), "the new route is named: {out}");
+    assert!(!out.contains("POST /charges**"), "an untouched route is not listed: {out}");
+
+    // A response literal keeps its generated model name while its shape changes,
+    // so the fields have to be compared, not just the type's name. Dropping the
+    // authentication middleware is the other thing a reviewer must not miss.
+    let checkout = repo.join("api-gateway/src/routes/checkout.ts");
+    let src = std::fs::read_to_string(&checkout).unwrap();
+    std::fs::write(
+        &checkout,
+        src.replace(
+            "checkoutRouter.post(\"/\", requireCustomer, async (req, res) => {",
+            "checkoutRouter.post(\"/\", async (req, res) => {",
+        )
+        .replace(
+            "res.status(201).json({ orderId: order.id, status: \"placed\" });",
+            "res.status(202).json({ orderId: order.id, status: \"placed\", trackingUrl: order.tracking });",
+        ),
+    )
+    .unwrap();
+    git(&repo, &["commit", "-aqm", "accept checkout asynchronously"]);
+
+    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    let out = text(&o);
+    assert!(out.contains("changed **api-gateway POST /checkout**"), "{out}");
+    for want in [
+        "response gains `trackingUrl`",
+        "success status `201` → `202`",
+        "no authentication requirement is recognised any more",
+    ] {
+        assert!(out.contains(want), "should report {want:?}: {out}");
+    }
+
+    // `--exit-code` is what turns the report into a gate.
+    let o = autodoc(&["diff", ".", "--base", "HEAD~2", "--exit-code"], &repo);
+    assert_eq!(o.status.code(), Some(1), "{}", text(&o));
+
+    // The JSON is the same finding, for a bot that wants to group or filter.
+    let o = autodoc(&["diff", ".", "--base", "HEAD~2", "--json"], &repo);
+    let v: Value = serde_json::from_str(&String::from_utf8_lossy(&o.stdout)).unwrap();
+    assert_eq!(v["base"], "HEAD~2");
+    let api = v["sections"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["title"] == "API operations")
+        .unwrap_or_else(|| panic!("an API section: {v:#}"));
+    assert_eq!(api["changes"][0]["verb"], "added");
+    assert_eq!(api["changes"][0]["subject"], "payments GET /charges/{id}");
+
+    // The comparison must not disturb the caller's tree: CI checks out the head
+    // commit and then runs this, and a leftover worktree breaks the next step.
+    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    let wt = Command::new("git").arg("-C").arg(&repo).args(["worktree", "list"]).output().unwrap();
+    let list = String::from_utf8_lossy(&wt.stdout);
+    assert_eq!(list.lines().count(), 1, "no worktree is left behind: {list}");
+}
