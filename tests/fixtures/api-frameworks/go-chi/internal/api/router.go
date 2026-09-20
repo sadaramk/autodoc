@@ -4,6 +4,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -87,4 +88,13 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// mountReports hangs the reports router under a prefix that only the
+// environment knows, so every route below it is a suffix of the real path.
+func mountReports(r chi.Router) {
+	base := os.Getenv("REPORTS_BASE")
+	r.Route(base+"/reports", func(sub chi.Router) {
+		sub.Get("/daily", getTask)
+	})
 }

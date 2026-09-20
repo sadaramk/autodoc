@@ -33,7 +33,8 @@ struct Unit<'f, 'a> {
     files: Vec<&'f Loaded<'a>>,
     consts: HashMap<String, String>,
     /// Prefixes a function's routes receive from `Mount("/x", fn())` / `StripPrefix`.
-    fn_prefixes: HashMap<String, Vec<String>>,
+    /// Prefixes a function's routes receive, and whether each was fully resolved.
+    fn_prefixes: HashMap<String, Vec<(String, bool)>>,
     structs: HashMap<String, Vec<Field>>,
     fn_returns: HashMap<String, String>,
 }
@@ -120,15 +121,17 @@ fn eval_path(u: &Unit, src: &Src, s: usize, e: usize) -> (String, bool) {
 fn collect_mounts(u: &mut Unit, fi: usize) {
     let src = &u.files[fi].src;
     let ranges = chi_ranges(u, src);
-    let mut found: Vec<(String, String)> = Vec::new();
+    let mut found: Vec<(String, String, bool)> = Vec::new();
     for (rs, ms, open) in method_calls(&src.code, &["Mount", "Handle"]) {
         let Some(close) = matching(&src.code, open) else { continue };
         let args = split_args(&src.code, open + 1, close);
         if args.len() < 2 {
             continue;
         }
-        let (prefix, _) = eval_path(u, src, args[0].0, args[0].1);
-        let prefix = join_path(&range_prefix(&ranges, rs), &prefix);
+        let (prefix, prefix_partial) = eval_path(u, src, args[0].0, args[0].1);
+        let (outer, outer_partial) = range_prefix(&ranges, rs);
+        let prefix = join_path(&outer, &prefix);
+        let prefix_partial = prefix_partial || outer_partial;
         let mut target = src.slice(args[1].0, args[1].1).trim().to_string();
         let is_mount = src.code[ms..].starts_with("Mount");
         if let Some(inner) = target.strip_prefix("http.StripPrefix(") {
@@ -140,11 +143,11 @@ fn collect_mounts(u: &mut Unit, fi: usize) {
         let Some(p) = target.find('(') else { continue };
         let name = target[..p].rsplit('.').next().unwrap_or("").to_string();
         if !name.is_empty() {
-            found.push((name, if prefix == "/" { String::new() } else { prefix }));
+            found.push((name, if prefix == "/" { String::new() } else { prefix }, prefix_partial));
         }
     }
-    for (n, p) in found {
-        u.fn_prefixes.entry(n).or_default().push(p);
+    for (n, p, partial) in found {
+        u.fn_prefixes.entry(n).or_default().push((p, partial));
     }
 }
 
@@ -166,31 +169,32 @@ fn is_client_receiver(recv: &str) -> bool {
 }
 
 /// chi `Route("/x", func(r chi.Router) { … })` and `Group(func …)` bodies with their prefixes, outermost first.
-fn chi_ranges(u: &Unit, src: &Src) -> Vec<(usize, usize, String)> {
+fn chi_ranges(u: &Unit, src: &Src) -> Vec<(usize, usize, String, bool)> {
     let code = &src.code;
     let mut ranges = Vec::new();
     for (_, ms, open) in method_calls(code, &["Route", "Group"]) {
         let Some(close) = matching(code, open) else { continue };
         let args = split_args(code, open + 1, close);
         let is_route = code[ms..].starts_with("Route");
-        let (prefix, func_arg) = match (is_route, args.as_slice()) {
-            (true, [p, f, ..]) => (eval_path(u, src, p.0, p.1).0, *f),
-            (false, [f]) => (String::new(), *f),
+        let ((prefix, partial), func_arg) = match (is_route, args.as_slice()) {
+            (true, [p, f, ..]) => (eval_path(u, src, p.0, p.1), *f),
+            (false, [f]) => ((String::new(), false), *f),
             _ => continue,
         };
         if !src.code_slice(func_arg.0, func_arg.1).starts_with("func") {
             continue;
         }
-        ranges.push((func_arg.0, func_arg.1, prefix));
+        ranges.push((func_arg.0, func_arg.1, prefix, partial));
     }
     ranges
 }
 
-fn range_prefix(ranges: &[(usize, usize, String)], at: usize) -> String {
-    ranges
-        .iter()
-        .filter(|(s, e, _)| *s < at && at < *e)
-        .fold(String::new(), |acc, (_, _, p)| join_path(&acc, p).trim_end_matches('/').to_string())
+/// The enclosing chi `Route`/`Group` prefixes, and whether any could not be
+/// resolved — a route under an unresolved prefix is a suffix of the truth.
+fn range_prefix(ranges: &[(usize, usize, String, bool)], at: usize) -> (String, bool) {
+    ranges.iter().filter(|(s, e, _, _)| *s < at && at < *e).fold((String::new(), false), |(acc, part), (_, _, p, q)| {
+        (join_path(&acc, p).trim_end_matches('/').to_string(), part || *q)
+    })
 }
 
 fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
@@ -199,7 +203,7 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
     let code = &src.code;
     let ranges = chi_ranges(u, src);
     // gin / echo / fiber group variables: v1 := r.Group("/v1", mw).
-    let mut groups: HashMap<String, (String, String, Vec<Requirement>)> = HashMap::new();
+    let mut groups: HashMap<String, (String, String, Vec<Requirement>, bool)> = HashMap::new();
     for (rs, ms, open) in method_calls(code, &["Group"]) {
         let Some(close) = matching(code, open) else { continue };
         let args = split_args(code, open + 1, close);
@@ -210,9 +214,12 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
         let before = code[..rs].trim_end();
         let Some(lhs) = before.strip_suffix(":=").or_else(|| before.strip_suffix('=')) else { continue };
         let Some((ns, ne)) = ident_before(code, lhs.len()) else { continue };
-        let (prefix, _) = eval_path(u, src, ps, pe);
+        let (prefix, prefix_partial) = eval_path(u, src, ps, pe);
         let auth = args[1..].iter().filter_map(|&(s, e)| auth_requirement(src.slice(s, e), src.ev(s))).collect();
-        groups.insert(src.slice(ns, ne).to_string(), (src.code_slice(rs, ms - 1).to_string(), prefix, auth));
+        groups.insert(
+            src.slice(ns, ne).to_string(),
+            (src.code_slice(rs, ms - 1).to_string(), prefix, auth, prefix_partial),
+        );
     }
     // Use(mw) per receiver name.
     let mut uses: Vec<(String, usize, Requirement)> = Vec::new();
@@ -291,22 +298,31 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
                 }
             }
         }
+        // A prefix that could not be resolved makes every route under it a
+        // suffix of the real path, however exact the leaf looks.
+        let mut prefix_partial = false;
         let mut cur = base_recv.clone();
         for _ in 0..6 {
-            let Some((parent, p, a)) = groups.get(&cur) else { break };
+            let Some((parent, p, a, q)) = groups.get(&cur) else { break };
             prefix = join_path(p, &prefix);
             auth.extend(a.iter().cloned());
+            prefix_partial |= *q;
             cur = parent.clone();
         }
-        prefix = join_path(&range_prefix(&ranges, rs), &prefix);
+        let (outer, outer_partial) = range_prefix(&ranges, rs);
+        prefix = join_path(&outer, &prefix);
+        prefix_partial |= outer_partial;
         let line = src.line(rs);
         let enclosing = f.enclosing(line).map(|s| s.name.clone());
-        let fn_prefixes =
-            enclosing.as_ref().and_then(|n| u.fn_prefixes.get(n)).cloned().unwrap_or_else(|| vec![String::new()]);
+        let fn_prefixes = enclosing
+            .as_ref()
+            .and_then(|n| u.fn_prefixes.get(n))
+            .cloned()
+            .unwrap_or_else(|| vec![(String::new(), false)]);
         for (recv_name, at, a) in &uses {
             let same_scope = enclosing.as_ref() == f.enclosing(src.line(*at)).map(|s| &s.name);
-            let in_range = ranges.iter().any(|(s, e, _)| s < at && at < e && *s < rs && rs < *e)
-                || !ranges.iter().any(|(s, e, _)| s < at && at < e);
+            let in_range = ranges.iter().any(|(s, e, _, _)| s < at && at < e && *s < rs && rs < *e)
+                || !ranges.iter().any(|(s, e, _, _)| s < at && at < e);
             if (*recv_name == base_recv || groups.get(&base_recv).is_some_and(|g| g.0 == *recv_name))
                 && same_scope
                 && in_range
@@ -324,7 +340,7 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
         }
         let framework = framework_of(f);
         let (hs, he) = *args.last().unwrap();
-        for fp in &fn_prefixes {
+        for (fp, fp_partial) in &fn_prefixes {
             let full = join_path(&join_path(fp, &prefix), &path);
             let mut op = new_op(
                 u.unit,
@@ -334,7 +350,7 @@ fn collect_routes(u: &Unit, fi: usize, h: &mut Harvest) {
                 SymbolRef { name: String::new(), evidence: src.ev(hs) },
                 src.ev_range(rs, close, None),
             );
-            op.path_partial = partial;
+            op.path_partial = partial || prefix_partial || *fp_partial;
             for a in &auth {
                 add_auth(&mut op, a.clone());
             }

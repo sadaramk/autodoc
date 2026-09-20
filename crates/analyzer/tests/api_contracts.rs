@@ -430,7 +430,9 @@ fn go_frameworks() {
             "go-chi:DELETE /api/admin/tasks/{taskID}",
             "go-chi:GET /api/tasks",
             "go-chi:POST /api/tasks",
-            "go-chi:GET /api/tasks/{taskID}"
+            "go-chi:GET /api/tasks/{taskID}",
+            // Mounted under an env-var prefix, so the path is what is known of it.
+            "go-chi:GET /reports/daily"
         ]
     );
     let create = op(&api, "go-chi:POST /api/tasks");
@@ -775,4 +777,21 @@ fn go_mux_builder_chains_register_routes() {
     assert_eq!(by("HEAD", "/{bucket}/{object}", None).handler.name, "HeadObjectHandler");
     assert_eq!(by("PUT", "/{bucket}/{object}", None).handler.name, "PutObjectHandler");
     assert_eq!(by("GET", "/", None).handler.name, "ListBucketsHandler");
+}
+
+/// A route under a prefix that could not be resolved is a suffix of the real
+/// path, not the path. The flag `eval_path` returns was kept at the leaf but
+/// discarded at every prefix site — `r.Route(os.Getenv("BASE")+"/reports", …)`
+/// produced `/reports/daily` and asserted it as exact.
+#[test]
+fn go_routes_under_an_unresolved_prefix_are_partial() {
+    let api = api_of(&fixture("api-frameworks/go-chi"));
+    let under_prefix = api.operations.iter().find(|o| o.path.ends_with("/reports/daily")).unwrap_or_else(|| {
+        panic!("route missing; have {:?}", api.operations.iter().map(|o| &o.path).collect::<Vec<_>>())
+    });
+    assert!(under_prefix.path_partial, "`{}` sits under an unresolved prefix and must say so", under_prefix.path);
+
+    // A route whose prefix is fully known stays exact.
+    let known = api.operations.iter().find(|o| o.path.contains("/tasks")).expect("the tasks routes are documented");
+    assert!(!known.path_partial, "`{}` is fully resolved and should not be marked partial", known.path);
 }
