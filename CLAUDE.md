@@ -11,6 +11,24 @@ Rust workspace (`crates/*`), a TypeScript zod mirror (`packages/ir-spec-ts`), Pl
 | Browser journeys (built release binary) | `make e2e` |
 | fmt + clippy | `docker compose run --rm lint` |
 
+**Locally, run what the change touches; let CI run the whole matrix.** The
+workspace suite links ~30 test binaries and the container shares this machine's
+memory with whatever else is running — a full `cargo test --workspace` is where
+builds get OOM-killed, and `-j 1` makes it slow rather than reliable. Prefer:
+
+```bash
+docker compose run --rm test cargo test -p autodoc-analyzer --test flows
+docker compose run --rm lint          # always cheap, always before pushing
+```
+
+CI runs fmt, clippy, the full workspace suite, the zod contract tests, Playwright
+and the example check on every push, on GitHub-hosted runners that are free and
+unlimited for this public repository. It is the gate; a local full run is not.
+
+Two things are worth doing locally before pushing regardless, because CI cannot
+tell you what they mean: `make demo-check` when analyzer or book output changes,
+and reverting your fix to confirm the new test actually fails without it.
+
 ## Critical journeys
 
 Each must pass before merge.
