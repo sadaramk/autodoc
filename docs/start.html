@@ -63,10 +63,13 @@ open docs/architecture/index.html</code></pre>
   </p>
   <pre><code>autodoc check /path/to/your/repo --out docs/architecture</code></pre>
   <p>Commit the book alongside the code it documents, and run the check on every push:</p>
-  <pre><code>- name: Architecture documentation is current
-  run: |
-    cargo build --release -p autodoc-cli
-    ./target/release/autodoc check . --out docs/architecture</code></pre>
+  <pre><code>- run: cargo install --git https://github.com/sadaramk/autodoc autodoc-cli
+- name: Architecture documentation is current
+  run: autodoc check . --out docs/architecture</code></pre>
+  <p class="meta">
+    That compiles autodoc on every run, which takes a couple of minutes. Prebuilt binaries and a
+    published action are the next thing on the list.
+  </p>
   <p>
     Committing the book does not invalidate it, and neither does a commit that changes nothing it
     describes: a book records the commit it documents rather than <code>HEAD</code>. The check goes red

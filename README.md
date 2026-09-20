@@ -33,7 +33,7 @@ Docker works too, and is how the project tests itself:
 ## Keep it true in CI
 
 ```yaml
-- run: cargo install --path crates/cli
+- run: cargo install --git https://github.com/sadaramk/autodoc autodoc-cli
 - name: Architecture documentation is current
   run: autodoc check . --out docs/architecture
 ```
