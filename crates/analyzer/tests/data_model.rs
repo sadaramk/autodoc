@@ -258,6 +258,9 @@ fn orm_models_across_frameworks() {
         vec![
             ("accounts", "Account", "sqlalchemy"),
             ("appointments", "Appointment", "jpa"),
+            // One service, two stores: the write must reach the right one.
+            ("audit_events", "AuditEvent", "spring-data-mongodb"),
+            ("audit_invoices", "AuditInvoice", "jpa"),
             ("carts", "Cart", "spring-data-mongodb"),
             ("clinics", "Clinic", "sql-ddl+jpa"),
             ("customers", "customers", "drizzle"),

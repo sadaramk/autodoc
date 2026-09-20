@@ -262,3 +262,35 @@ fn go_traces_a_request_through_a_command_bus() {
         .unwrap_or_else(|| panic!("no write in {:?}", shape(flow)));
     assert_cites(&root, write, "orders");
 }
+
+/// A service can keep different entities in different stores. The write step
+/// took the unit's first storage in enum order, so a `@Document` saved through
+/// a Mongo repository was drawn as a write to Postgres — with the real Mongo
+/// call site cited beside the wrong participant.
+#[test]
+fn a_write_is_drawn_to_the_store_that_holds_the_entity() {
+    let (_root, r) = behaviour("orm-models/two-stores");
+
+    let stores: Vec<&str> = r
+        .infrastructure
+        .iter()
+        .filter(|i| i.used_by.iter().any(|u| u == "two-stores" || u == "audit"))
+        .map(|i| i.id.as_str())
+        .collect();
+    assert!(
+        stores.contains(&"postgres") && stores.contains(&"mongodb"),
+        "the fixture should reach both stores: {stores:?}"
+    );
+
+    let flow = r
+        .flows
+        .iter()
+        .find(|f| f.id.contains("POST /audit-events"))
+        .unwrap_or_else(|| panic!("flow missing; have {:?}", r.flows.iter().map(|f| &f.id).collect::<Vec<_>>()));
+    let write = flow
+        .steps
+        .iter()
+        .find(|s| s.kind == StepKind::Write)
+        .unwrap_or_else(|| panic!("no write in {:?}", shape(flow)));
+    assert_eq!(write.to, "mongodb", "an audit event is a Mongo document, not a Postgres row");
+}

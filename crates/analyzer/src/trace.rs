@@ -881,7 +881,7 @@ impl<'a> Tracer<'a> {
                     let e = &self.data.unwrap().entities[entity];
                     steps.push(Step {
                         from: unit.to_string(),
-                        to: self.datastore_for(unit),
+                        to: self.datastore_for(unit, Some(e)),
                         kind: if write { StepKind::Write } else { StepKind::Read },
                         label: format!("{} {}", if write { "write" } else { "read" }, e.table),
                         payload: None,
@@ -1120,7 +1120,14 @@ impl<'a> Tracer<'a> {
         })
     }
 
-    fn datastore_for(&self, unit: &str) -> String {
+    /// The store a write lands in, preferring the one the entity was declared
+    /// against.
+    ///
+    /// Picking the unit's first storage in enum order drew every write to the
+    /// same place: a service with JPA on Postgres and a `@Document` saved
+    /// through a Mongo repository had its Mongo writes drawn to Postgres, with
+    /// the real Mongo call site cited beside them.
+    fn datastore_for(&self, unit: &str, entity: Option<&crate::data::Entity>) -> String {
         const DATABASES: &[&str] =
             &["postgres", "mysql", "sqlite", "mongodb", "sqlserver", "mariadb", "cockroachdb", "dynamodb", "firestore"];
         let used: Vec<&InfraSummary> = self
@@ -1128,6 +1135,20 @@ impl<'a> Tracer<'a> {
             .iter()
             .filter(|i| i.category == InfraCategory::Storage && i.used_by.iter().any(|u| u == unit))
             .collect();
+        if used.len() > 1 {
+            if let Some(source) = entity.map(|e| e.source.to_lowercase()) {
+                let wanted =
+                    ["mongo", "dynamo", "firestore", "elasticsearch", "redis"].into_iter().find(|k| source.contains(k));
+                let matches = |i: &InfraSummary| match wanted {
+                    Some(k) => i.id.contains(k),
+                    // Every other mapper declares a table in a SQL store.
+                    None => i.kind.is_sql(),
+                };
+                if let Some(i) = used.iter().find(|i| matches(i)) {
+                    return i.id.clone();
+                }
+            }
+        }
         used.iter()
             .find(|i| DATABASES.iter().any(|d| i.id.contains(d)))
             .or(used.first())
