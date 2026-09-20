@@ -1,4 +1,4 @@
-# nunki
+<h1><img src="media/mark.png" alt="" width="26" align="top"> nunki</h1>
 
 [![CI](https://github.com/sadaramk/nunki/actions/workflows/ci.yml/badge.svg)](https://github.com/sadaramk/nunki/actions/workflows/ci.yml)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
