@@ -380,9 +380,36 @@ pub fn import_package(spec: &str) -> &str {
     spec.split(['/', '.', ':']).next().unwrap_or(spec)
 }
 
+/// An image that watches, administers or fronts a datastore without being one.
+///
+/// The names match by substring, so `postgres-exporter` was documented as a
+/// PostgreSQL database and `kafka-ui` as an event bus — a Prometheus exporter
+/// and a web console drawn as the store the system depends on.
+fn is_companion_tool(name: &str) -> bool {
+    const SUFFIXES: &[&str] =
+        &["-exporter", "-ui", "-admin", "-console", "-manager", "-operator", "-backup", "-init", "-migrate"];
+    const TOOLS: &[&str] = &[
+        "pgadmin",
+        "adminer",
+        "phpmyadmin",
+        "mongo-express",
+        "redisinsight",
+        "redis-commander",
+        "kafdrop",
+        "akhq",
+        "kibana",
+        "grafana",
+        "prometheus",
+    ];
+    SUFFIXES.iter().any(|x| name.ends_with(x)) || TOOLS.iter().any(|t| name.contains(t))
+}
+
 pub fn infra_for_image(image: &str) -> Option<InfraKind> {
     let name = image.rsplit('/').next().unwrap_or(image).split(':').next().unwrap_or("").to_lowercase();
     let full = image.to_lowercase();
+    if is_companion_tool(&name) {
+        return None;
+    }
     Some(match name.as_str() {
         n if n.starts_with("postgres") || n == "postgis" || n.contains("timescale") => InfraKind::Postgres,
         "mysql" | "mariadb" => InfraKind::Mysql,
@@ -620,6 +647,12 @@ mod tests {
         assert_eq!(infra_for_image("postgres:16"), Some(InfraKind::Postgres));
         assert_eq!(infra_for_image("docker.redpanda.com/redpandadata/redpanda:v24"), Some(InfraKind::Kafka));
         assert_eq!(infra_for_image("bitnami/redis"), Some(InfraKind::Redis));
+        // A tool that watches or administers a store is not the store: these
+        // used to be documented as the database the system depends on.
+        assert_eq!(infra_for_image("prometheuscommunity/postgres-exporter"), None);
+        assert_eq!(infra_for_image("provectuslabs/kafka-ui:latest"), None);
+        assert_eq!(infra_for_image("dpage/pgadmin4"), None);
+        assert_eq!(infra_for_image("mongo-express:1.0"), None);
         assert_eq!(infra_for_image("nginx:1"), None);
     }
 }
