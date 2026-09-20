@@ -8,6 +8,40 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-09-19
+
+### Security
+
+- Repository content can no longer inject Markdown structure into the book. The
+  escaper handled `\ * _ <` but not brackets, so a route path carrying
+  `](https://…)` closed the link label the renderer had opened and left a live
+  link to a destination the repository chose in the operations table. Heading
+  text, callout titles, stat labels and table headers were interpolated with no
+  escaping at all.
+
+### Fixed
+
+- Kotlin controllers are documented the way Spring reads them. The Kotlin
+  extractor is a copy of the Java one and had drifted: a `${…}` placeholder was
+  emitted as a literal path segment and the path still called exact,
+  `@RequestMapping` without a `method` was reported as GET rather than every
+  verb, only the first of a list of verbs or paths was kept, and a `@Controller`
+  returning a view name was published as a REST operation. Kotlin writes a
+  literal `${…}` as `\${…}`, and the backslash was ending up in the path.
+- The book agrees with itself about how much of it is verified. Figure nodes
+  carry citations and were registered after the evidence page had counted them,
+  so that page reported a smaller total than the README and the manifest — the
+  bundled example said 135 of 135 while its manifest said 138 — and a stale
+  citation among them never reached the page's warning.
+
+### Internal
+
+- Eleven fixtures that were asserted at model level now also have a book built
+  for them, including every Kotlin shape, three ORM shapes, JAX-RS, Micronaut
+  and the Kubernetes topology. The information-architecture test is the only one
+  that catches a dangling figure id, a citation with no page or a broken anchor,
+  and it saw thirteen of twenty-four repositories.
+
 ## [0.2.2] - 2026-09-19
 
 A security release. Upgrade if you point autodoc at a repository you did not
@@ -170,7 +204,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/sadaramk/autodoc/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/sadaramk/autodoc/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/sadaramk/autodoc/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/sadaramk/autodoc/compare/v0.1.0...v0.2.0

@@ -69,7 +69,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "autodoc-analyzer"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "autodoc-git",
  "autodoc-ir",
@@ -94,7 +94,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-book"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "autodoc-analyzer",
  "autodoc-git",
@@ -109,7 +109,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-cli"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "anyhow",
  "autodoc-analyzer",
@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-git"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "schemars",
  "serde",
@@ -139,7 +139,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-ir"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "schemars",
  "serde",
@@ -150,7 +150,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-mcp"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "autodoc-analyzer",
  "autodoc-book",
@@ -166,7 +166,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-renderer"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "autodoc-analyzer",
  "autodoc-ir",
@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "autodoc-validator"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "autodoc-git",
  "autodoc-ir",
