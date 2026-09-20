@@ -8,6 +8,39 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-09-19
+
+Claims the analyzer could not support, found by reviewing the analyzer against
+real repositories. Each one produced confident output rather than missing
+output, which is the failure this project exists to avoid.
+
+### Fixed
+
+- A write is drawn to the store that holds the entity. The step took the unit's
+  first storage in enum order, so a service with JPA on Postgres and a
+  `@Document` saved through a Mongo repository had its Mongo writes drawn to
+  Postgres, with the real Mongo call site cited beside the wrong participant.
+- A unit at the repository root no longer answers to every service's name. Its
+  configuration prefix is empty and every path starts with the empty string, so
+  it collected every `spring.application.name` below it as an alias — and a
+  `@FeignClient` naming any of them resolved to the root rather than the service
+  that configures it.
+- A route under a prefix that could not be resolved is reported as partial.
+  `eval_path` already said when it could not resolve a path, and the flag was
+  kept at the leaf and dropped at all three prefix sites.
+- A drizzle column survives a builder chain wrapped by Prettier: the loop read
+  one physical line, so a primary key became an ordinary nullable column, a
+  required column became optional, and a foreign key disappeared.
+- An exporter, console or admin UI is no longer mistaken for the store it
+  watches. Image names match by substring, so `postgres-exporter` was documented
+  as a PostgreSQL database and `kafka-ui` as an event bus.
+- Every operation and model has its own anchor. `slug` is many-to-one, so
+  `/user-profile` and `/user_profile` shared one heading id and every link went
+  to the first; a model whose anchor collided was dropped from its page while
+  the links to it remained.
+- A source file that cannot be read as text is named in the scan notes and on
+  the evidence page, rather than disappearing with its routes and entities.
+
 ## [0.2.3] - 2026-09-19
 
 ### Security
@@ -204,7 +237,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/sadaramk/autodoc/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/sadaramk/autodoc/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/sadaramk/autodoc/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/sadaramk/autodoc/compare/v0.2.0...v0.2.1
