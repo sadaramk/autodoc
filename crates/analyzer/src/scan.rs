@@ -266,6 +266,10 @@ pub struct ScanStats {
     pub symbols: usize,
     pub files_with_parse_errors: usize,
     pub languages: BTreeMap<String, LangStats>,
+    /// Source files recognised by language but with no grammar to read them,
+    /// so nothing they declare reaches the book.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub unparsed: BTreeMap<String, usize>,
     pub duration_ms: u64,
     pub truncated: bool,
 }
@@ -392,12 +396,29 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         skipped_test_dirs,
         skipped_test_files,
         oversized,
+        unparsed,
     } = walk(&root, opts);
     if skipped_test_dirs + skipped_test_files > 0 {
         notes.push(format!(
             "excluded {skipped_test_dirs} test/example/tooling director{} and {skipped_test_files} test file(s); pass include_tests to scan them",
             if skipped_test_dirs == 1 { "y" } else { "ies" }
         ));
+    }
+    if !unparsed.is_empty() {
+        let parsed = source_paths.len();
+        let skipped: usize = unparsed.values().sum();
+        let census: Vec<String> = unparsed.iter().map(|(l, n)| format!("{n} {l}")).collect();
+        // A repository that is mostly a language with no grammar produces a
+        // book about the remainder, which reads as a book about the system.
+        if skipped > parsed {
+            notes.push(format!(
+                "most of this repository was not read: {} file(s) parsed, {skipped} not ({}). What those files declare — services, routes, entities — is absent, not missing from the code",
+                parsed,
+                census.join(", ")
+            ));
+        } else {
+            notes.push(format!("{skipped} file(s) have no grammar and were not read ({})", census.join(", ")));
+        }
     }
     if !oversized.is_empty() {
         let shown: Vec<&str> = oversized.iter().take(5).filter_map(|p| p.to_str()).collect();
@@ -481,6 +502,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         symbols: 0,
         files_with_parse_errors: 0,
         languages: BTreeMap::new(),
+        unparsed: unparsed.clone(),
         duration_ms: 0,
         truncated,
     };
@@ -714,6 +736,8 @@ struct Walked {
     skipped_test_files: usize,
     /// Source files past `max_file_bytes`, or whose size could not be read.
     oversized: Vec<PathBuf>,
+    /// Files of a language the scanner recognises but cannot parse.
+    unparsed: BTreeMap<String, usize>,
 }
 
 fn walk(root: &Path, opts: &ScanOptions) -> Walked {
@@ -721,6 +745,7 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
     let mut sources = Vec::new();
     let mut truncated = false;
     let mut oversized: Vec<PathBuf> = Vec::new();
+    let mut unparsed: BTreeMap<String, usize> = BTreeMap::new();
     let skipped_dirs = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let mut skipped_files = 0;
     let counter = skipped_dirs.clone();
@@ -793,7 +818,14 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
             skipped_files += 1;
             continue;
         }
-        let Some((grammar, language)) = Grammar::for_path(rel) else { continue };
+        let Some((grammar, language)) = Grammar::for_path(rel) else {
+            // Recognised, unreadable: counted so the book can say how much of
+            // the repository it never looked at.
+            if let Some(l) = rel.extension().and_then(|e| e.to_str()).and_then(Language::unparsed_for_extension) {
+                *unparsed.entry(l.display().to_string()).or_default() += 1;
+            }
+            continue;
+        };
         // Silently dropping a source file makes the documentation confidently
         // incomplete, so record what was left out and report it.
         if entry.metadata().map(|m| m.len() > opts.max_file_bytes).unwrap_or(true) {
@@ -814,6 +846,7 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
         skipped_test_dirs: skipped_dirs.load(std::sync::atomic::Ordering::Relaxed),
         skipped_test_files: skipped_files,
         oversized,
+        unparsed,
     }
 }
 

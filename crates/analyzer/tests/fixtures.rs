@@ -269,3 +269,28 @@ fn unreadable_source_files_are_reported_not_dropped_in_silence() {
     // The readable files are still documented.
     assert!(r.stats.files >= 1, "the rest of the repository is still scanned");
 }
+
+/// A repository written mostly in a language with no grammar still produces a
+/// book, and that book used to read as though it described the system. Discourse
+/// (12,280 Ruby files) came out as "one deployable written mainly in JavaScript,
+/// TypeScript" with not one Ruby citation and nothing anywhere saying so.
+#[test]
+fn a_repository_we_mostly_cannot_read_says_so() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path();
+    std::fs::write(repo.join("package.json"), r#"{"name":"app","version":"1.0.0"}"#).unwrap();
+    std::fs::write(repo.join("build.js"), "console.log('a small helper');\n").unwrap();
+    for i in 0..8 {
+        std::fs::write(repo.join(format!("app_{i}.rb")), "class Thing\n  def call; end\nend\n").unwrap();
+    }
+
+    let r = scan(repo, &ScanOptions::default()).unwrap();
+    assert_eq!(r.stats.unparsed.get("Ruby").copied(), Some(8), "the census counts what it could not read");
+
+    let note = r
+        .notes
+        .iter()
+        .find(|n| n.contains("most of this repository was not read"))
+        .unwrap_or_else(|| panic!("nothing warned that the book covers a fraction; notes: {:?}", r.notes));
+    assert!(note.contains("Ruby"), "the note should name the language: {note}");
+}
