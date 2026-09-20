@@ -136,9 +136,17 @@ finding became a fix and a regression fixture. The results, and the heuristics b
 
 ## The name
 
-Nunki is the oldest star name still in use — Babylonian in origin, carried down through four
-thousand years of astronomical tables. A name that survived its own chain of transmission seemed
-right for a tool whose argument is that a claim should be traceable back to its source.
+Nunki is the star σ Sagittarii. In Sumerian cuneiform **NUN.KI** writes the name of Eridu, the holy
+city on the Euphrates, and `MUL.NUNKI` — "star of the city of Eridu" — appears in Babylonian star
+lists. The IAU made *Nunki* the star's official name in 2016.
+
+It is widely called the oldest star name still in use. The truth is better: the name was lost,
+recovered from tablets by archaeologists, and popularised by R. H. Allen in 1899 — whose
+Mesopotamian etymologies are not considered reliable — and it is now thought the original name
+referred to an asterism over in Vela, not to this star at all.
+
+A claim repeated confidently for a century, traceable to a single popular source, and partly wrong
+once you follow it back. That is the failure this project exists to catch, so the name earns itself.
 
 ## Documentation
 

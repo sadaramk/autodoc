@@ -15,9 +15,12 @@ All notable changes to this project are recorded here. The format follows
 - **Renamed from `autodoc` to `nunki`.** "autodoc" is the name of Sphinx's
   best-known extension and a generic term for a whole category of tools, so the
   project was unfindable by name — the one thing a name has to do. Nunki is the
-  oldest star name still in use, Babylonian in origin, carried down through four
-  thousand years of astronomical tables: a name that survived its own chain of
-  transmission, for a tool about tracing claims back to their source.
+  star σ Sagittarii; in Sumerian cuneiform NUN.KI writes the name of Eridu, and
+  the IAU made it the star's official name in 2016. It is widely called the
+  oldest star name still in use, which turns out to be a claim worth checking:
+  the name was lost, recovered from tablets, popularised in 1899 by a source
+  whose Mesopotamian etymologies are unreliable, and probably belonged to a
+  different asterism. A fitting name for a tool about following claims back.
 
   The binary, the crates, the config file (`nunki.toml`), the MCP tool names and
   the `NUNKI_*` environment variables all follow. GitHub redirects the old
