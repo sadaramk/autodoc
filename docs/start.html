@@ -75,15 +75,20 @@ open docs/architecture/index.html</code></pre>
   </p>
   <p class="meta">
     The
-    <a href="https://github.com/sadaramk/autodoc/blob/main/examples/polyglot-shop/diagrams/containers.drawio.csv">exact
-    file</a> behind that screenshot. Paste it into draw.io to get the same diagram.
+    <a href="https://github.com/sadaramk/autodoc/blob/main/examples/polyglot-shop/diagrams/containers.drawio">exact
+    file</a> behind that screenshot. Open it in draw.io to get the same diagram.
   </p>
   <p>
-    The shapes arrive with the boundaries, sizes and positions autodoc already worked out, so the
-    diagram looks like the figure it came from rather than a knot for draw.io to untangle. Every shape
-    carries its <code>file:line</code> as shape data (right-click → Edit Data) and links to the line it
-    came from, so a diagram pasted into a slide can still be checked. Edge labels are placed by draw.io
-    and may want nudging.
+    The boundaries, sizes, positions, edge routes and label placements are the ones autodoc worked out
+    for the book, so the diagram opens looking like the figure it came from rather than a knot for
+    draw.io to untangle. Every shape carries its <code>file:line</code> as shape data (right-click →
+    Edit Data) and links to the line it came from, so a diagram pasted into a slide can still be
+    checked.
+  </p>
+  <p class="meta">
+    <code>--format drawio-csv</code> writes a CSV for <em>Extras → Insert → Advanced → CSV</em>
+    instead, to merge into a drawing you already have. CSV cannot express a route or a label position,
+    so draw.io lays that one out itself and it reads less well.
   </p>
   <p>
     One way, deliberately: reading a drawing back would mean deciding whether the file or the source is
@@ -97,13 +102,14 @@ open docs/architecture/index.html</code></pre>
   </p>
   <pre><code>autodoc check /path/to/your/repo --out docs/architecture</code></pre>
   <p>Commit the book alongside the code it documents, and run the check on every push:</p>
-  <pre><code>- uses: sadaramk/autodoc@v0.2.6
+  <pre><code>- uses: sadaramk/autodoc@v0.2.7
   with:
     out: docs/architecture</code></pre>
   <p class="meta">
     The action downloads a prebuilt binary for the runner and verifies it against the checksum
     published with the release, so nothing is compiled. <code>command</code> takes any subcommand
-    (<code>check</code> by default) and <code>args</code> is appended verbatim.
+    (<code>check</code> by default) and <code>args</code> is appended verbatim. Pinning the action
+    pins the binary — <code>@v0.2.7</code> runs that build; <code>@v0</code> tracks the newest 0.x.
   </p>
   <p>
     Committing the book does not invalidate it, and neither does a commit that changes nothing it
@@ -138,7 +144,7 @@ open docs/architecture/index.html</code></pre>
     Markdown by default so it can be posted as a comment, <code>--json</code> for a bot, and
     <code>--exit-code</code> to make an architecture change require a review:
   </p>
-  <pre><code>- uses: sadaramk/autodoc@v0.2.6
+  <pre><code>- uses: sadaramk/autodoc@v0.2.7
   with:
     command: diff
     args: --base ${{ github.event.pull_request.base.sha }}</code></pre>

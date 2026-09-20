@@ -227,6 +227,166 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     out
 }
 
+/// XML escaping for an attribute value.
+fn xml(v: &str) -> String {
+    let mut out = String::with_capacity(v.len());
+    for c in v.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\n' | '\r' => out.push(' '),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
+/// Point halfway along a polyline, by length rather than by index: the middle
+/// vertex of an L-shaped route is its corner, not its middle.
+fn midpoint(points: &[(f64, f64)]) -> (f64, f64) {
+    if points.is_empty() {
+        return (0.0, 0.0);
+    }
+    if points.len() == 1 {
+        return points[0];
+    }
+    let seg: Vec<f64> =
+        points.windows(2).map(|w| ((w[1].0 - w[0].0).powi(2) + (w[1].1 - w[0].1).powi(2)).sqrt()).collect();
+    let half = seg.iter().sum::<f64>() / 2.0;
+    let mut run = 0.0;
+    for (i, len) in seg.iter().enumerate() {
+        if run + len >= half && *len > 0.0 {
+            let t = (half - run) / len;
+            let (a, b) = (points[i], points[i + 1]);
+            return (a.0 + (b.0 - a.0) * t, a.1 + (b.1 - a.1) * t);
+        }
+        run += len;
+    }
+    *points.last().unwrap()
+}
+
+/// The diagram as a draw.io file: `.drawio` XML, opened by double-clicking.
+///
+/// The CSV import cannot carry a route or a label position, so draw.io re-routes
+/// every edge and places every label at its own midpoint — which sends
+/// connectors through boxes and prints edge labels over node names. This format
+/// carries the layout the book already computed, so the file opens looking like
+/// the figure it came from.
+pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -> String {
+    let l = layout::layout(ir, crate::svg::title_metrics(ir));
+    let at: BTreeMap<&str, Rect> = l
+        .nodes
+        .iter()
+        .map(|n| (n.id.as_str(), n.rect))
+        .chain(l.containers.iter().map(|c| (c.id.as_str(), c.rect)))
+        .collect();
+
+    let mut out = String::new();
+    out.push_str(&format!(
+        "<mxfile host=\"autodoc\" agent=\"autodoc {}\">\n  <diagram name=\"{}\">\n",
+        env!("CARGO_PKG_VERSION"),
+        xml(&ir.title)
+    ));
+    out.push_str(&format!(
+        "    <mxGraphModel dx=\"{}\" dy=\"{}\" grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" \
+         connect=\"1\" arrows=\"1\" fold=\"1\" page=\"1\" pageScale=\"1\" math=\"0\" shadow=\"0\">\n      \
+         <root>\n        <mxCell id=\"0\" />\n        <mxCell id=\"1\" parent=\"0\" />\n",
+        l.width.round() as i64,
+        l.height.round() as i64
+    ));
+
+    let cell = |id: &str| format!("autodoc-{}", safe_id(id));
+    for c in &ir.containers {
+        let r = at.get(c.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 240.0, h: 160.0 });
+        out.push_str(&format!(
+            "        <mxCell id=\"{}\" value=\"{}\" style=\"rounded=0;html=1;fillColor=none;\
+             strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;\" \
+             vertex=\"1\" parent=\"1\">\n          <mxGeometry x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" \
+             as=\"geometry\" />\n        </mxCell>\n",
+            cell(&c.id),
+            xml(&c.label),
+            r.x.round() as i64,
+            r.y.round() as i64,
+            r.w.round() as i64,
+            r.h.round() as i64
+        ));
+    }
+
+    for n in &ir.nodes {
+        let r = at.get(n.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 160.0, h: 60.0 });
+        let parent = n.container_id.as_deref().filter(|c| at.contains_key(c));
+        let origin = parent.and_then(|c| at.get(c)).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 0.0, h: 0.0 });
+        let ev = n.evidence.as_ref();
+        // An `<object>` rather than a bare cell: its attributes are the shape's
+        // data, which is where the evidence has to live to survive editing.
+        let mut attrs = format!("label=\"{}\"", xml(&n.label));
+        if let Some(t) = n.tech_stack.as_deref() {
+            attrs.push_str(&format!(" tech=\"{}\"", xml(t)));
+        }
+        if let Some(e) = ev {
+            attrs.push_str(&format!(" evidence=\"{}\"", xml(&evidence_ref(e))));
+        }
+        if let Some(url) = ev.and_then(permalink) {
+            attrs.push_str(&format!(" link=\"{}\"", xml(&url)));
+        }
+        out.push_str(&format!(
+            "        <object {attrs} id=\"{}\">\n          <mxCell style=\"{}\" vertex=\"1\" parent=\"{}\">\n            \
+             <mxGeometry x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" as=\"geometry\" />\n          </mxCell>\n        \
+             </object>\n",
+            cell(&n.id),
+            xml(&shape_style(n.is_key_focal_point)),
+            parent.map(cell).unwrap_or_else(|| "1".into()),
+            (r.x - origin.x).round() as i64,
+            (r.y - origin.y).round() as i64,
+            r.w.round() as i64,
+            r.h.round() as i64
+        ));
+    }
+
+    for (i, route) in l.edges.iter().enumerate() {
+        let Some(e) = ir.edges.iter().find(|e| e.id == route.id) else { continue };
+        let label = route.label.as_ref().map(|b| b.text.clone()).or_else(|| e.label.clone()).unwrap_or_default();
+        // The label goes on the edge so it travels with it, offset from where
+        // draw.io would otherwise put it — the midpoint of the route.
+        let mid = midpoint(&route.points);
+        let offset = route
+            .label
+            .as_ref()
+            .map(|b| ((b.rect.cx() - mid.0).round() as i64, (b.rect.cy() - mid.1).round() as i64))
+            .unwrap_or((0, 0));
+        out.push_str(&format!(
+            "        <mxCell id=\"autodoc-e{i}\" value=\"{}\" style=\"{}\" edge=\"1\" parent=\"1\" \
+             source=\"{}\" target=\"{}\">\n          <mxGeometry relative=\"1\" as=\"geometry\">\n",
+            xml(&label),
+            xml(&edge_style(e)),
+            cell(&route.source),
+            cell(&route.target)
+        ));
+        // Only the turns: mxGraph works out where the line meets each box.
+        let inner = if route.points.len() > 2 { &route.points[1..route.points.len() - 1] } else { &[][..] };
+        if !inner.is_empty() {
+            out.push_str("            <Array as=\"points\">\n");
+            for (x, y) in inner {
+                out.push_str(&format!(
+                    "              <mxPoint x=\"{}\" y=\"{}\" />\n",
+                    x.round() as i64,
+                    y.round() as i64
+                ));
+            }
+            out.push_str("            </Array>\n");
+        }
+        out.push_str(&format!(
+            "            <mxPoint as=\"offset\" x=\"{}\" y=\"{}\" />\n          </mxGeometry>\n        </mxCell>\n",
+            offset.0, offset.1
+        ));
+    }
+
+    out.push_str("      </root>\n    </mxGraphModel>\n  </diagram>\n</mxfile>\n");
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

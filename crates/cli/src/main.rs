@@ -50,20 +50,26 @@ enum FormatArg {
 
 #[derive(Clone, Copy, ValueEnum)]
 enum ExportFormat {
-    /// CSV for draw.io's Extras → Insert → Advanced → CSV.
+    /// A draw.io file, carrying the book's layout: open it directly.
     Drawio,
+    /// CSV for draw.io's Extras → Insert → Advanced → CSV, to merge into an
+    /// existing drawing. draw.io routes the edges itself, so the result is
+    /// laid out less well than the `drawio` file.
+    DrawioCsv,
 }
 
 impl ExportFormat {
     fn extension(self) -> &'static str {
         match self {
-            ExportFormat::Drawio => "drawio.csv",
+            ExportFormat::Drawio => "drawio",
+            ExportFormat::DrawioCsv => "drawio.csv",
         }
     }
 
     fn hint(self) -> &'static str {
         match self {
-            ExportFormat::Drawio => "draw.io: Extras → Insert → Advanced → CSV",
+            ExportFormat::Drawio => "open with draw.io",
+            ExportFormat::DrawioCsv => "draw.io: Extras → Insert → Advanced → CSV",
         }
     }
 }
@@ -472,7 +478,8 @@ fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option
         (known && forge).then(|| ctx.permalink(&e.file_path, e.start_line, e.end_line, commit.as_deref()))
     };
     let body = match format {
-        ExportFormat::Drawio => autodoc_renderer::drawio::to_csv(&diagram, &link),
+        ExportFormat::Drawio => autodoc_renderer::drawio::to_xml(&diagram, &link),
+        ExportFormat::DrawioCsv => autodoc_renderer::drawio::to_csv(&diagram, &link),
     };
     match output.as_deref().map(|p| p.to_string_lossy().into_owned()) {
         Some(ref o) if o == "-" => print!("{body}"),

@@ -21,8 +21,10 @@ inputs:
     default: ""
   version:
     description: >-
-      Release to download, such as v0.2.5. "latest" resolves the newest release.
-    default: latest
+      Release to download, such as v0.2.7. Left empty, the action uses the
+      version it was pinned to (`uses: …/autodoc@v0.2.7`), falling back to the
+      newest release when the ref is a branch or a moving major tag.
+    default: ""
   token:
     description: Token used for the release API and download, to avoid anonymous rate limits.
     default: ${{ github.token }}

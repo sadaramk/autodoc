@@ -35,10 +35,13 @@ Docker works too, and is how the project tests itself:
 ## Keep it true in CI
 
 ```yaml
-- uses: sadaramk/autodoc@v0.2.6
+- uses: sadaramk/autodoc@v0.2.7
   with:
     out: docs/architecture
 ```
+
+Pinning the action pins the binary: `@v0.2.7` runs that build, verified against the checksum
+published with it. `@v0` tracks the newest 0.x instead.
 
 Exits 1 when regenerating would change the book, or when a citation no longer matches the code.
 Committing the book does not invalidate it, and neither does a commit that changes nothing it
@@ -47,7 +50,7 @@ describes: a book records the commit it documents rather than `HEAD`.
 ## Review what a change does to the architecture
 
 ```yaml
-- uses: sadaramk/autodoc@v0.2.6
+- uses: sadaramk/autodoc@v0.2.7
   with:
     command: diff
     args: --base ${{ github.event.pull_request.base.sha }}
@@ -68,19 +71,23 @@ between them. Markdown by default for a PR comment, `--json` for a bot, `--exit-
 
 ```bash
 autodoc export docs/architecture/diagrams/containers.ir.json
-# → containers.drawio.csv · draw.io: Extras → Insert → Advanced → CSV
+# → containers.drawio · open with draw.io
 ```
 
 ![The exported containers diagram open in draw.io](media/drawio.png)
 
-*[That exact file](examples/polyglot-shop/diagrams/containers.drawio.csv) — paste it into draw.io to
-get this.*
+*[That exact file](examples/polyglot-shop/diagrams/containers.drawio) — open it in draw.io to get
+this.*
 
-Real shapes you can move, with the boundaries, sizes and positions autodoc already worked out, so it
-arrives looking like the figure it came from rather than as a knot for draw.io to untangle. The
-evidence travels too: every shape carries its `file:line` as shape data (right-click → Edit Data) and
-links to the line it came from, so a diagram pasted into a slide can still be checked. Edge labels
-are placed by draw.io and may want nudging.
+Real shapes you can move. The boundaries, sizes, positions, edge routes and label placements are the
+ones autodoc worked out for the book, so the diagram opens looking like the figure it came from
+rather than as a knot for draw.io to untangle. The evidence travels too: every shape carries its
+`file:line` as shape data (right-click → Edit Data) and links to the line it came from, so a diagram
+pasted into a slide can still be checked.
+
+`--format drawio-csv` writes a CSV for draw.io's *Extras → Insert → Advanced → CSV* instead, to merge
+into a drawing you already have. CSV cannot express a route or a label position, so draw.io lays that
+one out itself and it reads less well.
 
 One way, deliberately: the source stays authoritative about the architecture, and the drawing is
 yours.
@@ -114,7 +121,7 @@ Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
 | `autodoc generate [PATH] [--out DIR] [--include-tests] [--json]` | Write the architecture book. Rewrites only changed files; keeps hand-edited diagram IR. |
 | `autodoc check [PATH] [--out DIR] [--json]` | Exit 1 when regenerating would change the book or a citation is stale. |
 | `autodoc diff [PATH] [--base REV] [--head REV] [--json] [--exit-code]` | What changed architecturally between two revisions, as a PR comment. |
-| `autodoc export IR [--format drawio] [-o FILE] [--repo PATH]` | Write a diagram in another tool's import format, evidence included. |
+| `autodoc export IR [--format drawio\|drawio-csv] [-o FILE] [--repo PATH]` | Write a diagram for draw.io, carrying the book's layout and the evidence. |
 | `autodoc verify FILE:LINE[-END]... [--repo PATH] [--commit SHA]` | Check evidence for drift. Exit 1 unless all verified. |
 | `autodoc schema` | Print the DiagramIR JSON Schema. |
 | `autodoc serve` | MCP server over stdio. |

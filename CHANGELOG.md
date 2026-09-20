@@ -8,6 +8,30 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.7] - 2026-09-20
+
+### Fixed
+
+- Pinning the action pins the binary. `uses: sadaramk/autodoc@v0.2.6` downloaded
+  whatever the newest release was, so a workflow that pinned a version did not
+  get it — the wrong default for any tool, and the wrong one twice over for this
+  one. An exact `vX.Y.Z` ref now selects that release; a moving tag or a branch
+  still takes the newest.
+
+### Added
+
+- A moving major tag, so `uses: sadaramk/autodoc@v0` tracks the newest 0.x. The
+  release moves it.
+
+### Added
+
+- `autodoc export --format drawio` writes a `.drawio` file rather than a CSV,
+  and is the default. CSV cannot express an edge route or a label position, so
+  draw.io re-routed every connector through the boxes and dropped every label on
+  its own midpoint, printing them over the node names. The file carries the
+  routes and label placements the book already computed. `--format drawio-csv`
+  still writes the CSV, for merging into an existing drawing.
+
 ### Fixed
 
 - The draw.io export places shapes where autodoc's own layout puts them, with
@@ -313,7 +337,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.7...HEAD
+[0.2.7]: https://github.com/sadaramk/autodoc/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/sadaramk/autodoc/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/sadaramk/autodoc/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/sadaramk/autodoc/compare/v0.2.3...v0.2.4

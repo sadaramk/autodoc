@@ -160,3 +160,20 @@ jobs:
           files: dist/*
           body_path: notes.md
           fail_on_unmatched_files: true
+
+      # A moving major tag is the convention for an action: `uses: …/autodoc@v0`
+      # tracks the newest 0.x without editing every workflow on each release.
+      # Pinning an exact tag still pins the binary — the entrypoint only treats a
+      # full vX.Y.Z ref as a version, so `@v0` resolves to the newest release.
+      - name: Move the major tag
+        run: |
+          set -euo pipefail
+          major="${TAG%%.*}"
+          if [ "$major" = "$TAG" ]; then
+            echo "$TAG is not vX.Y.Z; not moving a major tag" >&2
+            exit 0
+          fi
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag -f "$major" "$TAG"
+          git push -f origin "refs/tags/$major"

@@ -562,7 +562,7 @@ fn journey_export_carries_evidence_into_drawio() {
     assert!(o.status.success(), "{}", text(&o));
 
     let ir = out.join("diagrams/containers.ir.json");
-    let o = autodoc(&["export", ir.to_str().unwrap(), "--output", "-"], &repo);
+    let o = autodoc(&["export", ir.to_str().unwrap(), "--format", "drawio-csv", "--output", "-"], &repo);
     let csv = String::from_utf8_lossy(&o.stdout).to_string();
     assert!(o.status.success(), "{}", text(&o));
 
@@ -626,7 +626,14 @@ fn journey_export_carries_evidence_into_drawio() {
     let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &plain);
     assert!(o.status.success(), "{}", text(&o));
     let o = autodoc(
-        &["export", plain.join("docs/architecture/diagrams/containers.ir.json").to_str().unwrap(), "--output", "-"],
+        &[
+            "export",
+            plain.join("docs/architecture/diagrams/containers.ir.json").to_str().unwrap(),
+            "--format",
+            "drawio-csv",
+            "--output",
+            "-",
+        ],
         &plain,
     );
     let out2 = text(&o);
@@ -637,7 +644,55 @@ fn journey_export_carries_evidence_into_drawio() {
     assert!(!row.contains("http"), "no link is better than a broken one: {row}");
 
     // The default output path sits beside the IR, named for the tool.
-    let o = autodoc(&["export", ir.to_str().unwrap()], &repo);
+    let o = autodoc(&["export", ir.to_str().unwrap(), "--format", "drawio-csv"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     assert!(out.join("diagrams/containers.drawio.csv").is_file(), "{}", text(&o));
+}
+
+/// CSV cannot carry a route or a label position, so draw.io re-routes every edge
+/// and drops every label on its own midpoint: connectors cut through boxes and
+/// edge labels print over node names. The `.drawio` file carries the layout the
+/// book already computed, which is why it is the default.
+#[test]
+fn journey_the_drawio_file_carries_the_books_layout() {
+    let (_tmp, repo) = shop_repo();
+    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    let ir = repo.join("docs/architecture/diagrams/containers.ir.json");
+
+    let o = autodoc(&["export", ir.to_str().unwrap(), "--output", "-"], &repo);
+    let xml = String::from_utf8_lossy(&o.stdout).to_string();
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(xml.starts_with("<mxfile"), "a draw.io file: {}", &xml[..xml.len().min(80)]);
+
+    // Routes and label positions: without these draw.io lays the diagram out
+    // itself, which is what made the CSV export unusable.
+    let waypoints = xml.matches("<Array as=\"points\">").count();
+    let offsets = xml.matches("as=\"offset\"").count();
+    assert!(waypoints >= 5, "edges carry their route, found {waypoints}:\n{xml}");
+    assert!(offsets >= 5, "labels carry their position, found {offsets}");
+
+    // Evidence rides on the shape, as an `<object>` attribute rather than a
+    // style, so it survives someone restyling the diagram.
+    assert!(xml.contains("evidence=\"api-gateway/src/server.ts:"), "{xml}");
+    assert!(xml.contains("link=\"https://github.com/acme/polyglot-shop/blob/"), "{xml}");
+    // Boundaries are real parents, so dragging one moves what it contains.
+    assert!(xml.contains("parent=\"autodoc-platform\""), "{xml}");
+    // `&` in a label has to be escaped or the file will not parse.
+    assert!(!xml.contains("reads & writes"), "raw ampersand in XML:\n{xml}");
+
+    // Well-formed: an unescaped character anywhere makes draw.io refuse the file.
+    let mut depth = 0i32;
+    for tag in xml.split('<').skip(1) {
+        if tag.starts_with('/') {
+            depth -= 1;
+        } else if !tag.starts_with('?') && !tag.contains("/>") {
+            depth += 1;
+        }
+    }
+    assert_eq!(depth, 0, "tags balance");
+
+    let o = autodoc(&["export", ir.to_str().unwrap()], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(repo.join("docs/architecture/diagrams/containers.drawio").is_file(), "{}", text(&o));
 }

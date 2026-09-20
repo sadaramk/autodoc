@@ -7,7 +7,19 @@
 set -euo pipefail
 
 REPO="${AUTODOC_ACTION_REPO:-sadaramk/autodoc}"
-version="${AUTODOC_VERSION:-latest}"
+version="${AUTODOC_VERSION:-}"
+
+# Pinning the action has to pin the binary. `uses: …/autodoc@v0.2.6` sets
+# GITHUB_ACTION_REF to `v0.2.6`, and a workflow that pinned that ref expects
+# that build — not whatever was released since. Only an exact vX.Y.Z is used:
+# a moving major tag (`@v0`) or a branch (`@main`) names no single release, so
+# those fall through to the newest one.
+if [ -z "$version" ]; then
+  case "${GITHUB_ACTION_REF:-}" in
+    v[0-9]*.[0-9]*.[0-9]*) version="$GITHUB_ACTION_REF" ;;
+    *) version=latest ;;
+  esac
+fi
 
 case "$(uname -s)" in
   Linux) os=unknown-linux-musl ;;
