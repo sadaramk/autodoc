@@ -1,0 +1,47 @@
+name: autodoc
+description: Generate or check verifiable architecture documentation from source code
+branding:
+  icon: book-open
+  color: gray-dark
+
+inputs:
+  command:
+    description: >-
+      autodoc subcommand to run: check (fail when the book is out of date or
+      cites stale code), generate, analyze, or verify.
+    default: check
+  path:
+    description: Repository to document.
+    default: "."
+  out:
+    description: Book directory. Defaults to whatever autodoc.toml says.
+    default: ""
+  args:
+    description: Extra arguments, appended verbatim.
+    default: ""
+  version:
+    description: >-
+      Release to download, such as v0.2.5. "latest" resolves the newest release.
+    default: latest
+  token:
+    description: Token used for the release API and download, to avoid anonymous rate limits.
+    default: ${{ github.token }}
+
+outputs:
+  binary:
+    description: Path to the autodoc binary that ran, for further steps.
+    value: ${{ steps.run.outputs.binary }}
+
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        AUTODOC_VERSION: ${{ inputs.version }}
+        AUTODOC_COMMAND: ${{ inputs.command }}
+        AUTODOC_PATH: ${{ inputs.path }}
+        AUTODOC_OUT: ${{ inputs.out }}
+        AUTODOC_ARGS: ${{ inputs.args }}
+        GH_TOKEN: ${{ inputs.token }}
+      run: bash "$GITHUB_ACTION_PATH/scripts/action-entrypoint.sh"

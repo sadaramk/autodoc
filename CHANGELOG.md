@@ -8,6 +8,43 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-09-20
+
+Two themes: the book no longer claims more than it read, and installing autodoc
+no longer needs a Rust toolchain.
+
+### Added
+
+- Prebuilt binaries for every tag: Linux (musl, static) and macOS on x86_64 and
+  arm64, and Windows on x86_64, with a `SHA256SUMS` beside them. Each target
+  generates and checks a book before it is published.
+- `curl … /releases/latest/download/install.sh | sh` installs one, verifying the
+  published checksum first.
+- A composite GitHub Action, so CI is `uses: sadaramk/autodoc@v0.2.5` instead of
+  a two-minute `cargo install`. It downloads the binary for the runner, verifies
+  the checksum, and runs any subcommand.
+- The API reference names the routes it does not document, with the reason and a
+  citation. Spring PetClinic has seventeen mappings and two REST operations; the
+  book documented the two under "the contract of every operation this service
+  serves" and said nothing about the other fifteen server-rendered views.
+- A language census in the scan notes: source files recognised by language but
+  with no grammar to read them are counted by language, and a repository that
+  was mostly unreadable says so before anything else.
+
+### Fixed
+
+- Go: a bare reassignment is no longer treated as a constant a path can resolve
+  to. `p = "/"` inside one function made every `.Post(p, …)` in the module look
+  like a route at `/`, so caddy's book documented one operation — `POST /`,
+  "handled by `int64`" — which is an outbound FastCGI client call.
+- An empty repository is refused rather than documented. Pointed at a directory
+  with no manifest, no container file and no source in a language autodoc reads,
+  it produced a six-page book around an empty diagram and exited 0, which is
+  what a mistyped path or a failed checkout looks like.
+- A failure is reported once. `EngineError` and `BookError` derived their message
+  from an inner error that was also their source, so `cannot scan …` printed
+  twice.
+
 ## [0.2.4] - 2026-09-19
 
 Claims the analyzer could not support, found by reviewing the analyzer against
@@ -237,7 +274,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.5...HEAD
+[0.2.5]: https://github.com/sadaramk/autodoc/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/sadaramk/autodoc/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/sadaramk/autodoc/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/sadaramk/autodoc/compare/v0.2.1...v0.2.2

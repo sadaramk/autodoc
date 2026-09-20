@@ -82,10 +82,8 @@
   </p>
 
   <h2>Run it on your own repository</h2>
-  <pre><code>git clone https://github.com/sadaramk/autodoc
-cd autodoc
-cargo build --release -p autodoc-cli
-./target/release/autodoc generate /path/to/your/repo --out docs/architecture
+  <pre><code>curl -fsSL https://github.com/sadaramk/autodoc/releases/latest/download/install.sh | sh
+autodoc generate /path/to/your/repo --out docs/architecture
 open docs/architecture/index.html</code></pre>
   <p>
     The book is self-contained and offline: one HTML file, a Markdown mirror for GitHub, <code>llms.txt</code>

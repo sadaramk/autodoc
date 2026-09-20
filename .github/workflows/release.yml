@@ -1,0 +1,162 @@
+name: Release
+
+# Binaries for a tag, so using autodoc does not require a Rust toolchain.
+# `cargo install --git` needs one and takes minutes; CI wants a download.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to build (must already exist)
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  # `workflow_dispatch` runs on a branch, so the tag has to come from the input.
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # musl, so one Linux binary runs on any distribution and in a scratch
+          # container. The C grammars are built with musl-gcc.
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            cc: musl-gcc
+          - target: aarch64-unknown-linux-musl
+            os: ubuntu-24.04-arm
+            cc: musl-gcc
+          # Apple clang cross-compiles C for either arch, so both macOS targets
+          # build on the arm64 runner.
+          - target: aarch64-apple-darwin
+            os: macos-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install musl toolchain
+        if: endsWith(matrix.target, '-musl')
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - uses: dtolnay/rust-toolchain@1.91.0
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.target }}
+
+      - name: Build
+        shell: bash
+        env:
+          CC_x86_64_unknown_linux_musl: ${{ matrix.cc }}
+          CC_aarch64_unknown_linux_musl: ${{ matrix.cc }}
+        run: cargo build --release --locked -p autodoc-cli --target ${{ matrix.target }}
+
+      # A binary that cannot document a repository is not worth publishing, so
+      # every target proves itself before it is uploaded. The x86_64 Linux and
+      # Windows targets cannot be built on a maintainer's machine, so this is
+      # the only place they are exercised.
+      - name: Smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin="target/${{ matrix.target }}/release/autodoc"
+          if [ -f "$bin.exe" ]; then bin="$bin.exe"; fi
+          "$bin" --version
+          "$bin" generate tests/fixtures/polyglot-shop --out "$RUNNER_TEMP/book"
+          test -f "$RUNNER_TEMP/book/index.html"
+          "$bin" check tests/fixtures/polyglot-shop --out "$RUNNER_TEMP/book"
+
+      - name: Package
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          name="autodoc-$version-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "target/${{ matrix.target }}/release/autodoc.exe" "dist/$name/"
+          else
+            cp "target/${{ matrix.target }}/release/autodoc" "dist/$name/"
+          fi
+          cp README.md LICENSE CHANGELOG.md "dist/$name/"
+          cd dist
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a "$name.zip" "$name" >/dev/null
+            echo "asset=dist/$name.zip" >> "$GITHUB_OUTPUT"
+          else
+            tar czf "$name.tar.gz" "$name"
+            echo "asset=dist/$name.tar.gz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: ${{ steps.package.outputs.asset }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      # One checksum file, so a download can be verified without trusting the
+      # page it came from.
+      - name: Checksums
+        run: |
+          cd dist
+          sha256sum autodoc-* > sums
+          mv sums SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Release notes
+        id: notes
+        run: |
+          version="${TAG#v}"
+          # The section for this version from CHANGELOG.md, without its heading.
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "CHANGELOG.md has no section for $version" >&2
+            exit 1
+          fi
+          cat notes.md
+
+      # The installer is a release asset so `releases/latest/download/install.sh`
+      # resolves, which is the URL the README tells people to pipe into sh.
+      - name: Stage the installer
+        run: cp scripts/install.sh dist/install.sh
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          files: dist/*
+          body_path: notes.md
+          fail_on_unmatched_files: true
