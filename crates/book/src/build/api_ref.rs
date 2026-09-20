@@ -406,7 +406,7 @@ impl<'a> Builder<'a> {
         // rather than let the reader discover the gap by counting annotations.
         if !excluded.is_empty() {
             summary.push(Inline::text(format!(
-                " {} route{} handled by this service {} left out; they are listed at the end with the reason.",
+                " {} route{} handled by this service {} left out, listed at the end with the reason.",
                 excluded.len(),
                 super::plural(excluded.len()),
                 if excluded.len() == 1 { "is" } else { "are" }
@@ -436,9 +436,9 @@ impl<'a> Builder<'a> {
             opaque
         ))];
         if excluded > 0 {
+            let (verb, noun) = if excluded == 1 { ("is", "an operation") } else { ("are", "operations") };
             coverage.push(Inline::text(format!(
-                " {} further route{} listed at the end, with why each is not documented as an operation.",
-                excluded,
+                " {excluded} further route{} {verb} not documented as {noun}, and listed at the end with the reason.",
                 super::plural(excluded)
             )));
         }

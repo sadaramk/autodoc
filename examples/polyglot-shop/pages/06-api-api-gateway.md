@@ -2,12 +2,12 @@
 
 _API reference_ · [Book index](../README.md)
 
-The contract of every express operation API Gateway serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+The contract of each express operation documented for API Gateway: parameters with their wire names and rules, request and response models, errors, authentication and who calls it. 1 route handled by this service is left out, listed at the end with the reason.
 
 **2** operations · **0** typed contracts · **1** partial · **1** opaque
 
 > [!NOTE]
-> **Contract coverage** — 0 of 2 operations declare request and response types; 1 partially; 1 not at all (the handler reads the request at runtime). 1 operational route (health, metrics, docs) listed at the end, not documented as functionality.
+> **Contract coverage** — 0 of 2 operations declare request and response types; 1 partially; 1 not at all (the handler reads the request at runtime). 1 further route is not documented as an operation, and listed at the end with the reason.
 
 ## Capabilities
 
@@ -98,7 +98,7 @@ Declared `api-gateway/src/routes/checkout.ts:13`
 | `sku` `api-gateway/src/routes/checkout.ts:16` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:16` |
 | `quantity` `api-gateway/src/routes/checkout.ts:17` | `number` | yes | must be an integer `api-gateway/src/routes/checkout.ts:17`; must be greater than 0 `api-gateway/src/routes/checkout.ts:17`; must be ≤ 99 `api-gateway/src/routes/checkout.ts:17` |
 
-## Operational routes
+## Routes not documented above
 
 | Route | Why excluded | Code |
 |---|---|---|

@@ -2,7 +2,7 @@
 
 _API reference_ · [Book index](../README.md)
 
-The contract of every axum operation Ledger Audit serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+The contract of each axum operation documented for Ledger Audit: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
 
 **2** operations · **2** typed contracts · **0** partial · **0** opaque
 

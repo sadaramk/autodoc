@@ -2,7 +2,7 @@
 
 _API reference_ · [Book index](../README.md)
 
-The contract of every net/http operation Payments serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
+The contract of each net/http operation documented for Payments: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
 
 **1** operations · **1** typed contracts · **0** partial · **0** opaque
 
