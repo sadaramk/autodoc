@@ -412,7 +412,16 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
     if truncated {
         notes.push(format!("scan truncated at {} files; raise max_files for full coverage", opts.max_files));
     }
-    let files = parse_files(&root, &source_paths);
+    let (files, unreadable) = parse_files(&root, &source_paths);
+    if !unreadable.is_empty() {
+        let shown: Vec<&str> = unreadable.iter().take(5).map(String::as_str).collect();
+        notes.push(format!(
+            "{} source file(s) could not be read as text, so nothing they declare is documented: {}{}",
+            unreadable.len(),
+            shown.join(", "),
+            if unreadable.len() > shown.len() { ", …" } else { "" }
+        ));
+    }
     let manifests: Vec<Manifest> = manifest_paths.iter().filter_map(|p| manifest::parse(&root, p)).collect();
 
     let repo_name = root.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "repo".into());
@@ -424,8 +433,9 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         vec![]
     };
     let mut jvm_names: BTreeMap<usize, Vec<String>> = BTreeMap::new();
+    let unit_dirs: Vec<String> = units.iter().map(|u| u.dir.clone()).collect();
     for (ui, u) in units.iter_mut().enumerate() {
-        let names = crate::jvm::application_names(u, &jvm_docs);
+        let names = crate::jvm::application_names(u, &jvm_docs, &unit_dirs);
         for (n, _) in &names {
             if !u.aliases.contains(n) {
                 u.aliases.push(n.clone());
@@ -807,10 +817,16 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
     }
 }
 
-fn parse_files(root: &Path, paths: &[(PathBuf, Grammar, Language)]) -> Vec<FileRec> {
+/// Parses every source file, and reports the ones it could not read.
+///
+/// A file that is not valid UTF-8, or that cannot be opened, used to disappear
+/// without a word: its routes and entities were simply absent and the book read
+/// as though the repository did not contain them.
+fn parse_files(root: &Path, paths: &[(PathBuf, Grammar, Language)]) -> (Vec<FileRec>, Vec<String>) {
     let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4).min(16);
     let chunk = paths.len().div_ceil(threads).max(1);
     let mut out: Vec<FileRec> = Vec::with_capacity(paths.len());
+    let mut unreadable: Vec<String> = Vec::new();
     std::thread::scope(|s| {
         let handles: Vec<_> = paths
             .chunks(chunk)
@@ -818,21 +834,31 @@ fn parse_files(root: &Path, paths: &[(PathBuf, Grammar, Language)]) -> Vec<FileR
                 s.spawn(move || {
                     batch
                         .iter()
-                        .filter_map(|(rel, grammar, language)| {
-                            let src = std::fs::read_to_string(root.join(rel)).ok()?;
+                        .map(|(rel, grammar, language)| {
                             let path = rel.to_string_lossy().replace('\\', "/");
-                            let facts = extract::extract(*grammar, *language, &path, &src);
-                            Some(FileRec { path, language: *language, facts })
+                            match std::fs::read_to_string(root.join(rel)) {
+                                Ok(src) => {
+                                    let facts = extract::extract(*grammar, *language, &path, &src);
+                                    Ok(FileRec { path, language: *language, facts })
+                                }
+                                Err(_) => Err(path),
+                            }
                         })
                         .collect::<Vec<_>>()
                 })
             })
             .collect();
         for h in handles {
-            out.extend(h.join().expect("parser thread panicked"));
+            for parsed in h.join().expect("parser thread panicked") {
+                match parsed {
+                    Ok(rec) => out.push(rec),
+                    Err(path) => unreadable.push(path),
+                }
+            }
         }
     });
-    out
+    unreadable.sort();
+    (out, unreadable)
 }
 
 /// The last commit that touched something the scan looked at, ignoring the

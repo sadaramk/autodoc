@@ -243,3 +243,29 @@ fn oversized_source_files_are_reported_not_dropped_in_silence() {
     let all = scan(repo, &ScanOptions::default()).unwrap();
     assert!(!all.notes.iter().any(|n| n.contains("were not parsed")), "notes: {:?}", all.notes);
 }
+
+/// A source file that is not valid UTF-8 was dropped by `.ok()?` with no word
+/// anywhere: its routes and entities were simply absent, and the book read as
+/// though the repository never contained them. Incompleteness has to be
+/// visible, which is what the note about oversized files already does.
+#[test]
+fn unreadable_source_files_are_reported_not_dropped_in_silence() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path();
+    std::fs::write(repo.join("go.mod"), "module github.com/acme/svc\n\ngo 1.22\n").unwrap();
+    std::fs::write(repo.join("main.go"), "package main\n\nfunc main() {}\n").unwrap();
+    // Latin-1 bytes: a real file, valid Go to a compiler, not valid UTF-8.
+    std::fs::write(repo.join("legacy.go"), b"package main\n\n// caf\xe9 handling\nfunc Legacy() {}\n").unwrap();
+
+    let r = scan(repo, &ScanOptions::default()).unwrap();
+
+    let note = r
+        .notes
+        .iter()
+        .find(|n| n.contains("could not be read"))
+        .unwrap_or_else(|| panic!("nothing said a file was skipped; notes: {:?}", r.notes));
+    assert!(note.contains("legacy.go"), "the note should name the file it could not read: {note}");
+
+    // The readable files are still documented.
+    assert!(r.stats.files >= 1, "the rest of the repository is still scanned");
+}

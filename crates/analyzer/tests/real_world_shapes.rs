@@ -409,3 +409,32 @@ fn runtime_topology_from_compose_overlays_and_kubernetes_manifests() {
         assert_eq!(drawn, env.links.iter().any(|l| l.from == "external"), "{}: entry traffic drawn", env.id);
     }
 }
+
+/// A unit at the repository root has an empty configuration prefix, and every
+/// path starts with the empty string — so it collected every service's
+/// `spring.application.name` as its own alias, and a `@FeignClient` naming any
+/// of them resolved to the root instead of the service that answers to it.
+/// The result was a dependency edge to the wrong unit, citing a real line.
+#[test]
+fn a_root_unit_does_not_answer_to_every_service_name() {
+    let r = scan_container(&fixture("spring-monorepo"));
+
+    let root_unit = r.containers.iter().find(|u| u.id == "spring-monorepo").unwrap_or_else(|| {
+        panic!("root unit missing; have {:?}", r.containers.iter().map(|u| &u.id).collect::<Vec<_>>())
+    });
+    assert!(
+        root_unit.aliases.is_empty(),
+        "the root unit claimed names configured by the services below it: {:?}",
+        root_unit.aliases
+    );
+
+    // The Feign call resolves to the service that configures that name.
+    let edge =
+        r.relationships.iter().find(|rel| rel.source == "gateway" && rel.target != "gateway").unwrap_or_else(|| {
+            panic!(
+                "no edge from the gateway; have {:?}",
+                r.relationships.iter().map(|e| (&e.source, &e.target)).collect::<Vec<_>>()
+            )
+        });
+    assert_eq!(edge.target, "accounts", "@FeignClient(\"account-service\") should reach the accounts service");
+}

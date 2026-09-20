@@ -173,10 +173,21 @@ fn flatten(v: &serde_yaml::Value, prefix: String, emit: &mut dyn FnMut(String, S
 
 /// Application names a JVM unit is known by (service discovery ids, config
 /// file names), from its own `application`/`bootstrap` configuration.
-pub(crate) fn application_names(unit: &Unit, docs: &[ConfigDoc]) -> Vec<(String, EvidenceRef)> {
+pub(crate) fn application_names(unit: &Unit, docs: &[ConfigDoc], others: &[String]) -> Vec<(String, EvidenceRef)> {
     let mut out: Vec<(String, EvidenceRef)> = Vec::new();
     let prefix = if unit.dir.is_empty() { String::new() } else { format!("{}/", unit.dir) };
-    for d in docs.iter().filter(|d| d.path.starts_with(&prefix) && CONFIG_NAMES.contains(&d.stem.as_str())) {
+    // A unit at the repository root has an empty prefix, which every path
+    // starts with — so it would claim every service's application name as its
+    // own alias, and a `@FeignClient("account-service")` anywhere would resolve
+    // to it. A configuration file inside another unit belongs to that unit.
+    let owned_by_another = |path: &str| {
+        others.iter().any(|d| !d.is_empty() && d.len() > unit.dir.len() && path.starts_with(&format!("{d}/")))
+    };
+    for d in docs
+        .iter()
+        .filter(|d| d.path.starts_with(&prefix) && CONFIG_NAMES.contains(&d.stem.as_str()))
+        .filter(|d| !owned_by_another(&d.path))
+    {
         // A config server's `shared/application.yml` is not this unit's identity.
         if d.dir.ends_with("/shared") || d.dir.contains("config-repo") {
             continue;
