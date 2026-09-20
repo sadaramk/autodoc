@@ -460,3 +460,57 @@ fn the_evidence_page_counts_every_citation_the_book_makes() {
         );
     }
 }
+
+/// Paths, symbol names and doc comments come from the documented repository,
+/// which is not necessarily code the reader trusts. A route path carrying
+/// `](https://…)` used to close the link label the renderer had opened, putting
+/// an attacker-chosen destination in the operations table of a published book.
+#[test]
+fn repository_content_cannot_inject_markdown_structure() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path().join("repo");
+    std::fs::create_dir_all(repo.join("cmd")).unwrap();
+    std::fs::write(repo.join("go.mod"), "module x\n\ngo 1.22\n\nrequire github.com/go-chi/chi/v5 v5.0.12\n").unwrap();
+    std::fs::write(
+        repo.join("cmd/main.go"),
+        r#"package main
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+)
+
+func main() {
+	r := chi.NewRouter()
+	r.Get("/x](https://evil.example)", handle)
+	http.ListenAndServe(":8080", r)
+}
+
+func handle(w http.ResponseWriter, r *http.Request) {}
+"#,
+    )
+    .unwrap();
+
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&repo, out.path(), &BookOptions::default()).unwrap();
+
+    // The path must still be documented — escaping it, not dropping it.
+    let api = planned.files.iter().find(|(p, _)| p.contains("06-api")).map(|(_, t)| t.clone()).unwrap_or_default();
+    assert!(api.contains("evil.example"), "the route should still be documented, escaped");
+
+    // …with its bracket escaped, so it cannot close the label the renderer
+    // opened. Unescaped, `[/x](https:/evil.example)](…)` is a live link to a
+    // destination the documented repository chose.
+    for (path, text) in &planned.files {
+        if !path.ends_with(".md") {
+            continue;
+        }
+        assert!(
+            !text.contains("x](https:/evil.example)"),
+            "{path} lets the repository close a link label:\n{}",
+            text.lines().filter(|l| l.contains("evil.example")).collect::<Vec<_>>().join("\n")
+        );
+    }
+    assert!(api.contains("\\](https:/evil.example)"), "the bracket should be escaped, not removed");
+}

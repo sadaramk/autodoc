@@ -53,7 +53,7 @@ POST /checkout — the critical transaction path. Handled by `checkoutRouter.pos
 
 | CheckoutRequest field | Type | Required | Rules |
 |---|---|---|---|
-| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
+| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem\[\]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
 | `paymentToken` `api-gateway/src/routes/checkout.ts:22` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:22` · Card token issued by the payment form. |
 | `couponCode` `api-gateway/src/routes/checkout.ts:23` | `string` | no | at most 32 characters `api-gateway/src/routes/checkout.ts:23` |
 
@@ -85,7 +85,7 @@ Body of POST /checkout, validated before anything is persisted. Declared `api-ga
 
 | CheckoutRequest field | Type | Required | Rules |
 |---|---|---|---|
-| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem[]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
+| `items` `api-gateway/src/routes/checkout.ts:13` | [CheckoutRequestItem\[\]](../pages/06-api-api-gateway.md#model-checkoutrequestitem) | yes | at least 1 item `api-gateway/src/routes/checkout.ts:13` · Cart lines to buy. |
 | `paymentToken` `api-gateway/src/routes/checkout.ts:22` | `string` | yes | at least 1 character `api-gateway/src/routes/checkout.ts:22` · Card token issued by the payment form. |
 | `couponCode` `api-gateway/src/routes/checkout.ts:23` | `string` | no | at most 32 characters `api-gateway/src/routes/checkout.ts:23` |
 

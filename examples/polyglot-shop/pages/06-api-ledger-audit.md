@@ -16,7 +16,7 @@ The contract of every axum operation Ledger Audit serves: parameters with their 
 
 | Method | Path | Request | Response | Auth | Contract |
 |---|---|---|---|---|---|
-| `GET` | [/reports/daily](../pages/06-api-ledger-audit.md#op-get-reports-daily) | — | [Vec&lt;DailyTotal>[]](../pages/06-api-ledger-audit.md#model-dailytotal) | _none found_ | _typed_ |
+| `GET` | [/reports/daily](../pages/06-api-ledger-audit.md#op-get-reports-daily) | — | [Vec&lt;DailyTotal>\[\]](../pages/06-api-ledger-audit.md#model-dailytotal) | _none found_ | _typed_ |
 | `GET` | [/reports/daily/{status}](../pages/06-api-ledger-audit.md#op-get-reports-daily-status) | — | [DailyTotal](../pages/06-api-ledger-audit.md#model-dailytotal) | _none found_ | _typed_ |
 
 ## GET /reports/daily
@@ -27,7 +27,7 @@ GET /reports/daily — today's payment totals by status. Handled by `daily_repor
 |---|---|---|---|---|
 | `minCount` (code: min\_count) `ledger-audit/src/routes.rs:32` | query | `Option<i64>` | no | — |
 
-- **Response 200** [Vec&lt;DailyTotal>[]](../pages/06-api-ledger-audit.md#model-dailytotal)
+- **Response 200** [Vec&lt;DailyTotal>\[\]](../pages/06-api-ledger-audit.md#model-dailytotal)
 
 Behaviour: [sequence diagram](../pages/05-critical-flows.md#flow-ledger-audit-get-reports-daily)
 

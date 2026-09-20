@@ -86,7 +86,7 @@ _3 participants, 3 messages · contract: [GET /reports/daily/{status}](../pages/
 
 Handlers started by a message, task or in-process event, traced the same way. Steps after a hand-off to another handler are asynchronous.
 
-### handle_order · Kafka topic order.placed
+### handle\_order · Kafka topic order.placed
 
 ![handle\_order · Kafka topic order.placed](../diagrams/flow-fulfillment-message-handle-order.svg)
 

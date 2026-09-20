@@ -43,7 +43,7 @@ _Entities and relationships_ · [IR](../diagrams/data-model.ir.json)
 | [payments](../pages/04-data-and-integrations.md#entity-payments)  `db/migrations/002_payments.sql:3` | sql-ddl | 6 | [Payments](../pages/03-containers-payments.md) `payments/internal/ledger/ledger.go:23` | [Ledger Audit](../pages/03-containers-ledger-audit.md) `ledger-audit/src/audit.rs:17` |
 | [products](../pages/04-data-and-integrations.md#entity-products)  `db/migrations/001_init.sql:3` | sql-ddl | 4 | _none found_ | [API Gateway](../pages/03-containers-api-gateway.md) `api-gateway/src/db.ts:24` |
 
-### order_items
+### order\_items
 
 | Column | Type | Key | Nullable | Default & constraints |
 |---|---|---|---|---|

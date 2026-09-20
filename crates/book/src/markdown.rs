@@ -20,9 +20,20 @@ fn relative(from_dir: &str, target: &str) -> String {
 }
 
 fn escape(s: &str, in_table: bool) -> String {
-    let mut out = s.replace('\\', "\\\\").replace('*', "\\*").replace('_', "\\_").replace('<', "&lt;");
+    // Brackets make a link label: a route path or symbol name carrying `](…)`
+    // closes the label the renderer opened and puts an attacker-chosen
+    // destination in the book. A newline ends the block it sits in — a list
+    // item, a table row, a blockquote — so it never survives as itself.
+    let mut out = s
+        .replace('\\', "\\\\")
+        .replace('*', "\\*")
+        .replace('_', "\\_")
+        .replace('[', "\\[")
+        .replace(']', "\\]")
+        .replace('<', "&lt;")
+        .replace('\n', " ");
     if in_table {
-        out = out.replace('|', "\\|").replace('\n', " ");
+        out = out.replace('|', "\\|");
     }
     out
 }
@@ -91,7 +102,7 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
     for b in bs {
         match b {
             Block::Heading { level, id: _, text } => {
-                out.push_str(&format!("\n{} {}\n\n", "#".repeat(*level as usize), text));
+                out.push_str(&format!("\n{} {}\n\n", "#".repeat(*level as usize), escape(text, false)));
             }
             Block::Para { inl } => {
                 out.push_str(&inlines(c, inl));
@@ -101,8 +112,13 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
                 let parts: Vec<String> = items
                     .iter()
                     .map(|s| match &s.page {
-                        Some(p) => format!("**{}** [{}]({})", s.value, s.label, page_href(c.book, c.dir, p, None)),
-                        None => format!("**{}** {}", s.value, s.label),
+                        Some(p) => format!(
+                            "**{}** [{}]({})",
+                            escape(&s.value, false),
+                            escape(&s.label, false),
+                            page_href(c.book, c.dir, p, None)
+                        ),
+                        None => format!("**{}** {}", escape(&s.value, false), escape(&s.label, false)),
                     })
                     .collect();
                 out.push_str(&parts.join(" · "));
@@ -111,7 +127,7 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
             Block::Table { columns, rows } => {
                 c.in_table = true;
                 let header: Vec<String> =
-                    columns.iter().map(|h| if h.is_empty() { " ".into() } else { h.clone() }).collect();
+                    columns.iter().map(|h| if h.is_empty() { " ".into() } else { escape(h, true) }).collect();
                 out.push_str(&format!("| {} |\n", header.join(" | ")));
                 out.push_str(&format!("|{}\n", "---|".repeat(columns.len())));
                 for row in rows {
@@ -136,7 +152,7 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
                     "warning" => "WARNING",
                     _ => "NOTE",
                 };
-                out.push_str(&format!("> [!{kind}]\n> **{}** — {}\n\n", title, inlines(c, inl)));
+                out.push_str(&format!("> [!{kind}]\n> **{}** — {}\n\n", escape(title, false), inlines(c, inl)));
             }
             Block::List { items } => {
                 for it in items {

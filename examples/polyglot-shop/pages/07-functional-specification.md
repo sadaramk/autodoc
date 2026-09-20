@@ -41,7 +41,7 @@ _Product_ · [Book index](../README.md)
 - **Trigger** [GET /reports/daily](../pages/06-api-ledger-audit.md#op-get-reports-daily) → `daily_report` `ledger-audit/src/routes.rs:36-40`
 - **Capability** [Reports](../pages/06-api-ledger-audit.md)
 - **Accepts** no declared input
-- **Returns** 200 [Vec&lt;DailyTotal>[]](../pages/06-api-ledger-audit.md#model-dailytotal)
+- **Returns** 200 [Vec&lt;DailyTotal>\[\]](../pages/06-api-ledger-audit.md#model-dailytotal)
 
 ### FR-004 · GET /reports/daily/{status}
 
@@ -69,7 +69,7 @@ _Product_ · [Book index](../README.md)
 
 Requirements realised by scheduled jobs, message and event handlers and startup hooks: the system acts without a caller.
 
-### FR-006 · handle_order · Kafka topic order.placed
+### FR-006 · handle\_order · Kafka topic order.placed
 
 - **Trigger** _message_ `Kafka topic order.placed` → [Fulfillment](../pages/03-containers-fulfillment.md) `fulfillment/fulfillment/consumer.py:19-29`
 - **Changes state** `write orders` `fulfillment/fulfillment/shipping.py:14`
