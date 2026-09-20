@@ -21,30 +21,30 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@1.91.0
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release -p autodoc-cli
+      - run: cargo build --release -p nunki-cli
 
       # Documenting itself is the honest demonstration: the book on the site is
       # produced by the same commit it describes. It runs before anything is
       # copied into site/, so the scan sees the repository and not the output.
-      - name: autodoc's own repository
-        run: ./target/release/autodoc generate . --out /tmp/autodoc-self
+      - name: nunki's own repository
+        run: ./target/release/nunki generate . --out /tmp/nunki-self
 
       - name: The project's own demo repository
         run: |
           mkdir -p site/examples
           cp -R examples/polyglot-shop site/examples/polyglot-shop
-          cp -R /tmp/autodoc-self site/examples/autodoc
+          cp -R /tmp/nunki-self site/examples/nunki
 
       # Third-party examples: permissively licensed, generated fresh, attribution on the gallery page.
       - name: Spring PetClinic (Apache-2.0)
         run: |
           git clone --depth 1 https://github.com/spring-projects/spring-petclinic /tmp/spring-petclinic
-          ./target/release/autodoc generate /tmp/spring-petclinic --out site/examples/spring-petclinic
+          ./target/release/nunki generate /tmp/spring-petclinic --out site/examples/spring-petclinic
 
       - name: PiggyMetrics (MIT)
         run: |
           git clone --depth 1 https://github.com/sqshq/piggymetrics /tmp/piggymetrics
-          ./target/release/autodoc generate /tmp/piggymetrics --out site/examples/piggymetrics
+          ./target/release/nunki generate /tmp/piggymetrics --out site/examples/piggymetrics
 
       - name: Assemble the site
         run: |

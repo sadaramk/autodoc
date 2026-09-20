@@ -1,10 +1,10 @@
-# Polyglot Shop — containers — exported from autodoc, one way.
+# Polyglot Shop — containers — exported from nunki, one way.
 # Import with Extras → Insert → Advanced → CSV. Evidence travels as shape data:
 # right-click a shape → Edit Data to see the file and line it came from.
 #
 # label: %label%
 # style: %style%
-# namespace: autodoc-
+# namespace: nunki-
 # identity: id
 # parent: parent
 # parentstyle: rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;

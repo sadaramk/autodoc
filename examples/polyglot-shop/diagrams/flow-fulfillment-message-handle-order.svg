@@ -1,70 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" class="autodoc ad-sequence" data-theme="editorial-light" data-diagram-type="ad-sequence" viewBox="0 0 720 460" width="720" height="460" data-width="720" data-height="460" role="img" aria-labelledby="ad-title ad-desc"><title id="ad-title">handle_order · Kafka topic order.placed</title><desc id="ad-desc">Sequence diagram with 3 nodes and 2 connections.</desc><style>.autodoc[data-theme="editorial-light"]{--ad-canvas:#F8F9FA;--ad-card:#FFFFFF;--ad-card-recessed:#F4F6F8;--ad-border:#E2E8F0;--ad-text:#0F172A;--ad-muted:#64748B;--ad-edge:#A3B0C2;--ad-edge-strong:#334155;--ad-zone-fill:#F1F4F7;--ad-zone-stroke:#D5DDE7;--ad-badge:#F8FAFC;--ad-accent:#4F46E5;--ad-accent-tint:#F4F4FD;--ad-accent-soft:#C1BEF6;color-scheme:light}
-.autodoc[data-theme="editorial-dark"]{--ad-canvas:#0B0F17;--ad-card:#151D2C;--ad-card-recessed:#111827;--ad-border:#223049;--ad-text:#F8FAFC;--ad-muted:#94A3B8;--ad-edge:#4A5B77;--ad-edge-strong:#CBD5E1;--ad-zone-fill:#0F1521;--ad-zone-stroke:#1E2A40;--ad-badge:#101826;--ad-accent:#818CF8;--ad-accent-tint:#242D49;--ad-accent-soft:#464F88;color-scheme:dark}
-.autodoc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
-.autodoc text{font-family:inherit}
-.autodoc .ad-canvas{fill:var(--ad-canvas)}
-.autodoc .ad-eyebrow{fill:var(--ad-muted);font:500 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
-.autodoc .ad-title{fill:var(--ad-text);font-size:26px;font-weight:650;letter-spacing:-.01em}
-.autodoc .ad-subtitle{fill:var(--ad-muted);font-size:15px}
-.autodoc .ad-zone-box{fill:var(--ad-zone-fill);stroke:var(--ad-zone-stroke);stroke-width:1}
-.autodoc .b-trust .ad-zone-box{stroke-dasharray:5 4}
-.autodoc .b-third .ad-zone-box{fill:none;stroke-dasharray:2 3}
-.autodoc .b-client .ad-zone-box{fill:none}
-.autodoc .ad-zone-label{fill:var(--ad-muted);font:600 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
-.autodoc .ad-zone-kind{fill:var(--ad-muted);opacity:.7;font:500 9.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em;text-anchor:end}
-.autodoc .ad-edge-line{fill:none;stroke:var(--ad-edge);stroke-width:1.25;stroke-linejoin:round;marker-end:url(#ad-arrow)}
-.autodoc .ad-edge-hit{fill:none;stroke:transparent;stroke-width:12}
-.autodoc .t-read .ad-edge-line{marker-end:url(#ad-open);stroke-width:1.1}
-.autodoc .t-write .ad-edge-line{stroke-width:1.7}
-.autodoc .t-event .ad-edge-line{marker-start:url(#ad-dot)}
-.autodoc .is-dashed .ad-edge-line{stroke-dasharray:6 4}
-.autodoc .is-dotted .ad-edge-line{stroke-dasharray:1.5 4;stroke-linecap:round;stroke-width:1.6}
-.autodoc .is-primary .ad-edge-line{stroke:var(--ad-accent);stroke-width:2;marker-end:url(#ad-arrow-accent)}
-.autodoc .is-primary.t-read .ad-edge-line{marker-end:url(#ad-open-accent)}
-.autodoc .is-primary.t-event .ad-edge-line{marker-start:url(#ad-dot-accent)}
-.autodoc .ad-mk{fill:var(--ad-edge)}
-.autodoc .ad-mk-strong{fill:var(--ad-edge-strong)}
-.autodoc .ad-mk-accent{fill:var(--ad-accent)}
-.autodoc .ad-mk-open{fill:none;stroke:var(--ad-edge);stroke-width:1.4}
-.autodoc .ad-mk-open-strong{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4}
-.autodoc .ad-mk-open-accent{fill:none;stroke:var(--ad-accent);stroke-width:1.6}
-.autodoc .ad-edge-label rect{fill:var(--ad-canvas)}
-.autodoc .ad-edge-label text{fill:var(--ad-muted);font-size:11px;font-weight:500;text-anchor:middle}
-.autodoc .ad-edge-label.is-primary text{fill:var(--ad-accent)}
-.autodoc .ad-card{fill:var(--ad-card);stroke:var(--ad-border);stroke-width:1}
-.autodoc .b-storage .ad-card{fill:var(--ad-card-recessed)}
-.autodoc .b-third .ad-card{stroke-dasharray:4 3}
-.autodoc .is-focal .ad-card{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
-.autodoc .ad-node-label{fill:var(--ad-text);font-size:14px;font-weight:600}
-.autodoc .ad-node-subtitle{fill:var(--ad-muted);font-size:12px}
-.autodoc .ad-badge{fill:var(--ad-badge);stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-badge-text{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.autodoc .ad-evidence-glyph{fill:var(--ad-muted);opacity:.55;font:600 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
-.autodoc .ad-legend-glyph{text-anchor:start;opacity:.8}
-.autodoc .is-focal .ad-evidence-glyph{fill:var(--ad-accent);opacity:.8}
-.autodoc .ad-rule{stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-legend-text{fill:var(--ad-muted);font-size:12px}
-.autodoc .ad-legend-focal{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
-.autodoc .ad-footer{fill:var(--ad-muted);opacity:.8;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.autodoc .ad-edge-detail{fill:var(--ad-muted);opacity:.85;font:10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
-.autodoc .ad-lifeline{stroke:var(--ad-border);stroke-width:1.2;stroke-dasharray:4 4}
-.autodoc .is-reply .ad-edge-line{marker-end:url(#ad-open)}
-.autodoc .is-primary.is-reply .ad-edge-line{marker-end:url(#ad-open-accent)}
-.autodoc .ad-edge.is-reply.is-lit:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
-.autodoc .ad-state-mark{fill:var(--ad-text)}
-.autodoc .is-focal .ad-state-mark{fill:var(--ad-accent)}
-.autodoc .ad-state-inner{fill:none;stroke:var(--ad-border);stroke-width:1}
-.autodoc .is-focal .ad-state-inner{stroke:var(--ad-accent)}
-.autodoc .ad-rows-rule{stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-row-name{fill:var(--ad-text);font-size:12px}
-.autodoc .is-key .ad-row-name{font-weight:600}
-.autodoc .ad-row-key{fill:var(--ad-accent);font:600 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
-.autodoc .ad-row-type{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
-.autodoc.ad-er g.ad-edge.ad-edge .ad-edge-line{marker-start:none;marker-end:none}
-.autodoc.ad-er g.ad-edge.c-s-one .ad-edge-line{marker-start:url(#ad-one)}
-.autodoc.ad-er g.ad-edge.c-s-many .ad-edge-line{marker-start:url(#ad-many)}
-.autodoc.ad-er g.ad-edge.c-t-one .ad-edge-line{marker-end:url(#ad-one)}
-.autodoc.ad-er g.ad-edge.c-t-many .ad-edge-line{marker-end:url(#ad-many)}
-.autodoc .ad-mk-crow{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4;stroke-linecap:round}
+<svg xmlns="http://www.w3.org/2000/svg" class="nunki ad-sequence" data-theme="editorial-light" data-diagram-type="ad-sequence" viewBox="0 0 720 460" width="720" height="460" data-width="720" data-height="460" role="img" aria-labelledby="ad-title ad-desc"><title id="ad-title">handle_order · Kafka topic order.placed</title><desc id="ad-desc">Sequence diagram with 3 nodes and 2 connections.</desc><style>.nunki[data-theme="editorial-light"]{--ad-canvas:#F8F9FA;--ad-card:#FFFFFF;--ad-card-recessed:#F4F6F8;--ad-border:#E2E8F0;--ad-text:#0F172A;--ad-muted:#64748B;--ad-edge:#A3B0C2;--ad-edge-strong:#334155;--ad-zone-fill:#F1F4F7;--ad-zone-stroke:#D5DDE7;--ad-badge:#F8FAFC;--ad-accent:#4F46E5;--ad-accent-tint:#F4F4FD;--ad-accent-soft:#C1BEF6;color-scheme:light}
+.nunki[data-theme="editorial-dark"]{--ad-canvas:#0B0F17;--ad-card:#151D2C;--ad-card-recessed:#111827;--ad-border:#223049;--ad-text:#F8FAFC;--ad-muted:#94A3B8;--ad-edge:#4A5B77;--ad-edge-strong:#CBD5E1;--ad-zone-fill:#0F1521;--ad-zone-stroke:#1E2A40;--ad-badge:#101826;--ad-accent:#818CF8;--ad-accent-tint:#242D49;--ad-accent-soft:#464F88;color-scheme:dark}
+.nunki{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
+.nunki text{font-family:inherit}
+.nunki .ad-canvas{fill:var(--ad-canvas)}
+.nunki .ad-eyebrow{fill:var(--ad-muted);font:500 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
+.nunki .ad-title{fill:var(--ad-text);font-size:26px;font-weight:650;letter-spacing:-.01em}
+.nunki .ad-subtitle{fill:var(--ad-muted);font-size:15px}
+.nunki .ad-zone-box{fill:var(--ad-zone-fill);stroke:var(--ad-zone-stroke);stroke-width:1}
+.nunki .b-trust .ad-zone-box{stroke-dasharray:5 4}
+.nunki .b-third .ad-zone-box{fill:none;stroke-dasharray:2 3}
+.nunki .b-client .ad-zone-box{fill:none}
+.nunki .ad-zone-label{fill:var(--ad-muted);font:600 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
+.nunki .ad-zone-kind{fill:var(--ad-muted);opacity:.7;font:500 9.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em;text-anchor:end}
+.nunki .ad-edge-line{fill:none;stroke:var(--ad-edge);stroke-width:1.25;stroke-linejoin:round;marker-end:url(#ad-arrow)}
+.nunki .ad-edge-hit{fill:none;stroke:transparent;stroke-width:12}
+.nunki .t-read .ad-edge-line{marker-end:url(#ad-open);stroke-width:1.1}
+.nunki .t-write .ad-edge-line{stroke-width:1.7}
+.nunki .t-event .ad-edge-line{marker-start:url(#ad-dot)}
+.nunki .is-dashed .ad-edge-line{stroke-dasharray:6 4}
+.nunki .is-dotted .ad-edge-line{stroke-dasharray:1.5 4;stroke-linecap:round;stroke-width:1.6}
+.nunki .is-primary .ad-edge-line{stroke:var(--ad-accent);stroke-width:2;marker-end:url(#ad-arrow-accent)}
+.nunki .is-primary.t-read .ad-edge-line{marker-end:url(#ad-open-accent)}
+.nunki .is-primary.t-event .ad-edge-line{marker-start:url(#ad-dot-accent)}
+.nunki .ad-mk{fill:var(--ad-edge)}
+.nunki .ad-mk-strong{fill:var(--ad-edge-strong)}
+.nunki .ad-mk-accent{fill:var(--ad-accent)}
+.nunki .ad-mk-open{fill:none;stroke:var(--ad-edge);stroke-width:1.4}
+.nunki .ad-mk-open-strong{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4}
+.nunki .ad-mk-open-accent{fill:none;stroke:var(--ad-accent);stroke-width:1.6}
+.nunki .ad-edge-label rect{fill:var(--ad-canvas)}
+.nunki .ad-edge-label text{fill:var(--ad-muted);font-size:11px;font-weight:500;text-anchor:middle}
+.nunki .ad-edge-label.is-primary text{fill:var(--ad-accent)}
+.nunki .ad-card{fill:var(--ad-card);stroke:var(--ad-border);stroke-width:1}
+.nunki .b-storage .ad-card{fill:var(--ad-card-recessed)}
+.nunki .b-third .ad-card{stroke-dasharray:4 3}
+.nunki .is-focal .ad-card{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
+.nunki .ad-node-label{fill:var(--ad-text);font-size:14px;font-weight:600}
+.nunki .ad-node-subtitle{fill:var(--ad-muted);font-size:12px}
+.nunki .ad-badge{fill:var(--ad-badge);stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-badge-text{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.nunki .ad-evidence-glyph{fill:var(--ad-muted);opacity:.55;font:600 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
+.nunki .ad-legend-glyph{text-anchor:start;opacity:.8}
+.nunki .is-focal .ad-evidence-glyph{fill:var(--ad-accent);opacity:.8}
+.nunki .ad-rule{stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-legend-text{fill:var(--ad-muted);font-size:12px}
+.nunki .ad-legend-focal{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
+.nunki .ad-footer{fill:var(--ad-muted);opacity:.8;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.nunki .ad-edge-detail{fill:var(--ad-muted);opacity:.85;font:10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
+.nunki .ad-lifeline{stroke:var(--ad-border);stroke-width:1.2;stroke-dasharray:4 4}
+.nunki .is-reply .ad-edge-line{marker-end:url(#ad-open)}
+.nunki .is-primary.is-reply .ad-edge-line{marker-end:url(#ad-open-accent)}
+.nunki .ad-edge.is-reply.is-lit:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
+.nunki .ad-state-mark{fill:var(--ad-text)}
+.nunki .is-focal .ad-state-mark{fill:var(--ad-accent)}
+.nunki .ad-state-inner{fill:none;stroke:var(--ad-border);stroke-width:1}
+.nunki .is-focal .ad-state-inner{stroke:var(--ad-accent)}
+.nunki .ad-rows-rule{stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-row-name{fill:var(--ad-text);font-size:12px}
+.nunki .is-key .ad-row-name{font-weight:600}
+.nunki .ad-row-key{fill:var(--ad-accent);font:600 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.nunki .ad-row-type{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
+.nunki.ad-er g.ad-edge.ad-edge .ad-edge-line{marker-start:none;marker-end:none}
+.nunki.ad-er g.ad-edge.c-s-one .ad-edge-line{marker-start:url(#ad-one)}
+.nunki.ad-er g.ad-edge.c-s-many .ad-edge-line{marker-start:url(#ad-many)}
+.nunki.ad-er g.ad-edge.c-t-one .ad-edge-line{marker-end:url(#ad-one)}
+.nunki.ad-er g.ad-edge.c-t-many .ad-edge-line{marker-end:url(#ad-many)}
+.nunki .ad-mk-crow{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4;stroke-linecap:round}
 </style><defs><marker id="ad-one" viewBox="0 0 14 14" refX="14" refY="7" markerWidth="14" markerHeight="14" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-crow" d="M8,1 L8,13"/></marker><marker id="ad-many" viewBox="0 0 14 14" refX="14" refY="7" markerWidth="14" markerHeight="14" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-crow" d="M2,7 L14,1 M2,7 L14,13"/></marker><marker id="ad-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk" d="M0,1 L9,5 L0,9 z"/></marker><marker id="ad-arrow-strong" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-strong" d="M0,1 L9,5 L0,9 z"/></marker><marker id="ad-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-accent" d="M0,1 L9,5 L0,9 z"/></marker><marker id="ad-open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-open" d="M1,1 L9,5 L1,9"/></marker><marker id="ad-open-strong" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-open-strong" d="M1,1 L9,5 L1,9"/></marker><marker id="ad-open-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path class="ad-mk-open-accent" d="M1,1 L9,5 L1,9"/></marker><marker id="ad-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse"><circle class="ad-mk" cx="5" cy="5" r="4"/></marker><marker id="ad-dot-accent" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" markerUnits="userSpaceOnUse"><circle class="ad-mk-accent" cx="5" cy="5" r="4"/></marker></defs><rect class="ad-canvas" x="0" y="0" width="720" height="460"/><g id="ad-viewport" class="ad-viewport"><g class="ad-header"><text class="ad-eyebrow" x="48" y="58">SEQUENCE DIAGRAM</text><text class="ad-title" x="48" y="94">handle_order · Kafka topic order.placed</text></g><g class="ad-zones"></g><g class="ad-lifelines"><line class="ad-lifeline" data-id="kafka" x1="178.0" y1="206.0" x2="178.0" y2="316.0"/><line class="ad-lifeline" data-id="fulfillment" x1="358.0" y1="206.0" x2="358.0" y2="316.0"/><line class="ad-lifeline" data-id="postgres" x1="540.0" y1="206.0" x2="540.0" y2="316.0"/></g><g class="ad-edges"><g class="ad-edge t-event has-evidence is-primary is-dotted" data-id="m1" data-source="kafka" data-target="fulfillment"><path class="ad-edge-hit" d="M178.0,251.0H358.0"/><path class="ad-edge-line" d="M178.0,251.0H358.0"/></g><g class="ad-edge t-write has-evidence is-primary" data-id="m2" data-source="fulfillment" data-target="postgres"><path class="ad-edge-hit" d="M358.0,292.0H540.0"/><path class="ad-edge-line" d="M358.0,292.0H540.0"/></g></g><g class="ad-labels"><g class="ad-edge-label is-primary has-evidence" data-edge="m1"><rect x="201.7" y="226.0" width="132.7" height="18.0" rx="4"/><text x="268.0" y="238.5">1. delivers order.placed</text></g><g class="ad-edge-label is-primary has-evidence" data-edge="m2"><rect x="404.3" y="267.0" width="89.4" height="18.0" rx="4"/><text x="449.0" y="279.5">2. write orders</text></g></g><g class="ad-nodes"><g class="ad-node has-evidence is-participant" data-id="kafka"><rect class="ad-card" x="112.0" y="128.0" width="132.0" height="78.0" rx="8.0"/><text class="ad-node-label" x="128.0" y="172.0">Kafka</text><text class="ad-evidence-glyph" x="230.0" y="171.0">&lt;/&gt;</text></g><g class="ad-node is-focal has-evidence is-participant" data-id="fulfillment"><rect class="ad-card" x="292.0" y="128.0" width="132.0" height="78.0" rx="8.0"/><text class="ad-node-label" x="308.0" y="157.0">Fulfillment</text><text class="ad-evidence-glyph" x="410.0" y="156.0">&lt;/&gt;</text><rect class="ad-badge" x="308.0" y="170.0" width="56.3" height="20" rx="4"/><text class="ad-badge-text" x="316.0" y="184.0">Python</text></g><g class="ad-node has-evidence is-participant" data-id="postgres"><rect class="ad-card" x="472.0" y="128.0" width="135.9" height="78.0" rx="8.0"/><text class="ad-node-label" x="488.0" y="172.0">PostgreSQL</text><text class="ad-evidence-glyph" x="594.0" y="171.0">&lt;/&gt;</text></g></g><g class="ad-legend"><line class="ad-rule" x1="48" y1="348" x2="672.0" y2="348"/><g class="ad-edge ad-legend-sample t-event is-dotted"><path class="ad-edge-line" d="M48.0,372.0H78.0"/></g><text class="ad-legend-text" x="88.0" y="376.0">Event</text><g class="ad-edge ad-legend-sample t-write"><path class="ad-edge-line" d="M143.7,372.0H173.7"/></g><text class="ad-legend-text" x="183.7" y="376.0">Write</text><g class="ad-edge ad-legend-sample t-sync is-primary"><path class="ad-edge-line" d="M236.5,372.0H266.5"/></g><text class="ad-legend-text" x="276.5" y="376.0">Primary path</text><rect class="ad-legend-focal" x="371.8" y="365.0" width="14" height="14" rx="3"/><text class="ad-legend-text" x="393.8" y="376.0">Focal point</text><text class="ad-evidence-glyph ad-legend-glyph" x="479.9" y="376.0">&lt;/&gt;</text><text class="ad-legend-text" x="505.9" y="376.0">Source evidence</text><text class="ad-footer" x="48.0" y="400.0" text-anchor="start">polyglot-shop</text></g></g></svg>

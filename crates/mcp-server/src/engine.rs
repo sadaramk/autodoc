@@ -4,11 +4,11 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::{Depth, DraftOptions, ScanOptions, ScanReport};
-use autodoc_git::{EvidenceQuery, EvidenceReport, EvidenceState};
-use autodoc_ir::{DiagramIR, Theme};
-use autodoc_renderer::{Accent, EvidenceView, RenderOptions};
-use autodoc_validator::{validate, validate_json, Diagnostic, Severity, ValidateOptions, ValidationReport};
+use nunki_analyzer::{Depth, DraftOptions, ScanOptions, ScanReport};
+use nunki_git::{EvidenceQuery, EvidenceReport, EvidenceState};
+use nunki_ir::{DiagramIR, Theme};
+use nunki_renderer::{Accent, EvidenceView, RenderOptions};
+use nunki_validator::{validate, validate_json, Diagnostic, Severity, ValidateOptions, ValidationReport};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -17,11 +17,11 @@ pub enum EngineError {
     // `transparent` rather than `{0}`: with `#[from]` the inner error is also
     // the source, so `{e:#}` printed the same sentence twice.
     #[error(transparent)]
-    Scan(#[from] autodoc_analyzer::ScanError),
+    Scan(#[from] nunki_analyzer::ScanError),
     #[error("{0}")]
     Invalid(String),
     #[error(transparent)]
-    Book(#[from] autodoc_book::BookError),
+    Book(#[from] nunki_book::BookError),
     #[error("cannot write {path}: {source}")]
     Io { path: String, source: std::io::Error },
 }
@@ -61,19 +61,19 @@ pub fn scan_repository(
     include_tests: bool,
     theme: Theme,
 ) -> Result<ScanResponse, EngineError> {
-    let report = autodoc_analyzer::scan(repo, &ScanOptions { depth, focus, include_tests, ..Default::default() })?;
-    let mut draft = autodoc_analyzer::draft_ir(&report, &DraftOptions { theme, generated_at: None });
+    let report = nunki_analyzer::scan(repo, &ScanOptions { depth, focus, include_tests, ..Default::default() })?;
+    let mut draft = nunki_analyzer::draft_ir(&report, &DraftOptions { theme, generated_at: None });
     let opts = ValidateOptions { repo_root: Some(PathBuf::from(&report.repo.root)), ..Default::default() };
     // The drafter heals its own IR the way an agent would: evidence that
     // doesn't verify is dropped rather than shipped.
-    let (draft_validation, healed) = autodoc_validator::heal_evidence(&mut draft.ir, &opts);
+    let (draft_validation, healed) = nunki_validator::heal_evidence(&mut draft.ir, &opts);
     draft.notes.extend(healed);
     Ok(ScanResponse {
         report,
         draft_ir: draft.ir,
         draft_notes: draft.notes,
         draft_validation,
-        next_step: "Refine `draftIr` (labels, grouping, focal point, primary path) using `evidenceMap` for file+line pins, then call autodoc_compile_diagram. Keep density ≤ 0.40 and at most 2 focal nodes.".into(),
+        next_step: "Refine `draftIr` (labels, grouping, focal point, primary path) using `evidenceMap` for file+line pins, then call nunki_compile_diagram. Keep density ≤ 0.40 and at most 2 focal nodes.".into(),
     })
 }
 
@@ -159,8 +159,8 @@ pub fn compile_diagram(req: &CompileRequest) -> Result<CompileOutcome, EngineErr
     };
     let parsed = match &req.ir {
         IrInput::Typed(ir) => Ok((**ir).clone()),
-        IrInput::Json(text) => autodoc_ir::parse_ir(text).map_err(|_| text.clone()),
-        IrInput::Value(v) => autodoc_ir::parse_ir_value(v.clone()).map_err(|_| v.to_string()),
+        IrInput::Json(text) => nunki_ir::parse_ir(text).map_err(|_| text.clone()),
+        IrInput::Value(v) => nunki_ir::parse_ir_value(v.clone()).map_err(|_| v.to_string()),
     };
     let ir = match parsed {
         Ok(ir) => ir,
@@ -179,8 +179,8 @@ pub fn compile_diagram(req: &CompileRequest) -> Result<CompileOutcome, EngineErr
     ir.metadata.visual_density_score = validation.density.as_ref().map(|d| d.score);
     let opts = RenderOptions { accent: req.accent.clone(), evidence, footer: None };
     let rendered = match req.format {
-        OutputFormat::Html => autodoc_renderer::render_html(&ir, &opts),
-        OutputFormat::Svg => autodoc_renderer::render_svg(&ir, &opts),
+        OutputFormat::Html => nunki_renderer::render_html(&ir, &opts),
+        OutputFormat::Svg => nunki_renderer::render_svg(&ir, &opts),
     };
     if let Some(parent) = req.output_path.parent().filter(|p| !p.as_os_str().is_empty()) {
         std::fs::create_dir_all(parent)
@@ -196,7 +196,7 @@ pub fn compile_diagram(req: &CompileRequest) -> Result<CompileOutcome, EngineErr
         bytes: rendered.content.len(),
         width: rendered.layout.width,
         height: rendered.layout.height,
-        density: autodoc_ir::visual_density(ir.nodes.len(), ir.edges.len()),
+        density: nunki_ir::visual_density(ir.nodes.len(), ir.edges.len()),
         nodes: ir.nodes.len(),
         edges: ir.edges.len(),
         warnings: validation.diagnostics.into_iter().filter(|d| d.severity == Severity::Warning).collect(),
@@ -213,7 +213,7 @@ fn state_name(s: EvidenceState) -> String {
 pub fn evidence_views(ir: &DiagramIR, repo: Option<&Path>) -> (BTreeMap<String, EvidenceView>, EvidenceSummary) {
     let mut out = BTreeMap::new();
     let mut summary = EvidenceSummary::default();
-    let ctx = repo.map(autodoc_git::repo_context);
+    let ctx = repo.map(nunki_git::repo_context);
     // Edge evidence (sequence messages, relationships) is keyed `edge:<id>`.
     let pinned = ir
         .nodes
@@ -243,7 +243,7 @@ pub fn evidence_views(ir: &DiagramIR, repo: Option<&Path>) -> (BTreeMap<String, 
                     end_line: Some(ev.end_line),
                     symbol_name: ev.symbol_name.clone(),
                 };
-                let r = autodoc_git::verify_evidence(ctx, &q, ir.metadata.commit_hash.as_deref());
+                let r = nunki_git::verify_evidence(ctx, &q, ir.metadata.commit_hash.as_deref());
                 match r.state {
                     EvidenceState::Verified => summary.verified += 1,
                     EvidenceState::Stale | EvidenceState::Untracked => summary.stale += 1,
@@ -258,7 +258,7 @@ pub fn evidence_views(ir: &DiagramIR, repo: Option<&Path>) -> (BTreeMap<String, 
                     }
                 }
                 view.snippet =
-                    autodoc_git::read_snippet(&ctx.root, &ev.file_path, ev.start_line, ev.end_line, SNIPPET_MAX_LINES);
+                    nunki_git::read_snippet(&ctx.root, &ev.file_path, ev.start_line, ev.end_line, SNIPPET_MAX_LINES);
             }
             None => summary.unverified += 1,
         }
@@ -289,9 +289,9 @@ pub fn verify_evidence(
     if !repo.is_dir() {
         return Err(EngineError::Invalid(format!("repoPath `{}` is not a directory", repo.display())));
     }
-    let ctx = autodoc_git::repo_context(repo);
+    let ctx = nunki_git::repo_context(repo);
     let results: Vec<EvidenceReport> =
-        items.iter().map(|q| autodoc_git::verify_evidence(&ctx, q, pinned_commit)).collect();
+        items.iter().map(|q| nunki_git::verify_evidence(&ctx, q, pinned_commit)).collect();
     let mut counts = BTreeMap::new();
     for r in &results {
         *counts.entry(state_name(r.state)).or_insert(0) += 1;

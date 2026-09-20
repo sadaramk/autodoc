@@ -1,5 +1,5 @@
 ---
-name: autodoc-engine
+name: nunki
 description: Generate verifiable, editorial-grade C4 architecture diagrams and interactive documentation from source code.
 triggers:
   - "document architecture"
@@ -8,21 +8,21 @@ triggers:
   - "visualize architecture"
 ---
 
-# AutoDoc Engine Agent Protocol
+# Nunki Agent Protocol
 
 You produce architecture diagrams that are **true to the code** and **editorially restrained**.
 You never write SVG, Mermaid, or layout coordinates. You reason in `DiagramIR` (typed JSON);
 the engine validates it, lays it out deterministically, and renders a standalone HTML page
 whose every card links back to the exact file and line range it came from.
 
-Tools come from the `autodoc` MCP server (`autodoc serve`). If MCP isn't connected, use the
+Tools come from the `nunki` MCP server (`nunki serve`). If MCP isn't connected, use the
 CLI equivalents listed at the end; the behaviour is identical.
 
 ## When invoked
 
 ### 1. Analyze first — never draw from memory
 
-Call `autodoc_scan_repository` with `repoPath` and `depth`:
+Call `nunki_scan_repository` with `repoPath` and `depth`:
 
 | The user wants…                                   | `depth`     |
 |---------------------------------------------------|-------------|
@@ -63,7 +63,7 @@ Start from `draftIr`. Refine; don't rebuild. Rules the compiler enforces:
 
 ### 3. Compile and self-correct
 
-Call `autodoc_compile_diagram` with `ir`, `outputPath` (`.html` or `.svg`), `format`, and `repoPath`.
+Call `nunki_compile_diagram` with `ir`, `outputPath` (`.html` or `.svg`), `format`, and `repoPath`.
 
 - `status: "compiled"` → done; note `warnings` and `evidence` counts.
 - `status: "rejected"` → nothing was written. For each diagnostic:
@@ -84,14 +84,14 @@ Common fixes:
 | `ERR_EVIDENCE_*` | Re-read `evidenceMap`; clamp ranges; fix `symbolName` |
 | `WARN_EVIDENCE_STALE` | Code changed since `commitHash`; re-scan before publishing |
 
-Use `autodoc_verify_evidence` when the user asks "is this still accurate?" or before refreshing an old diagram.
+Use `nunki_verify_evidence` when the user asks "is this still accurate?" or before refreshing an old diagram.
 
 ### Documenting a whole repository
 
-When the user wants the architecture documented (not one targeted diagram), call `autodoc_generate_book` with
+When the user wants the architecture documented (not one targeted diagram), call `nunki_generate_book` with
 `repoPath` (and `outDir` if they name one). It scans, drafts every view, verifies every citation and writes
 `index.html`, Markdown pages, `llms.txt` and `diagrams/*.ir.json`. To improve a figure, edit its
-`diagrams/<id>.ir.json` (same rules as above) and run `autodoc_generate_book` again — hand-edited IR is kept and
+`diagrams/<id>.ir.json` (same rules as above) and run `nunki_generate_book` again — hand-edited IR is kept and
 re-rendered. Use `checkOnly: true` to answer "is the documentation still accurate?".
 
 The book serves several readers: architecture and container pages, an **API reference** per service (parameters,
@@ -116,13 +116,13 @@ Return the absolute output path (the book's `index.html`, or the compiled diagra
 ## CLI equivalents
 
 ```bash
-autodoc analyze <repo> --depth container --json scan.json --emit-ir draft.ir.json
-autodoc validate draft.ir.json --json          # diagnostics + patches, exit 1 on errors
-autodoc render draft.ir.json -o docs/architecture.html --repo <repo>
-autodoc verify src/server.ts:18-23 --repo <repo>
-autodoc generate <repo>                        # the architecture book (index.html, Markdown, llms.txt, diagrams)
-autodoc check <repo>                           # exit 1 when the book is outdated or cites changed code
-autodoc schema                                 # DiagramIR JSON Schema
+nunki analyze <repo> --depth container --json scan.json --emit-ir draft.ir.json
+nunki validate draft.ir.json --json          # diagnostics + patches, exit 1 on errors
+nunki render draft.ir.json -o docs/architecture.html --repo <repo>
+nunki verify src/server.ts:18-23 --repo <repo>
+nunki generate <repo>                        # the architecture book (index.html, Markdown, llms.txt, diagrams)
+nunki check <repo>                           # exit 1 when the book is outdated or cites changed code
+nunki schema                                 # DiagramIR JSON Schema
 ```
 
 See `reference.md` for the IR field guide, visual semantics, and worked examples.

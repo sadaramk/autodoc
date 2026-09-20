@@ -7,7 +7,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use autodoc_analyzer::api::{Operation, Requirement};
+use nunki_analyzer::api::{Operation, Requirement};
 
 use super::Builder;
 use crate::model::*;
@@ -162,9 +162,8 @@ impl<'a> Builder<'a> {
             let total = row.ops.len();
             let mut cells: Vec<Vec<Inline>> = vec![row.label.clone()];
             // For each column: operations granting it, and the first requirement as evidence.
-            let mut granted: BTreeMap<&Principal, (usize, Option<autodoc_analyzer::scan::EvidenceRef>)> =
-                BTreeMap::new();
-            let mut conditions: Vec<(String, autodoc_analyzer::scan::EvidenceRef)> = Vec::new();
+            let mut granted: BTreeMap<&Principal, (usize, Option<nunki_analyzer::scan::EvidenceRef>)> = BTreeMap::new();
+            let mut conditions: Vec<(String, nunki_analyzer::scan::EvidenceRef)> = Vec::new();
             let mut unprotected = 0;
             for op in &row.ops {
                 if op.auth.is_empty() {
@@ -239,7 +238,7 @@ impl<'a> Builder<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use autodoc_analyzer::scan::EvidenceRef;
+    use nunki_analyzer::scan::EvidenceRef;
 
     fn req(kind: &str, detail: &str) -> Requirement {
         Requirement {

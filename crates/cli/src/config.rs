@@ -1,20 +1,20 @@
-//! `autodoc.toml`: per-repository defaults. CLI flags always win.
+//! `nunki.toml`: per-repository defaults. CLI flags always win.
 
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use autodoc_analyzer::Depth;
-use autodoc_ir::Theme;
-use autodoc_mcp::engine::OutputFormat;
+use nunki_analyzer::Depth;
+use nunki_ir::Theme;
+use nunki_mcp::engine::OutputFormat;
 use serde::Deserialize;
 
-pub const FILE_NAME: &str = "autodoc.toml";
+pub const FILE_NAME: &str = "nunki.toml";
 
-pub const TEMPLATE: &str = r#"# autodoc configuration. CLI flags override these values.
+pub const TEMPLATE: &str = r#"# nunki configuration. CLI flags override these values.
 
 [output]
-dir = "docs/architecture"   # where `autodoc generate` writes diagrams
-format = "html"             # default for `autodoc render` without -o (generate writes both)
+dir = "docs/architecture"   # where `nunki generate` writes diagrams
+format = "html"             # default for `nunki render` without -o (generate writes both)
 
 [style]
 theme = "editorial-light"   # editorial-light | editorial-dark
@@ -82,13 +82,13 @@ pub struct ValidationConfig {
 
 impl Default for ValidationConfig {
     fn default() -> Self {
-        ValidationConfig { max_density: autodoc_ir::MAX_VISUAL_DENSITY, strict: false }
+        ValidationConfig { max_density: nunki_ir::MAX_VISUAL_DENSITY, strict: false }
     }
 }
 
 /// A configured output directory must stay inside the repository it describes:
 /// an absolute path replaces the base outright when joined, and `..` climbs out
-/// of it, either of which lets a scanned repository choose where autodoc writes.
+/// of it, either of which lets a scanned repository choose where nunki writes.
 pub fn confined(dir: &str) -> Result<()> {
     let p = Path::new(dir);
     let escapes = p.is_absolute()
@@ -103,7 +103,7 @@ pub fn confined(dir: &str) -> Result<()> {
 }
 
 impl Config {
-    /// Nearest `autodoc.toml` walking up from `start`; defaults when absent.
+    /// Nearest `nunki.toml` walking up from `start`; defaults when absent.
     ///
     /// The file is part of the repository being documented, which is not
     /// necessarily code the user wrote, so its output directory is confined to

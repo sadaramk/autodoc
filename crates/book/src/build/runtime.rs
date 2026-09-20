@@ -1,16 +1,16 @@
 //! Runtime & deployment: the environments the repository declares (Compose,
 //! Kubernetes), what runs in each, how traffic gets in, and what starts first.
 
-use autodoc_analyzer::topology::{draft_topology_ir, Environment};
-use autodoc_analyzer::DraftOptions;
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::topology::{draft_topology_ir, Environment};
+use nunki_analyzer::DraftOptions;
+use nunki_validator::ValidateOptions;
 use std::collections::BTreeMap;
 
 use super::Builder;
 use crate::model::*;
 
 pub(super) fn figure_id(env: &Environment) -> String {
-    format!("runtime-{}", autodoc_analyzer::scan::slug(&env.id))
+    format!("runtime-{}", nunki_analyzer::scan::slug(&env.id))
 }
 
 impl<'a> Builder<'a> {

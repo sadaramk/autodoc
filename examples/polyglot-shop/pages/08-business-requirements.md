@@ -11,7 +11,7 @@ A business requirements document scaffolded from the implementation: what is bui
 
 _needs input: the problem this system solves, for whom_
 
-_from README_ A small checkout platform used as the autodoc demo repository. `README.md:3`
+_from README_ A small checkout platform used as the nunki demo repository. `README.md:3`
 
 ## 2. Goals & non-goals
 

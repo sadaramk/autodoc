@@ -2,13 +2,13 @@
 
 _Overview_ · [Book index](../README.md)
 
-A small checkout platform used as the autodoc demo repository.
+A small checkout platform used as the nunki demo repository.
 
 **5** [Deployables](../pages/02-architecture.md) · **3** [Datastores & queues](../pages/04-data-and-integrations.md) · **2** [External services](../pages/04-data-and-integrations.md) · **24 files** Source
 
 ## What it is
 
-A small checkout platform used as the autodoc demo repository.  `README.md:3`
+A small checkout platform used as the nunki demo repository.  `README.md:3`
 
 Polyglot Shop builds [API Gateway](../pages/03-containers-api-gateway.md), [Fulfillment](../pages/03-containers-fulfillment.md), [Ledger Audit](../pages/03-containers-ledger-audit.md), [Payments](../pages/03-containers-payments.md) and [Web](../pages/03-containers-web.md) — deployables written mainly in TypeScript, Python, Go. State lives in **PostgreSQL**, **Redis** and **Kafka**. It calls **Stripe** and **SendGrid** outside its trust boundary.
 

@@ -2,8 +2,8 @@
 
 use std::fmt::Write;
 
-use autodoc_mcp::engine::{CompileOutcome, ScanResponse, VerifyResponse};
-use autodoc_validator::{Severity, ValidationReport};
+use nunki_mcp::engine::{CompileOutcome, ScanResponse, VerifyResponse};
+use nunki_validator::{Severity, ValidationReport};
 
 pub fn scan_summary(res: &ScanResponse) -> String {
     let r = &res.report;
@@ -154,7 +154,7 @@ pub fn verify(res: &VerifyResponse) -> String {
     s
 }
 
-pub fn book(r: &autodoc_book::WriteReport) -> String {
+pub fn book(r: &nunki_book::WriteReport) -> String {
     let mut s = String::new();
     let e = &r.evidence;
     let _ = writeln!(
@@ -177,7 +177,7 @@ pub fn book(r: &autodoc_book::WriteReport) -> String {
     s
 }
 
-pub fn check(r: &autodoc_book::CheckReport) -> String {
+pub fn check(r: &nunki_book::CheckReport) -> String {
     let mut s = String::new();
     for f in &r.missing {
         let _ = writeln!(s, "missing   {f}");
@@ -196,7 +196,7 @@ pub fn check(r: &autodoc_book::CheckReport) -> String {
         } else if r.up_to_date {
             "book is current but cites code that changed"
         } else {
-            "book is out of date: run `autodoc generate`"
+            "book is out of date: run `nunki generate`"
         },
         r.evidence.verified,
         r.evidence.total

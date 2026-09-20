@@ -9,7 +9,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use autodoc_ir::{DiagramIR, DiagramType, Edge, EdgeStyle, EdgeType, KeyKind};
+use nunki_ir::{DiagramIR, DiagramType, Edge, EdgeStyle, EdgeType, KeyKind};
 use serde::Serialize;
 
 use crate::text::{fit, mono_width, sans_width};
@@ -137,7 +137,7 @@ pub fn key_label(k: KeyKind) -> &'static str {
     }
 }
 
-fn attr_rows(node: &autodoc_ir::Node, w: f64) -> Vec<AttrRow> {
+fn attr_rows(node: &nunki_ir::Node, w: f64) -> Vec<AttrRow> {
     let Some(attrs) = &node.attributes else { return vec![] };
     let name_max = (w - 2.0 * CARD_PAD_X - KEY_W) * 0.55;
     let mut rows: Vec<AttrRow> = attrs
@@ -1311,7 +1311,7 @@ fn add_hops(routes: &mut [EdgeRoute]) {
     }
 }
 
-/// Geometric contract checks used by tests and `autodoc render --check`.
+/// Geometric contract checks used by tests and `nunki render --check`.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct GeometryIssue {
     pub kind: &'static str,

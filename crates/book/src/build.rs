@@ -5,13 +5,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::catalog::InfraCategory;
-use autodoc_analyzer::scan::{EvidenceRef, InfraSummary, RelationSource, Relationship, UnitSummary};
-use autodoc_analyzer::{draft_component_ir, draft_ir, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
-use autodoc_git::{EvidenceQuery, EvidenceState, RepoContext};
-use autodoc_ir::{DiagramIR, EdgeType, Theme};
-use autodoc_renderer::{Accent, RenderOptions};
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::catalog::InfraCategory;
+use nunki_analyzer::scan::{EvidenceRef, InfraSummary, RelationSource, Relationship, UnitSummary};
+use nunki_analyzer::{draft_component_ir, draft_ir, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
+use nunki_git::{EvidenceQuery, EvidenceState, RepoContext};
+use nunki_ir::{DiagramIR, EdgeType, Theme};
+use nunki_renderer::{Accent, RenderOptions};
+use nunki_validator::ValidateOptions;
 
 use crate::authored::Authored;
 use crate::model::*;
@@ -65,7 +65,7 @@ const LIBRARY_LINK_LIMIT: usize = 25;
 /// the previous run generated; those are rendered as-is instead of redrafted.
 /// The book's own directory, relative to the repository root, when it sits
 /// inside it — the part of the tree the documentation does not describe.
-fn book_dir_in_repo(ctx: &autodoc_git::RepoContext, out_dir: &Path) -> Option<String> {
+fn book_dir_in_repo(ctx: &nunki_git::RepoContext, out_dir: &Path) -> Option<String> {
     let top = ctx.git_root.as_ref()?;
     let out = out_dir.canonicalize().unwrap_or_else(|_| out_dir.to_path_buf());
     let rel = out.strip_prefix(top).ok()?;
@@ -78,7 +78,7 @@ pub fn build(
     opts: &BookOptions,
     curated: &BTreeMap<String, String>,
 ) -> Result<Built, crate::BookError> {
-    let report = autodoc_analyzer::scan(
+    let report = nunki_analyzer::scan(
         repo,
         &ScanOptions {
             depth: Depth::Container,
@@ -91,15 +91,15 @@ pub fn build(
     )?;
     let root = PathBuf::from(&report.repo.root);
     // One git snapshot for every citation and every figure in this build.
-    let cache = std::sync::Arc::new(autodoc_git::EvidenceCache::default());
+    let cache = std::sync::Arc::new(nunki_git::EvidenceCache::default());
     let mut ctx = cache.context(&root);
     // The book records the commit it describes, not HEAD. Committing the book
     // moves HEAD, and pinning to that would leave the documentation one commit
     // behind itself for ever: `check` would fail however often it was
     // regenerated, which is exactly the loop CI runs.
-    ctx.head_commit = autodoc_git::commit_describing(&ctx, book_dir_in_repo(&ctx, out_dir));
+    ctx.head_commit = nunki_git::commit_describing(&ctx, book_dir_in_repo(&ctx, out_dir));
     let ctx = ctx;
-    let commit_date = ctx.head_commit.as_deref().and_then(|c| autodoc_git::commit_date(&ctx, c));
+    let commit_date = ctx.head_commit.as_deref().and_then(|c| nunki_git::commit_date(&ctx, c));
     let draft_opts = DraftOptions {
         theme: opts.theme,
         // Pinned to the commit so regeneration is byte-identical; outside git
@@ -119,7 +119,7 @@ pub fn build(
         authored,
         report: &report,
         ctx: &ctx,
-        verifier: autodoc_git::Verifier::cached(&ctx, None, Some(&cache)),
+        verifier: nunki_git::Verifier::cached(&ctx, None, Some(&cache)),
         cites: BTreeMap::new(),
         cite_keys: BTreeMap::new(),
         pages: Vec::new(),
@@ -180,13 +180,13 @@ pub fn build(
         commit: ctx.head_commit.clone(),
         commit_date,
         branch: ctx.branch.clone(),
-        web_url: ctx.remote_url.as_deref().and_then(autodoc_git::web_base),
+        web_url: ctx.remote_url.as_deref().and_then(nunki_git::web_base),
         path_prefix: if ctx.prefix.is_empty() { String::new() } else { format!("{}/", ctx.prefix.trim_matches('/')) },
         files: report.stats.files,
         lines: report.stats.lines,
         languages: report.stats.languages.iter().map(|(l, s)| (l.clone(), s.files)).collect(),
         evidence: health,
-        generator: autodoc_renderer::GENERATOR.to_string(),
+        generator: nunki_renderer::GENERATOR.to_string(),
     };
     let Builder { pages, figures, cites, diagrams, warnings, .. } = b;
     let operation_ids: Vec<String> =
@@ -204,7 +204,7 @@ struct Builder<'a> {
     authored: Authored,
     report: &'a ScanReport,
     ctx: &'a RepoContext,
-    verifier: autodoc_git::Verifier<'a>,
+    verifier: nunki_git::Verifier<'a>,
     cites: BTreeMap<String, Cite>,
     cite_keys: BTreeMap<(String, u32, u32), String>,
     pages: Vec<Page>,
@@ -334,14 +334,14 @@ impl<'a> Builder<'a> {
             format!("#L{}-L{}", e.start_line, e.end_line)
         };
         let snippet = matches!(r.state, EvidenceState::Verified | EvidenceState::Stale | EvidenceState::Untracked)
-            .then(|| autodoc_git::read_snippet(&self.ctx.root, &e.file_path, e.start_line, e.end_line, SNIPPET_LINES))
+            .then(|| nunki_git::read_snippet(&self.ctx.root, &e.file_path, e.start_line, e.end_line, SNIPPET_LINES))
             .flatten();
         // What a reader can rebuild from the book's repository, commit and path
         // prefix isn't stored: on a large book these three fields are ~40% of it.
         let prefix =
             if self.ctx.prefix.is_empty() { String::new() } else { format!("{}/", self.ctx.prefix.trim_matches('/')) };
         let derived_permalink =
-            match (self.ctx.remote_url.as_deref().and_then(autodoc_git::web_base), self.ctx.head_commit.as_deref()) {
+            match (self.ctx.remote_url.as_deref().and_then(nunki_git::web_base), self.ctx.head_commit.as_deref()) {
                 (Some(base), Some(commit)) => Some(format!("{base}/blob/{commit}/{prefix}{}{anchor}", e.file_path)),
                 _ => None,
             };
@@ -403,11 +403,11 @@ impl<'a> Builder<'a> {
     fn add_figure(
         &mut self,
         id: &str,
-        draft: autodoc_analyzer::Draft,
+        draft: nunki_analyzer::Draft,
         curated: &BTreeMap<String, String>,
         validate: &ValidateOptions,
     ) {
-        let (mut ir, mut notes, is_curated) = match curated.get(id).map(|text| autodoc_ir::parse_ir(text)) {
+        let (mut ir, mut notes, is_curated) = match curated.get(id).map(|text| nunki_ir::parse_ir(text)) {
             Some(Ok(ir)) => (ir, vec![format!("rendered hand-edited `{id}.ir.json`")], true),
             Some(Err(e)) => {
                 self.warnings.push(format!("ignored hand-edited `{id}.ir.json`: {e}"));
@@ -415,13 +415,13 @@ impl<'a> Builder<'a> {
             }
             None => (draft.ir, draft.notes, false),
         };
-        let (report, healed) = autodoc_validator::heal_evidence(&mut ir, validate);
+        let (report, healed) = nunki_validator::heal_evidence(&mut ir, validate);
         notes.extend(healed);
         if !report.valid {
             let codes: Vec<&str> = report
                 .diagnostics
                 .iter()
-                .filter(|d| d.severity == autodoc_validator::Severity::Error)
+                .filter(|d| d.severity == nunki_validator::Severity::Error)
                 .map(|d| d.code.as_str())
                 .collect();
             self.warnings.push(format!("figure `{id}` has validation errors [{}]; rendered anyway", codes.join(", ")));
@@ -436,8 +436,8 @@ impl<'a> Builder<'a> {
         );
         let render_opts =
             RenderOptions { accent: self.opts.accent.clone(), evidence: BTreeMap::new(), footer: Some(footer) };
-        let embedded = autodoc_renderer::render_embedded_svg(&ir, &render_opts, &format!("fig-{id}"));
-        let standalone = autodoc_renderer::render_svg(&ir, &render_opts);
+        let embedded = nunki_renderer::render_embedded_svg(&ir, &render_opts, &format!("fig-{id}"));
+        let standalone = nunki_renderer::render_svg(&ir, &render_opts);
         self.figures.insert(
             id.to_string(),
             Figure {
@@ -449,7 +449,7 @@ impl<'a> Builder<'a> {
                 nodes: BTreeMap::new(),
                 ir_path: format!("diagrams/{id}.ir.json"),
                 svg_path: format!("diagrams/{id}.svg"),
-                density: autodoc_ir::visual_density(ir.nodes.len(), ir.edges.len()),
+                density: nunki_ir::visual_density(ir.nodes.len(), ir.edges.len()),
             },
         );
         self.diagrams.push(BuiltDiagram {
@@ -1372,20 +1372,20 @@ fn push_list(out: &mut Vec<Inline>, items: Vec<Inline>) {
 }
 
 /// The primary-path edges in walking order (one chain; ties by id).
-pub fn primary_chain(ir: &DiagramIR) -> Vec<autodoc_ir::Edge> {
-    let primary: Vec<&autodoc_ir::Edge> = ir.edges.iter().filter(|e| e.primary()).collect();
+pub fn primary_chain(ir: &DiagramIR) -> Vec<nunki_ir::Edge> {
+    let primary: Vec<&nunki_ir::Edge> = ir.edges.iter().filter(|e| e.primary()).collect();
     if primary.is_empty() {
         return vec![];
     }
     let targets: BTreeSet<&str> = primary.iter().map(|e| e.target.as_str()).collect();
-    let mut start: Vec<&&autodoc_ir::Edge> = primary.iter().filter(|e| !targets.contains(e.source.as_str())).collect();
+    let mut start: Vec<&&nunki_ir::Edge> = primary.iter().filter(|e| !targets.contains(e.source.as_str())).collect();
     start.sort_by_key(|e| e.id.clone());
     let Some(first) = start.first() else { return primary.into_iter().cloned().collect() };
     let mut chain = vec![(**first).clone()];
     let mut used = BTreeSet::from([first.id.clone()]);
     loop {
         let cur = chain.last().unwrap().target.clone();
-        let mut next: Vec<&&autodoc_ir::Edge> =
+        let mut next: Vec<&&nunki_ir::Edge> =
             primary.iter().filter(|e| e.source == cur && !used.contains(&e.id)).collect();
         next.sort_by_key(|e| e.id.clone());
         match next.first() {

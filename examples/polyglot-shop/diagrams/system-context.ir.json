@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "diagramType": "system-context",
   "title": "Polyglot Shop — system context",
-  "subtitle": "A small checkout platform used as the autodoc demo repository",
+  "subtitle": "A small checkout platform used as the nunki demo repository",
   "theme": "editorial-light",
   "metadata": {
     "targetRepo": "/tmp/polyglot-shop",
@@ -44,7 +44,7 @@
         "symbolName": "main"
       },
       "metadata": {
-        "docstring": "A small checkout platform used as the autodoc demo repository.",
+        "docstring": "A small checkout platform used as the nunki demo repository.",
         "units": "api-gateway, fulfillment, ledger-audit, payments"
       }
     },

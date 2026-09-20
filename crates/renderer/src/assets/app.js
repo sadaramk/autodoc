@@ -1,10 +1,10 @@
 (function () {
   "use strict";
 
-  var data = JSON.parse(document.getElementById("autodoc-data").textContent);
+  var data = JSON.parse(document.getElementById("nunki-data").textContent);
   var ir = data.ir;
   var stage = document.querySelector(".stage");
-  var svg = stage.querySelector("svg.autodoc");
+  var svg = stage.querySelector("svg.nunki");
   var viewport = svg.querySelector(".ad-viewport");
   var drawer = document.querySelector(".drawer");
   var zoomLabel = document.querySelector("[data-zoom-label]");
@@ -394,13 +394,13 @@
     svg.setAttribute("data-theme", theme);
     document.body.setAttribute("data-theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
-    try { localStorage.setItem("autodoc-theme", theme); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem("nunki-theme", theme); } catch (e) { /* storage unavailable */ }
   }
   function toggleTheme() {
     setTheme(svg.getAttribute("data-theme") === "editorial-dark" ? "editorial-light" : "editorial-dark");
   }
   try {
-    var saved = localStorage.getItem("autodoc-theme");
+    var saved = localStorage.getItem("nunki-theme");
     if (saved === "editorial-light" || saved === "editorial-dark") setTheme(saved);
   } catch (e) { /* storage unavailable */ }
 
@@ -497,5 +497,5 @@
 
   view = fitView();
   apply();
-  window.autodoc = { data: data, fit: actions.fit, open: openDrawer, openEdge: openEdge, close: closeDrawer, setTheme: setTheme, exportSvg: standaloneSvg, view: function () { return view; } };
+  window.nunki = { data: data, fit: actions.fit, open: openDrawer, openEdge: openEdge, close: closeDrawer, setTheme: setTheme, exportSvg: standaloneSvg, view: function () { return view; } };
 })();

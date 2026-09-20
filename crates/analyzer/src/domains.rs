@@ -27,7 +27,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-use autodoc_ir::{Attribute, BoundaryType, Cardinality, Container, DiagramType, Edge, EdgeType, KeyKind, Node};
+use nunki_ir::{Attribute, BoundaryType, Cardinality, Container, DiagramType, Edge, EdgeType, KeyKind, Node};
 
 use crate::data::{DataModel, Entity};
 use crate::draft::{Draft, DraftOptions};
@@ -504,7 +504,7 @@ pub fn draft_domain_irs(report: &ScanReport, data: &DataModel, opts: &DraftOptio
         let Some(mut draft) = crate::views::draft_entity_ir(report, &subset, opts) else { continue };
         draft.ir.title = format!("{} data model", d.label);
         let mut stubs: BTreeSet<String> = BTreeSet::new();
-        let budget = autodoc_ir::element_budget();
+        let budget = nunki_ir::element_budget();
         for e in &subset.entities {
             for r in &e.relations {
                 let Some(target) = by_id.get(r.target.as_str()) else { continue };
@@ -560,7 +560,7 @@ pub fn draft_domain_irs(report: &ScanReport, data: &DataModel, opts: &DraftOptio
                     target: target_id,
                     label: Some(truncate(&r.via, 32)).filter(|v| !v.is_empty()),
                     edge_type: EdgeType::Sync,
-                    style: Some(autodoc_ir::EdgeStyle::Dashed),
+                    style: Some(nunki_ir::EdgeStyle::Dashed),
                     is_primary_path: None,
                     sequence: None,
                     reply: None,
@@ -580,7 +580,7 @@ pub fn draft_domain_irs(report: &ScanReport, data: &DataModel, opts: &DraftOptio
             });
         }
         draft.ir.metadata.visual_density_score =
-            Some(autodoc_ir::visual_density(draft.ir.nodes.len(), draft.ir.edges.len()));
+            Some(nunki_ir::visual_density(draft.ir.nodes.len(), draft.ir.edges.len()));
         out.push((d, draft));
     }
     out
@@ -601,16 +601,16 @@ pub fn draft_domain_overview_ir(report: &ScanReport, data: &DataModel, opts: &Dr
     let domain_of: BTreeMap<&str, &str> =
         data.entities.iter().map(|e| (e.id.as_str(), e.domain.as_deref().unwrap_or("schema"))).collect();
     let dom_id = |name: &str| format!("domain-{}", slug(name));
-    let mut ir = autodoc_ir::DiagramIR {
-        version: autodoc_ir::IrVersion::V1_1_0,
+    let mut ir = nunki_ir::DiagramIR {
+        version: nunki_ir::IrVersion::V1_1_0,
         diagram_type: DiagramType::Component,
         title: "Data domains".into(),
         subtitle: Some(format!("{} entities in {} domains", data.entities.len(), doms.len())),
         theme: opts.theme,
-        metadata: autodoc_ir::DiagramMetadata {
+        metadata: nunki_ir::DiagramMetadata {
             target_repo: report.repo.root.clone(),
             commit_hash: report.repo.commit_hash.clone(),
-            generated_at: opts.generated_at.clone().unwrap_or_else(autodoc_ir::now_rfc3339),
+            generated_at: opts.generated_at.clone().unwrap_or_else(nunki_ir::now_rfc3339),
             visual_density_score: None,
         },
         containers: vec![
@@ -673,7 +673,7 @@ pub fn draft_domain_overview_ir(report: &ScanReport, data: &DataModel, opts: &Dr
         }
     }
     let units: BTreeSet<&str> = access.keys().map(|(u, _, _)| u.as_str()).collect();
-    let budget = autodoc_ir::element_budget();
+    let budget = nunki_ir::element_budget();
 
     // One edge per service/domain pair (a write implies the read): these connect
     // domains that no foreign key reaches.
@@ -832,7 +832,7 @@ pub fn draft_domain_overview_ir(report: &ScanReport, data: &DataModel, opts: &Dr
         ir.nodes.iter_mut().filter(|n| n.id == top).for_each(|n| n.is_key_focal_point = true);
     }
     ir.containers.retain(|c| ir.nodes.iter().any(|n| n.container_id.as_deref() == Some(c.id.as_str())));
-    ir.metadata.visual_density_score = Some(autodoc_ir::visual_density(ir.nodes.len(), ir.edges.len()));
+    ir.metadata.visual_density_score = Some(nunki_ir::visual_density(ir.nodes.len(), ir.edges.len()));
     Some(Draft { ir, notes })
 }
 

@@ -1,7 +1,7 @@
 {
-  "name": "@autodoc-engine/ir-spec",
+  "name": "@nunki/ir-spec",
   "version": "0.1.0",
-  "description": "TypeScript + zod mirror of the autodoc-engine DiagramIR",
+  "description": "TypeScript + zod mirror of the nunki DiagramIR",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

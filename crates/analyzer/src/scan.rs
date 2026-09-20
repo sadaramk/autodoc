@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use autodoc_ir::EdgeType;
+use nunki_ir::EdgeType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -70,8 +70,8 @@ pub struct EvidenceRef {
 }
 
 impl EvidenceRef {
-    pub fn to_ir(&self) -> autodoc_ir::Evidence {
-        autodoc_ir::Evidence {
+    pub fn to_ir(&self) -> nunki_ir::Evidence {
+        nunki_ir::Evidence {
             file_path: self.file_path.clone(),
             start_line: self.start_line,
             end_line: self.end_line,
@@ -386,7 +386,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
     if !root.is_dir() {
         return Err(crate::ScanError::Root(root.display().to_string(), "not a directory".into()));
     }
-    let ctx = autodoc_git::repo_context(&root);
+    let ctx = nunki_git::repo_context(&root);
     let mut notes = Vec::new();
 
     let Walked {
@@ -903,7 +903,7 @@ fn parse_files(root: &Path, paths: &[(PathBuf, Grammar, Language)]) -> (Vec<File
 
 /// The last commit that touched something the scan looked at, ignoring the
 /// directories it was told to skip (the book's own output among them).
-fn describing_commit(ctx: &autodoc_git::RepoContext, opts: &ScanOptions) -> Option<String> {
+fn describing_commit(ctx: &nunki_git::RepoContext, opts: &ScanOptions) -> Option<String> {
     let Some(top) = ctx.git_root.as_ref() else { return ctx.head_commit.clone() };
     let excluded: Vec<String> = opts
         .ignore_dirs
@@ -917,7 +917,7 @@ fn describing_commit(ctx: &autodoc_git::RepoContext, opts: &ScanOptions) -> Opti
     match excluded.as_slice() {
         [] => ctx.head_commit.clone(),
         // One exclusion is the common case; git takes several just as well.
-        many => autodoc_git::commit_describing(ctx, Some(many.join(","))),
+        many => nunki_git::commit_describing(ctx, Some(many.join(","))),
     }
 }
 
@@ -2673,12 +2673,12 @@ mod tests {
 
         // A bullet wrapped over two lines is one item: its tail is not a
         // paragraph, and taking it as the summary starts mid-sentence.
-        let wrapped = "# autodoc\n\n- **Opinionated.** Density budgets, orthogonal connectors that never pass behind\n  a card. A cluttered IR is rejected with diagnostics.\n\nautodoc is a tool that turns source code into architecture documentation.";
+        let wrapped = "# nunki\n\n- **Opinionated.** Density budgets, orthogonal connectors that never pass behind\n  a card. A cluttered IR is rejected with diagnostics.\n\nnunki is a tool that turns source code into architecture documentation.";
         assert_eq!(
             summary_from_markdown(wrapped).as_deref(),
-            Some("autodoc is a tool that turns source code into architecture documentation.")
+            Some("nunki is a tool that turns source code into architecture documentation.")
         );
-        let noun_phrase = "# autodoc\n\n[![CI](https://x/b.svg)](https://x)\n\nVerifiable, editorial architecture documentation from source code — as a CLI, an MCP server, and an agent skill.\n\nMore words here.";
+        let noun_phrase = "# nunki\n\n[![CI](https://x/b.svg)](https://x)\n\nVerifiable, editorial architecture documentation from source code — as a CLI, an MCP server, and an agent skill.\n\nMore words here.";
         assert_eq!(
             summary_from_markdown(noun_phrase).as_deref(),
             Some("Verifiable, editorial architecture documentation from source code — as a CLI, an MCP server, and an agent skill.")

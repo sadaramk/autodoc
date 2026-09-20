@@ -3,34 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>How it works — autodoc</title>
-<meta name="description" content="Evidence, the typed DiagramIR, density budgets, and why autodoc marks what it does not know.">
-<link rel="canonical" href="https://sadaramk.github.io/autodoc/how.html">
+<title>How it works — nunki</title>
+<meta name="description" content="Evidence, the typed DiagramIR, density budgets, and why nunki marks what it does not know.">
+<link rel="canonical" href="https://sadaramk.github.io/nunki/how.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="autodoc">
-<meta property="og:title" content="How autodoc works: evidence, typed IR, density budgets">
-<meta property="og:description" content="Evidence, the typed DiagramIR, density budgets, and why autodoc marks what it does not know.">
-<meta property="og:url" content="https://sadaramk.github.io/autodoc/how.html">
+<meta property="og:site_name" content="nunki">
+<meta property="og:title" content="How nunki works: evidence, typed IR, density budgets">
+<meta property="og:description" content="Evidence, the typed DiagramIR, density budgets, and why nunki marks what it does not know.">
+<meta property="og:url" content="https://sadaramk.github.io/nunki/how.html">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="How autodoc works: evidence, typed IR, density budgets">
-<meta name="twitter:description" content="Evidence, the typed DiagramIR, density budgets, and why autodoc marks what it does not know.">
+<meta name="twitter:title" content="How nunki works: evidence, typed IR, density budgets">
+<meta name="twitter:description" content="Evidence, the typed DiagramIR, density budgets, and why nunki marks what it does not know.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="wrap">
   <nav>
-    <a class="brand" href="index.html">autodoc</a>
+    <a class="brand" href="index.html">nunki</a>
     <a href="index.html">Examples</a>
     <a href="start.html">Getting started</a>
     <a href="how.html" aria-current="page">How it works</a>
     <a href="support.html">What it reads</a>
-    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+    <a href="https://github.com/sadaramk/nunki">GitHub</a>
   </nav>
 
   <p class="eyebrow">How it works</p>
   <h1>Why you can trust a generated diagram</h1>
   <p class="lead">
-    Architecture documentation usually rots because nothing connects it to the code. autodoc's answer
+    Architecture documentation usually rots because nothing connects it to the code. nunki's answer
     is that every claim carries the line it came from, and that line is checked against the commit.
   </p>
 
@@ -40,7 +40,7 @@
     a symbol name. On every run those references are verified against the working tree and the commit
     they were pinned to. A reference whose lines have changed becomes <em>stale</em>; one whose file has
     gone becomes <em>broken</em>. The book reports its own counts rather than presenting everything as
-    equally certain, and <code>autodoc check</code> turns that into a build failure.
+    equally certain, and <code>nunki check</code> turns that into a build failure.
   </p>
   <p>
     This is also why the tool refuses to guess. Business intent, service ownership and the reason behind
@@ -55,9 +55,9 @@
     what makes the output editable and reviewable: an IR file diffs in a pull request, survives
     regeneration, and can be produced by an agent that is told precisely what is wrong with its draft.
   </p>
-  <pre><code>autodoc schema                       # the JSON Schema
-autodoc validate diagrams/x.ir.json  # diagnostics, exit 1 on errors
-autodoc render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
+  <pre><code>nunki schema                       # the JSON Schema
+nunki validate diagrams/x.ir.json  # diagnostics, exit 1 on errors
+nunki render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
   <p>
     Diagnostics are machine-actionable. A rejection names the offending element and, where the fix is
     mechanical, carries a JSON Patch that applies it — which is how the agent loop converges without a
@@ -66,7 +66,7 @@ autodoc render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
 
   <h2>Diagrams chosen for the question they answer</h2>
   <p>
-    A diagram that shows everything answers nothing. autodoc picks the view that fits the question and
+    A diagram that shows everything answers nothing. nunki picks the view that fits the question and
     holds it to a budget: visual density at or below 0.40, at most two focal points, orthogonal routing,
     and a layout contract enforced by property tests over hundreds of random graphs.
   </p>
@@ -119,7 +119,7 @@ autodoc render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
   </ul>
 
   <footer>
-    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed
+    <a href="https://github.com/sadaramk/nunki">Source on GitHub</a> · MIT licensed
   </footer>
 </main>
 </body>

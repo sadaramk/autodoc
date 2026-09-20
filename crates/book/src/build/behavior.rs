@@ -8,12 +8,12 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use autodoc_analyzer::api::{ApiModel, Confidence, Model, Operation};
-use autodoc_analyzer::data::DataModel;
-use autodoc_analyzer::scan::{slug, EvidenceRef};
-use autodoc_analyzer::trace::{Flow, StepKind};
-use autodoc_analyzer::{draft_lifecycle_ir, DraftOptions};
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::api::{ApiModel, Confidence, Model, Operation};
+use nunki_analyzer::data::DataModel;
+use nunki_analyzer::scan::{slug, EvidenceRef};
+use nunki_analyzer::trace::{Flow, StepKind};
+use nunki_analyzer::{draft_lifecycle_ir, DraftOptions};
+use nunki_validator::ValidateOptions;
 
 use super::Builder;
 use crate::authored::{given, given_list};
@@ -80,7 +80,7 @@ impl<'a> Builder<'a> {
 
     /// State machines of the domain: at least two states, and changed somewhere
     /// other than a web client (UI widget and animation states are not lifecycles).
-    pub(super) fn business_machines(&self) -> Vec<&'a autodoc_analyzer::data::StateMachine> {
+    pub(super) fn business_machines(&self) -> Vec<&'a nunki_analyzer::data::StateMachine> {
         let Some(data) = self.data() else { return vec![] };
         data.state_machines
             .iter()
@@ -88,7 +88,7 @@ impl<'a> Builder<'a> {
             .filter(|sm| {
                 sm.transitions
                     .iter()
-                    .any(|t| self.unit(&t.unit).is_none_or(|u| u.kind != autodoc_analyzer::UnitKind::WebClient))
+                    .any(|t| self.unit(&t.unit).is_none_or(|u| u.kind != nunki_analyzer::UnitKind::WebClient))
             })
             .collect()
     }
@@ -481,7 +481,7 @@ impl<'a> Builder<'a> {
                 let unit_name = self.element_name(&unit);
                 // A service with more requirements than a page holds gets one page per capability group.
                 let per_group = frs.iter().filter(|(_, o)| o.unit == unit).count()
-                    > super::api_ref::threshold("AUTODOC_FR_SPLIT_OVER", FR_SPLIT_OVER);
+                    > super::api_ref::threshold("NUNKI_FR_SPLIT_OVER", FR_SPLIT_OVER);
                 let mut order: Vec<String> = Vec::new();
                 for (u, g, _) in &per_fr {
                     if *u == unit && !order.contains(g) {
@@ -568,8 +568,8 @@ impl<'a> Builder<'a> {
                 )],
             });
             // Very large catalogs get one page per rule kind (ids stay global).
-            let by_kind = rules_split
-                && rules.len() > 2 * super::api_ref::threshold("AUTODOC_RULES_SPLIT_OVER", RULES_SPLIT_OVER);
+            let by_kind =
+                rules_split && rules.len() > 2 * super::api_ref::threshold("NUNKI_RULES_SPLIT_OVER", RULES_SPLIT_OVER);
             let mut kind_rows: Vec<(&'static str, Vec<Vec<Vec<Inline>>>)> = Vec::new();
             let mut rows = Vec::new();
             for r in &rules {
@@ -674,8 +674,8 @@ impl<'a> Builder<'a> {
     /// (split requirements into per-service pages, move the rules catalog to its own page).
     pub(super) fn functional_layout(&self, frs: usize, rules: usize) -> (bool, bool) {
         (
-            frs > super::api_ref::threshold("AUTODOC_FR_SPLIT_OVER", FR_SPLIT_OVER),
-            rules > super::api_ref::threshold("AUTODOC_RULES_SPLIT_OVER", RULES_SPLIT_OVER),
+            frs > super::api_ref::threshold("NUNKI_FR_SPLIT_OVER", FR_SPLIT_OVER),
+            rules > super::api_ref::threshold("NUNKI_RULES_SPLIT_OVER", RULES_SPLIT_OVER),
         )
     }
 
@@ -685,7 +685,7 @@ impl<'a> Builder<'a> {
             return "functional".into();
         }
         let in_unit = self.api().map(|a| a.operations.iter().filter(|o| o.unit == op.unit).count()).unwrap_or(0);
-        if in_unit > super::api_ref::threshold("AUTODOC_FR_SPLIT_OVER", FR_SPLIT_OVER) {
+        if in_unit > super::api_ref::threshold("NUNKI_FR_SPLIT_OVER", FR_SPLIT_OVER) {
             let group = self.api_index.op_group.get(&op.id).cloned().unwrap_or_default();
             format!("functional/{}/{}", op.unit, self.group_slug(&op.unit, &group))
         } else {
@@ -768,7 +768,7 @@ impl<'a> Builder<'a> {
             .report
             .containers
             .iter()
-            .filter(|u| matches!(u.kind, autodoc_analyzer::UnitKind::WebClient))
+            .filter(|u| matches!(u.kind, nunki_analyzer::UnitKind::WebClient))
             .map(|u| u.id.clone())
             .collect();
         if !actors.is_empty() || !clients.is_empty() {
@@ -840,7 +840,7 @@ impl<'a> Builder<'a> {
             .report
             .infrastructure
             .iter()
-            .filter(|i| i.category == autodoc_analyzer::catalog::InfraCategory::ThirdParty)
+            .filter(|i| i.category == nunki_analyzer::catalog::InfraCategory::ThirdParty)
             .map(|i| i.label.clone())
             .collect();
         blocks.push(Block::Para {

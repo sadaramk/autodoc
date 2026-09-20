@@ -3,34 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Getting started — autodoc</title>
-<meta name="description" content="Install autodoc, generate an architecture book from a repository, and keep it honest in CI.">
-<link rel="canonical" href="https://sadaramk.github.io/autodoc/start.html">
+<title>Getting started — nunki</title>
+<meta name="description" content="Install nunki, generate an architecture book from a repository, and keep it honest in CI.">
+<link rel="canonical" href="https://sadaramk.github.io/nunki/start.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="autodoc">
-<meta property="og:title" content="Getting started with autodoc">
-<meta property="og:description" content="Install autodoc, generate an architecture book from a repository, and keep it honest in CI.">
-<meta property="og:url" content="https://sadaramk.github.io/autodoc/start.html">
+<meta property="og:site_name" content="nunki">
+<meta property="og:title" content="Getting started with nunki">
+<meta property="og:description" content="Install nunki, generate an architecture book from a repository, and keep it honest in CI.">
+<meta property="og:url" content="https://sadaramk.github.io/nunki/start.html">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Getting started with autodoc">
-<meta name="twitter:description" content="Install autodoc, generate an architecture book from a repository, and keep it honest in CI.">
+<meta name="twitter:title" content="Getting started with nunki">
+<meta name="twitter:description" content="Install nunki, generate an architecture book from a repository, and keep it honest in CI.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="wrap">
   <nav>
-    <a class="brand" href="index.html">autodoc</a>
+    <a class="brand" href="index.html">nunki</a>
     <a href="index.html">Examples</a>
     <a href="start.html" aria-current="page">Getting started</a>
     <a href="how.html">How it works</a>
     <a href="support.html">What it reads</a>
-    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+    <a href="https://github.com/sadaramk/nunki">GitHub</a>
   </nav>
 
   <p class="eyebrow">Getting started</p>
   <h1>From a repository to a book</h1>
   <p class="lead">
-    autodoc reads a repository and writes the documentation into a directory you commit. There is no
+    nunki reads a repository and writes the documentation into a directory you commit. There is no
     server, no account and no network call: the book is plain files.
   </p>
 
@@ -39,18 +39,18 @@
     One static binary, for Linux and macOS on x86_64 and arm64. The installer verifies the checksum
     published with the release before it writes anything.
   </p>
-  <pre><code>curl -fsSL https://github.com/sadaramk/autodoc/releases/latest/download/install.sh | sh</code></pre>
+  <pre><code>curl -fsSL https://github.com/sadaramk/nunki/releases/latest/download/install.sh | sh</code></pre>
   <p>
-    Windows binaries are on the <a href="https://github.com/sadaramk/autodoc/releases">releases page</a>.
+    Windows binaries are on the <a href="https://github.com/sadaramk/nunki/releases">releases page</a>.
     To build from source instead, a Rust toolchain is the only requirement:
   </p>
-  <pre><code>cargo install --git https://github.com/sadaramk/autodoc autodoc-cli</code></pre>
+  <pre><code>cargo install --git https://github.com/sadaramk/nunki nunki-cli</code></pre>
   <p>Or run everything through Docker, which is how the project tests itself:</p>
-  <pre><code>docker compose build autodoc
-docker compose run --rm autodoc generate /repo --out /repo/docs/architecture</code></pre>
+  <pre><code>docker compose build nunki
+docker compose run --rm nunki generate /repo --out /repo/docs/architecture</code></pre>
 
   <h2>Generate the book</h2>
-  <pre><code>autodoc generate /path/to/your/repo --out docs/architecture
+  <pre><code>nunki generate /path/to/your/repo --out docs/architecture
 open docs/architecture/index.html</code></pre>
   <p>What lands in the output directory:</p>
   <table>
@@ -65,21 +65,21 @@ open docs/architecture/index.html</code></pre>
   <h2>Take a diagram into draw.io</h2>
   <p>
     A generated diagram is sometimes the start of a drawing you then own — a slide, an annotated
-    review, a boundary autodoc cannot see. The export writes draw.io's CSV import, which becomes real
+    review, a boundary nunki cannot see. The export writes draw.io's CSV import, which becomes real
     shapes with a layout applied rather than a flattened image.
   </p>
-  <pre><code>autodoc export docs/architecture/diagrams/containers.ir.json</code></pre>
+  <pre><code>nunki export docs/architecture/diagrams/containers.ir.json</code></pre>
   <p>
     <img src="media/drawio.png" alt="The exported containers diagram open in draw.io"
          style="width:100%;border:1px solid var(--rule, #e2e8f0);border-radius:6px">
   </p>
   <p class="meta">
     The
-    <a href="https://github.com/sadaramk/autodoc/blob/main/examples/polyglot-shop/diagrams/containers.drawio">exact
+    <a href="https://github.com/sadaramk/nunki/blob/main/examples/polyglot-shop/diagrams/containers.drawio">exact
     file</a> behind that screenshot. Open it in draw.io to get the same diagram.
   </p>
   <p>
-    The boundaries, sizes, positions, edge routes and label placements are the ones autodoc worked out
+    The boundaries, sizes, positions, edge routes and label placements are the ones nunki worked out
     for the book, so the diagram opens looking like the figure it came from rather than a knot for
     draw.io to untangle. Every shape carries its <code>file:line</code> as shape data (right-click →
     Edit Data) and links to the line it came from, so a diagram pasted into a slide can still be
@@ -100,16 +100,16 @@ open docs/architecture/index.html</code></pre>
     <code>check</code> exits non-zero when the book is out of date or cites code that has moved, which
     is the point: documentation that is wrong should fail the build rather than mislead a reader.
   </p>
-  <pre><code>autodoc check /path/to/your/repo --out docs/architecture</code></pre>
+  <pre><code>nunki check /path/to/your/repo --out docs/architecture</code></pre>
   <p>Commit the book alongside the code it documents, and run the check on every push:</p>
-  <pre><code>- uses: sadaramk/autodoc@v0.2.7
+  <pre><code>- uses: sadaramk/nunki@v0.3.0
   with:
     out: docs/architecture</code></pre>
   <p class="meta">
     The action downloads a prebuilt binary for the runner and verifies it against the checksum
     published with the release, so nothing is compiled. <code>command</code> takes any subcommand
     (<code>check</code> by default) and <code>args</code> is appended verbatim. Pinning the action
-    pins the binary — <code>@v0.2.7</code> runs that build; <code>@v0</code> tracks the newest 0.x.
+    pins the binary — <code>@v0.3.0</code> runs that build; <code>@v0</code> tracks the newest 0.x.
   </p>
   <p>
     Committing the book does not invalidate it, and neither does a commit that changes nothing it
@@ -123,7 +123,7 @@ open docs/architecture/index.html</code></pre>
     question — what does this change? — and two rendered books do not answer it: they diff as text, so
     a reordered table reads as a change and one new route reads as five.
   </p>
-  <pre><code>autodoc diff . --base origin/main</code></pre>
+  <pre><code>nunki diff . --base origin/main</code></pre>
   <p>
     <code>diff</code> reads both revisions in throwaway worktrees, so it never touches your working
     tree, and compares the models rather than the pages:
@@ -144,7 +144,7 @@ open docs/architecture/index.html</code></pre>
     Markdown by default so it can be posted as a comment, <code>--json</code> for a bot, and
     <code>--exit-code</code> to make an architecture change require a review:
   </p>
-  <pre><code>- uses: sadaramk/autodoc@v0.2.7
+  <pre><code>- uses: sadaramk/nunki@v0.3.0
   with:
     command: diff
     args: --base ${{ github.event.pull_request.base.sha }}</code></pre>
@@ -162,26 +162,26 @@ open docs/architecture/index.html</code></pre>
     point — regenerating will not undo it, as long as the IR still validates. That is the intended
     workflow: the tool drafts, you edit, the edit survives.
   </p>
-  <pre><code>autodoc validate docs/architecture/diagrams/containers.ir.json
-autodoc render docs/architecture/diagrams/containers.ir.json -o containers.html</code></pre>
+  <pre><code>nunki validate docs/architecture/diagrams/containers.ir.json
+nunki render docs/architecture/diagrams/containers.ir.json -o containers.html</code></pre>
 
   <h2>Write the parts code cannot know</h2>
   <p>
-    Business intent is not in the source. autodoc marks it <em>needs input</em> instead of guessing,
+    Business intent is not in the source. nunki marks it <em>needs input</em> instead of guessing,
     and <code>authored.json</code> is where you supply it. Anything you write there is shown as
     authored, kept apart from what was measured, and never overwritten by a later run.
   </p>
 
   <h2>Let an agent drive it</h2>
   <p>
-    <code>autodoc serve</code> runs an MCP server on stdio, exposing scan, compile and verify. An agent
+    <code>nunki serve</code> runs an MCP server on stdio, exposing scan, compile and verify. An agent
     drafts an IR, has it rejected with JSON Patch diagnostics naming exactly what to fix, and retries —
     it never emits SVG itself.
   </p>
-  <pre><code>autodoc serve</code></pre>
+  <pre><code>nunki serve</code></pre>
 
   <footer>
-    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed
+    <a href="https://github.com/sadaramk/nunki">Source on GitHub</a> · MIT licensed
   </footer>
 </main>
 </body>

@@ -8,7 +8,7 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::{scan, EvidenceRef, ScanOptions, ScanReport};
+use nunki_analyzer::{scan, EvidenceRef, ScanOptions, ScanReport};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)

@@ -30,7 +30,7 @@ pub enum BookError {
     // `transparent` rather than `{0}`: with `#[from]` the inner error is also the
     // source, so anyhow's `{e:#}` printed the same sentence twice.
     #[error(transparent)]
-    Scan(#[from] autodoc_analyzer::ScanError),
+    Scan(#[from] nunki_analyzer::ScanError),
     #[error("cannot write {path}: {source}")]
     Io { path: String, source: std::io::Error },
     #[error("refusing to write `{path}`: it would leave the output directory")]
@@ -257,7 +257,7 @@ fn manifest(planned: &Planned) -> Value {
     let b = &planned.built;
     json!({
         "generator": b.book.meta.generator,
-        "generatedAt": autodoc_ir::now_rfc3339(),
+        "generatedAt": nunki_ir::now_rfc3339(),
         "repository": b.book.meta.repo,
         "commit": b.book.meta.commit,
         "commitDate": b.book.meta.commit_date,
@@ -271,7 +271,7 @@ fn manifest(planned: &Planned) -> Value {
             "svg": format!("diagrams/{}.svg", d.id),
             "nodes": d.ir.nodes.len(),
             "edges": d.ir.edges.len(),
-            "density": autodoc_ir::visual_density(d.ir.nodes.len(), d.ir.edges.len()),
+            "density": nunki_ir::visual_density(d.ir.nodes.len(), d.ir.edges.len()),
             "curated": d.curated,
             "notes": d.notes,
         })).collect::<Vec<_>>(),

@@ -1,20 +1,20 @@
 #!/usr/bin/env sh
-# Install a released autodoc binary.
+# Install a released nunki binary.
 #
-#   curl -fsSL https://github.com/sadaramk/autodoc/releases/latest/download/install.sh | sh
+#   curl -fsSL https://github.com/sadaramk/nunki/releases/latest/download/install.sh | sh
 #
 # Environment:
-#   AUTODOC_VERSION  release tag to install (default: latest)
-#   AUTODOC_BIN_DIR  where to put the binary (default: the first writable of
+#   NUNKI_VERSION  release tag to install (default: latest)
+#   NUNKI_BIN_DIR  where to put the binary (default: the first writable of
 #                    /usr/local/bin, $HOME/.local/bin)
 #
 # The checksum published with the release is verified before anything is
-# installed. POSIX sh on purpose: this runs before autodoc does, on whatever the
+# installed. POSIX sh on purpose: this runs before nunki does, on whatever the
 # machine has.
 set -eu
 
-REPO="${AUTODOC_REPO:-sadaramk/autodoc}"
-version="${AUTODOC_VERSION:-latest}"
+REPO="${NUNKI_REPO:-sadaramk/nunki}"
+version="${NUNKI_VERSION:-latest}"
 
 die() {
   echo "install: $1" >&2
@@ -42,7 +42,7 @@ if [ "$version" = latest ]; then
 fi
 plain="${version#v}"
 
-name="autodoc-$plain-$target"
+name="nunki-$plain-$target"
 base="https://github.com/$REPO/releases/download/$version"
 
 work=$(mktemp -d)
@@ -64,7 +64,7 @@ fi
 
 tar xzf "$work/$name.tar.gz" -C "$work"
 
-dir="${AUTODOC_BIN_DIR:-}"
+dir="${NUNKI_BIN_DIR:-}"
 if [ -z "$dir" ]; then
   for candidate in /usr/local/bin "$HOME/.local/bin"; do
     if [ -d "$candidate" ] && [ -w "$candidate" ]; then
@@ -78,10 +78,10 @@ if [ -z "$dir" ]; then
   mkdir -p "$dir"
 fi
 
-install -m 755 "$work/$name/autodoc" "$dir/autodoc" 2>/dev/null ||
-  die "cannot write to $dir; set AUTODOC_BIN_DIR to a directory you own"
+install -m 755 "$work/$name/nunki" "$dir/nunki" 2>/dev/null ||
+  die "cannot write to $dir; set NUNKI_BIN_DIR to a directory you own"
 
-echo "install: $("$dir/autodoc" --version) → $dir/autodoc"
+echo "install: $("$dir/nunki" --version) → $dir/nunki"
 case ":$PATH:" in
   *":$dir:"*) ;;
   *) echo "install: add $dir to PATH" ;;

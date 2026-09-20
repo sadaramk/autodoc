@@ -1,5 +1,5 @@
 [package]
-name = "autodoc-git"
+name = "nunki-git"
 description = "Commit pinning, diff tracking and source-evidence verification"
 version.workspace = true
 edition.workspace = true

@@ -23,7 +23,7 @@ async function open(page: Page, which = "containers") {
     };
   });
   await page.goto(paths[which]);
-  await expect(page.locator("svg.autodoc")).toBeVisible();
+  await expect(page.locator("svg.nunki")).toBeVisible();
   return errors;
 }
 
@@ -49,7 +49,7 @@ test("renders the container diagram fitted to the viewport without errors", asyn
 test("hovering a node traces its upstream and downstream paths", async ({ page }) => {
   await open(page);
   await node(page, "payments").hover();
-  await expect(page.locator("svg.autodoc")).toHaveClass(/is-tracing/);
+  await expect(page.locator("svg.nunki")).toHaveClass(/is-tracing/);
   for (const id of ["web", "api-gateway", "payments", "postgres", "stripe"]) {
     await expect(node(page, id)).toHaveClass(/is-lit/);
   }
@@ -59,7 +59,7 @@ test("hovering a node traces its upstream and downstream paths", async ({ page }
   await expect(page.locator('.ad-edges .ad-edge[data-id="payments--stripe"]')).toHaveClass(/is-lit/);
   await expect(page.locator('.ad-edges .ad-edge[data-id="api-gateway--redis"]')).not.toHaveClass(/is-lit/);
   await page.mouse.move(5, 5);
-  await expect(page.locator("svg.autodoc")).not.toHaveClass(/is-tracing/);
+  await expect(page.locator("svg.nunki")).not.toHaveClass(/is-tracing/);
 });
 
 test("clicking a node opens the evidence drawer with verified source and a git reference", async ({ page }) => {
@@ -93,7 +93,7 @@ test("clicking a node opens the evidence drawer with verified source and a git r
 test("nodes are keyboard operable", async ({ page }) => {
   await open(page);
   await node(page, "kafka").focus();
-  await expect(page.locator("svg.autodoc")).toHaveClass(/is-tracing/);
+  await expect(page.locator("svg.nunki")).toHaveClass(/is-tracing/);
   await page.keyboard.press("Enter");
   await expect(page.locator(".drawer h2")).toHaveText("Kafka");
   await expect(page.locator(".drawer .body")).toContainText("order.placed");
@@ -121,7 +121,7 @@ test("wheel zooms, drag pans, and fit restores the view", async ({ page }) => {
 
 test("theme toggles between editorial light and dark without redrawing", async ({ page }) => {
   await open(page);
-  const svg = page.locator("svg.autodoc");
+  const svg = page.locator("svg.nunki");
   const cardsBefore = await page.locator(".ad-node").evaluateAll((els) => els.map((e) => e.outerHTML.length));
   const canvasFill = () => page.locator(".ad-canvas").evaluate((el) => getComputedStyle(el).fill);
   await expect(svg).toHaveAttribute("data-theme", "editorial-light");
@@ -149,7 +149,7 @@ test("exports a standalone SVG and a high-resolution PNG", async ({ page }) => {
   const png = readFileSync((await pngDownload.path())!);
   expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
   const width = png.readUInt32BE(16);
-  const layoutWidth = await page.evaluate(() => (window as any).autodoc.data.layout.width);
+  const layoutWidth = await page.evaluate(() => (window as any).nunki.data.layout.width);
   expect(width).toBeGreaterThanOrEqual(Math.round(layoutWidth * 2));
 });
 
@@ -167,7 +167,7 @@ test("component and system views render and respond", async ({ page }) => {
 
 test("dark theme with coral accent is honoured from the IR", async ({ page }) => {
   await open(page, "dark");
-  await expect(page.locator("svg.autodoc")).toHaveAttribute("data-theme", "editorial-dark");
+  await expect(page.locator("svg.nunki")).toHaveAttribute("data-theme", "editorial-dark");
   const stroke = await page.locator(".ad-node.is-focal .ad-card").evaluate((el) => getComputedStyle(el).stroke);
   expect(stroke).toBe("rgb(251, 113, 133)");
 });
@@ -185,7 +185,7 @@ test("small screens keep the canvas and drawer usable", async ({ page }) => {
 
 test("sequence diagram: numbered messages on lifelines open their verified evidence", async ({ page }) => {
   const errors = await open(page, "sequence");
-  await expect(page.locator("svg.autodoc")).toHaveAttribute("data-diagram-type", "ad-sequence");
+  await expect(page.locator("svg.nunki")).toHaveAttribute("data-diagram-type", "ad-sequence");
   await expect(page.locator(".ad-lifeline")).toHaveCount(4);
   const labels = page.locator(".ad-edge-label text:not(.ad-edge-detail)");
   await expect(labels).toHaveText([

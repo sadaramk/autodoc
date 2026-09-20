@@ -3,34 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>autodoc — example architecture books</title>
+<title>nunki — example architecture books</title>
 <meta name="description" content="Architecture documentation generated from source code, with every claim linked to the line it came from.">
-<link rel="canonical" href="https://sadaramk.github.io/autodoc/">
+<link rel="canonical" href="https://sadaramk.github.io/nunki/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="autodoc">
-<meta property="og:title" content="autodoc — architecture documentation generated from source code">
+<meta property="og:site_name" content="nunki">
+<meta property="og:title" content="nunki — architecture documentation generated from source code">
 <meta property="og:description" content="Architecture documentation generated from source code, with every claim linked to the line it came from.">
-<meta property="og:url" content="https://sadaramk.github.io/autodoc/">
+<meta property="og:url" content="https://sadaramk.github.io/nunki/">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="autodoc — architecture documentation generated from source code">
+<meta name="twitter:title" content="nunki — architecture documentation generated from source code">
 <meta name="twitter:description" content="Architecture documentation generated from source code, with every claim linked to the line it came from.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="wrap">
   <nav>
-    <a class="brand" href="index.html">autodoc</a>
+    <a class="brand" href="index.html">nunki</a>
     <a href="index.html" aria-current="page">Examples</a>
     <a href="start.html">Getting started</a>
     <a href="how.html">How it works</a>
     <a href="support.html">What it reads</a>
-    <a href="https://github.com/sadaramk/autodoc">GitHub</a>
+    <a href="https://github.com/sadaramk/nunki">GitHub</a>
   </nav>
 
-  <p class="eyebrow">autodoc</p>
+  <p class="eyebrow">nunki</p>
   <h1>Architecture documentation generated from source code</h1>
   <p class="lead">
-    autodoc reads a repository and writes an architecture book: diagrams chosen for the question they
+    nunki reads a repository and writes an architecture book: diagrams chosen for the question they
     answer, an API reference, a data model, request and background flows, and a business-requirements
     scaffold. Every claim links to the file and line it came from, and each citation is verified
     against the commit.
@@ -54,8 +54,8 @@
       <p>A Spring Cloud microservice system: gateway routes from config, Feign calls, MongoDB, RabbitMQ, scheduled jobs that send email.</p>
       <p class="meta">Java · Spring Cloud · MIT</p>
     </a>
-    <a class="card" href="examples/autodoc/index.html">
-      <h3>autodoc itself →</h3>
+    <a class="card" href="examples/nunki/index.html">
+      <h3>nunki itself →</h3>
       <p>The tool documenting its own repository: the analyzer, renderer, validator and MCP server, and how a scan becomes a book.</p>
       <p class="meta">Rust · workspace · MIT</p>
     </a>
@@ -75,15 +75,15 @@
 
   <h2>Proven on real repositories</h2>
   <p>
-    Besides its own fixtures, autodoc is run against public codebases of different shapes — etcd, MinIO,
+    Besides its own fixtures, nunki is run against public codebases of different shapes — etcd, MinIO,
     Caddy, Spring PetClinic, PiggyMetrics, wild-workouts and others. Each thing it got wrong became a fix
     and a regression fixture, and the results are written down rather than summarised:
-    <a href="https://github.com/sadaramk/autodoc/blob/main/HEURISTICS.md">what each repository exposed →</a>
+    <a href="https://github.com/sadaramk/nunki/blob/main/HEURISTICS.md">what each repository exposed →</a>
   </p>
 
   <h2>Run it on your own repository</h2>
-  <pre><code>curl -fsSL https://github.com/sadaramk/autodoc/releases/latest/download/install.sh | sh
-autodoc generate /path/to/your/repo --out docs/architecture
+  <pre><code>curl -fsSL https://github.com/sadaramk/nunki/releases/latest/download/install.sh | sh
+nunki generate /path/to/your/repo --out docs/architecture
 open docs/architecture/index.html</code></pre>
   <p>
     The book is self-contained and offline: one HTML file, a Markdown mirror for GitHub, <code>llms.txt</code>
@@ -93,7 +93,7 @@ open docs/architecture/index.html</code></pre>
   </p>
 
   <footer>
-    <a href="https://github.com/sadaramk/autodoc">Source on GitHub</a> · MIT licensed ·
+    <a href="https://github.com/sadaramk/nunki">Source on GitHub</a> · MIT licensed ·
     Generated books embed excerpts of the documented repository's source.
   </footer>
 </main>

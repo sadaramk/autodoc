@@ -7,7 +7,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use autodoc_ir::EdgeType;
+use nunki_ir::EdgeType;
 
 use crate::extract::Annotation;
 use crate::scan::{EvidenceRef, FileRec, Unit};

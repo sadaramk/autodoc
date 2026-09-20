@@ -81,11 +81,11 @@
   };
 
   // ── Theme ────────────────────────────────────────────────────────────────
-  function storedTheme() { try { return localStorage.getItem("autodoc-book-theme"); } catch (e) { return null; } }
+  function storedTheme() { try { return localStorage.getItem("nunki-book-theme"); } catch (e) { return null; } }
   function applyTheme(t) {
     document.documentElement.setAttribute("data-theme", t);
     document.body.setAttribute("data-theme", t);
-    document.querySelectorAll("svg.autodoc").forEach(function (s) { s.setAttribute("data-theme", t); });
+    document.querySelectorAll("svg.nunki").forEach(function (s) { s.setAttribute("data-theme", t); });
   }
   var theme = storedTheme();
   if (theme !== "editorial-light" && theme !== "editorial-dark") {
@@ -95,7 +95,7 @@
   function toggleTheme() {
     theme = theme === "editorial-dark" ? "editorial-light" : "editorial-dark";
     applyTheme(theme);
-    try { localStorage.setItem("autodoc-book-theme", theme); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem("nunki-book-theme", theme); } catch (e) { /* storage unavailable */ }
   }
 
   // ── Shell ────────────────────────────────────────────────────────────────
@@ -946,5 +946,5 @@
   window.addEventListener("resize", function () { if (!popover.hidden && popState.anchor) positionPopover(popState.anchor); });
 
   renderPage(parseHash());
-  window.autodocBook = { book: book, go: function (p) { location.hash = href(p); }, figures: function () { return figures; } };
+  window.nunkiBook = { book: book, go: function (p) { location.hash = href(p); }, figures: function () { return figures; } };
 })();

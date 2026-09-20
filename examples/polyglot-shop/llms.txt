@@ -1,12 +1,12 @@
 # Polyglot Shop
 
-> A small checkout platform used as the autodoc demo repository.
+> A small checkout platform used as the nunki demo repository.
 
-Architecture book generated from source by autodoc. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
+Architecture book generated from source by nunki. Every claim links to file:line evidence verified against the commit. `polyglot-shop` · 138/138 citations verified
 
 ## Pages
 
-- [Polyglot Shop](pages/01-overview.md): A small checkout platform used as the autodoc demo repository.
+- [Polyglot Shop](pages/01-overview.md): A small checkout platform used as the nunki demo repository.
 - [Architecture](pages/02-architecture.md): How the 5 deployables, 3 datastores and queues, and 2 external services connect.
 - [API Gateway](pages/03-containers-api-gateway.md): HTTP service built with TypeScript · Express.
 - [Fulfillment](pages/03-containers-fulfillment.md): Ships placed orders and notifies customers

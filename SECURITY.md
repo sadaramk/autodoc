@@ -1,10 +1,10 @@
 # Security
 
-autodoc reads a repository and writes documentation. The repository it reads is **untrusted input**:
+nunki reads a repository and writes documentation. The repository it reads is **untrusted input**:
 documenting code you did not write is the point of the tool, so file contents, paths, symbol names,
 configuration and `.git/config` all come from somewhere else.
 
-autodoc does not run the code it scans, and the generated book makes no network requests — figures,
+nunki does not run the code it scans, and the generated book makes no network requests — figures,
 citations and snippets are inlined.
 
 It does run `git`, which is where the sharp edges are. A repository can carry configuration that
@@ -15,7 +15,7 @@ vendored copy: `git clone` does not carry the source repository's config.
 
 Residual risk worth knowing: a `.gitattributes` clean filter is still applied by `git diff` when one
 is configured for the repository. If you are documenting something you actively distrust, run
-autodoc in a container.
+nunki in a container.
 
 ## Publishing a book
 
@@ -24,14 +24,14 @@ autodoc in a container.
   included.
 - **Evidence stays inside the repository.** A citation that resolves outside it — by traversal or
   through a symlinked directory — is refused rather than quoted.
-- **The output directory is confined.** `output.dir` in a repository's `autodoc.toml` must be a
+- **The output directory is confined.** `output.dir` in a repository's `nunki.toml` must be a
   relative path inside that repository; `--out` is your own instruction and is not restricted.
-- **`authored.json` is yours.** autodoc creates it once and never overwrites it; anything you write
+- **`authored.json` is yours.** nunki creates it once and never overwrites it; anything you write
   there is published with the book.
 
 ## Reporting a vulnerability
 
 Please report suspected vulnerabilities privately through GitHub's
-[security advisories](https://github.com/sadaramk/autodoc/security/advisories/new) rather than a
+[security advisories](https://github.com/sadaramk/nunki/security/advisories/new) rather than a
 public issue. Include the repository shape or input that triggers it. I'll acknowledge within a few
 days and credit you in the fix unless you'd rather stay anonymous.

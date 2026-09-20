@@ -3,7 +3,7 @@
 use std::path::Path;
 use std::process::Command;
 
-use autodoc_git::*;
+use nunki_git::*;
 
 fn sh(dir: &Path, args: &[&str]) -> String {
     let out = Command::new("git").arg("-C").arg(dir).args(args).output().expect("git runs");
@@ -80,7 +80,7 @@ fn untracked_files_and_unknown_commits_are_flagged() {
 
 /// A repository's own `.git/config` can name a command for git to run —
 /// `core.fsmonitor` turns an innocent `git status` into arbitrary execution as
-/// whoever ran autodoc. Config travels with a tarball, an archive or a vendored
+/// whoever ran nunki. Config travels with a tarball, an archive or a vendored
 /// copy, and documenting code you did not write is the whole point of the tool,
 /// so every invocation must override the keys that can execute something.
 #[test]

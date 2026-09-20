@@ -1,6 +1,6 @@
 [package]
-name = "autodoc-cli"
-description = "autodoc: init, analyze, validate, render, serve"
+name = "nunki-cli"
+description = "nunki: init, analyze, validate, render, serve"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,17 +8,17 @@ repository.workspace = true
 rust-version.workspace = true
 
 [[bin]]
-name = "autodoc"
+name = "nunki"
 path = "src/main.rs"
 
 [dependencies]
-autodoc-ir.workspace = true
-autodoc-git.workspace = true
-autodoc-analyzer.workspace = true
-autodoc-validator.workspace = true
-autodoc-renderer.workspace = true
-autodoc-mcp.workspace = true
-autodoc-book.workspace = true
+nunki-ir.workspace = true
+nunki-git.workspace = true
+nunki-analyzer.workspace = true
+nunki-validator.workspace = true
+nunki-renderer.workspace = true
+nunki-mcp.workspace = true
+nunki-book.workspace = true
 tempfile.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -28,4 +28,4 @@ toml.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-autodoc-validator.workspace = true
+nunki-validator.workspace = true

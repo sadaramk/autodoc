@@ -2,7 +2,7 @@
 //! lifecycles of their status fields.
 //!
 //! A model that fits one figure (≤ `MAX_ENTITIES`) is drawn as one. A larger one
-//! is presented by business domain (see `autodoc_analyzer::domains`): an
+//! is presented by business domain (see `nunki_analyzer::domains`): an
 //! overview of the domains and how they reference each other, then one
 //! entity-relationship figure per domain. Past `DOMAIN_PAGE_THRESHOLD` entities
 //! each domain gets its own page, `data/<domain>`, so the data page stays
@@ -10,11 +10,11 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use autodoc_analyzer::data::{Access, DataModel, Entity, StateMachine};
-use autodoc_analyzer::domains::{domains, draft_domain_irs, draft_domain_overview_ir, DomainSummary};
-use autodoc_analyzer::scan::{slug, EvidenceRef};
-use autodoc_analyzer::{draft_entity_ir, DraftOptions};
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::data::{Access, DataModel, Entity, StateMachine};
+use nunki_analyzer::domains::{domains, draft_domain_irs, draft_domain_overview_ir, DomainSummary};
+use nunki_analyzer::scan::{slug, EvidenceRef};
+use nunki_analyzer::{draft_entity_ir, DraftOptions};
+use nunki_validator::ValidateOptions;
 
 use super::Builder;
 use crate::model::*;

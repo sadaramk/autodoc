@@ -4,7 +4,7 @@
 use std::collections::BTreeSet;
 use std::fmt::Write;
 
-use autodoc_ir::{BoundaryType, Cardinality, DiagramIR, DiagramType, EdgeType, StateKind};
+use nunki_ir::{BoundaryType, Cardinality, DiagramIR, DiagramType, EdgeType, StateKind};
 
 use crate::layout::{self, container_chip, EdgeRoute, Layout, NodeBox, TitleMetrics, KEY_W, MARGIN, ROW_H};
 use crate::text::{fit, mono_width, sans_width, xml_escape as esc};
@@ -104,7 +104,7 @@ fn type_class(t: EdgeType) -> &'static str {
 }
 
 pub fn svg_style(accent: &Accent) -> String {
-    let mut css = token_css(".autodoc", accent);
+    let mut css = token_css(".nunki", accent);
     css.push_str(include_str!("assets/diagram.css"));
     css
 }
@@ -127,7 +127,7 @@ pub fn render(ir: &DiagramIR, lay: &Layout, opts: &SvgOptions) -> String {
     };
     let _ = write!(
         s,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" class="autodoc {kind}" data-theme="{theme}" data-diagram-type="{kind}" {frame} data-width="{w}" data-height="{h}" role="img" aria-labelledby="{p}-title {p}-desc">"#,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" class="nunki {kind}" data-theme="{theme}" data-diagram-type="{kind}" {frame} data-width="{w}" data-height="{h}" role="img" aria-labelledby="{p}-title {p}-desc">"#,
         kind = type_class_of(ir.diagram_type),
         theme = theme_attr(ir.theme),
         p = opts.id_prefix

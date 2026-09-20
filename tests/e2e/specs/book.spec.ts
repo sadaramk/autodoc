@@ -44,7 +44,7 @@ test("book overview renders nav, table of contents, stats and figure without err
   await expect(page.locator('.sidenav .nav-link[aria-current="page"]')).toHaveText("Overview");
   await expect(page.locator(".rail .toc a")).toHaveCount(3);
   await expect(page.locator(".stats .stat")).toHaveCount(4);
-  await expect(figure(page, "system-context").locator("svg.autodoc")).toBeVisible();
+  await expect(figure(page, "system-context").locator("svg.nunki")).toBeVisible();
   await expect(page.locator(".chip.health")).toContainText("verified");
   await expect(page.locator(".cards .card")).not.toHaveCount(0);
   expect(errors).toEqual([]);
@@ -72,7 +72,7 @@ test("architecture figure drills down and traces dependencies", async ({ page })
   await openBook(page, "#/architecture");
   const fig = figure(page, "containers");
   await fig.locator('.ad-node[data-id="payments"]').hover();
-  await expect(fig.locator("svg.autodoc")).toHaveClass(/is-tracing/);
+  await expect(fig.locator("svg.nunki")).toHaveClass(/is-tracing/);
   await expect(fig.locator('.ad-node[data-id="stripe"]')).toHaveClass(/is-lit/);
   await expect(fig.locator('.ad-node[data-id="web"]')).toHaveClass(/is-lit/);
   await expect(fig.locator('.ad-node[data-id="redis"]')).not.toHaveClass(/is-lit/);
@@ -115,7 +115,7 @@ test("citation chips open a popover with verified source and a copyable permalin
 test("ctrl+wheel zooms a figure while plain wheel scrolls the page; fullscreen toggles", async ({ page }) => {
   await openBook(page, "#/architecture");
   const fig = figure(page, "containers");
-  const svg = fig.locator("svg.autodoc");
+  const svg = fig.locator("svg.nunki");
   const vb0 = await svg.getAttribute("viewBox");
   const box = (await fig.locator(".fig-canvas").boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -132,7 +132,7 @@ test("ctrl+wheel zooms a figure while plain wheel scrolls the page; fullscreen t
   await expect.poll(async () => Number((await svg.getAttribute("viewBox"))!.split(" ")[2])).toBeLessThan(Number(vb0!.split(" ")[2]));
 
   await fig.getByRole("button", { name: "Fit diagram" }).click();
-  const layoutWidth = await page.evaluate(() => (window as any).autodocBook.book.diagrams.containers.width);
+  const layoutWidth = await page.evaluate(() => (window as any).nunkiBook.book.diagrams.containers.width);
   await expect.poll(async () => Number((await svg.getAttribute("viewBox"))!.split(" ")[2])).toBeGreaterThanOrEqual(layoutWidth - 1);
   await fig.getByRole("button", { name: "Full screen" }).click();
   await expect(fig).toHaveClass(/is-fullscreen/);
@@ -143,7 +143,7 @@ test("ctrl+wheel zooms a figure while plain wheel scrolls the page; fullscreen t
 test("critical flow walkthrough frames each hop with both cards whole", async ({ page }) => {
   await openBook(page, "#/flows");
   const walk = page.locator(".walk");
-  const svg = walk.locator("svg.autodoc");
+  const svg = walk.locator("svg.nunki");
   const steps = walk.locator(".step");
   const count = await steps.count();
   expect(count).toBeGreaterThanOrEqual(2);
@@ -192,7 +192,7 @@ test("theme toggle switches canvas color and persists across reloads", async ({ 
   expect(await bg()).toBe("rgb(248, 249, 250)");
   await page.getByRole("button", { name: "Toggle light or dark theme" }).click();
   expect(await bg()).toBe("rgb(11, 15, 23)");
-  await expect(figure(page, "containers").locator("svg.autodoc")).toHaveAttribute("data-theme", "editorial-dark");
+  await expect(figure(page, "containers").locator("svg.nunki")).toHaveAttribute("data-theme", "editorial-dark");
   await page.reload();
   await expect(page.locator(".article h1")).toBeVisible();
   expect(await bg()).toBe("rgb(11, 15, 23)");
@@ -243,12 +243,12 @@ test("small screens: no horizontal overflow, nav becomes a drawer", async ({ pag
 test("behaviour pages: sequence flows, data model, API contract, functional spec and business requirements", async ({ page }) => {
   const errors = await openBook(page, "#/flows");
   const seq = figure(page, "flow-api-gateway-post-checkout");
-  await expect(seq.locator("svg.autodoc.ad-sequence")).toBeVisible();
+  await expect(seq.locator("svg.nunki.ad-sequence")).toBeVisible();
   await expect(seq.locator(".ad-lifeline")).not.toHaveCount(0);
   await expect(seq.locator(".ad-edge-label text").first()).toHaveText(/^1\. POST \/checkout/);
 
   await page.locator(".sidenav .nav-link", { hasText: "Data & integrations" }).click();
-  await expect(figure(page, "data-model").locator("svg.autodoc.ad-er .ad-node.is-entity")).not.toHaveCount(0);
+  await expect(figure(page, "data-model").locator("svg.nunki.ad-er .ad-node.is-entity")).not.toHaveCount(0);
   await expect(figure(page, "lifecycle-orders-status").locator(".ad-node.is-state")).not.toHaveCount(0);
 
   await page.locator(".sidenav .nav-group", { hasText: "API reference" }).locator(".nav-link", { hasText: "API Gateway" }).click();
@@ -272,8 +272,8 @@ test("runtime page shows the declared environment, entry ports and startup order
   const errors = await openBook(page, "#/runtime");
   await expect(page.locator(".article h1")).toHaveText("Runtime & deployment");
   const fig = page.locator("figure.figure").first();
-  await expect(fig.locator("svg.autodoc .ad-node").first()).toBeVisible();
-  await expect(fig.locator('svg.autodoc .ad-node[data-id="external"]')).toBeVisible();
+  await expect(fig.locator("svg.nunki .ad-node").first()).toBeVisible();
+  await expect(fig.locator('svg.nunki .ad-node[data-id="external"]')).toBeVisible();
   await expect(page.locator(".article h3", { hasText: "How traffic gets in" }).first()).toBeVisible();
   await expect(page.locator("table").first()).toContainText("api-gateway");
   expect(errors).toEqual([]);

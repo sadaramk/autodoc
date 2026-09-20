@@ -3,7 +3,7 @@
 //! order. Gaps between lifelines widen until every message label fits over its
 //! span, so a label never has to leave its own row.
 
-use autodoc_ir::{DiagramIR, EdgeStyle};
+use nunki_ir::{DiagramIR, EdgeStyle};
 
 use crate::layout::{
     edge_label_text, edge_label_width, AttrRow, EdgeRoute, LabelBox, Layout, Lifeline, NodeBox, Rect, RouteKind,

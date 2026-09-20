@@ -11,13 +11,13 @@ pub mod theme;
 
 use std::collections::BTreeMap;
 
-use autodoc_ir::DiagramIR;
+use nunki_ir::DiagramIR;
 
 pub use html::EvidenceView;
 pub use layout::{GeometryIssue, Layout};
 pub use theme::Accent;
 
-pub const GENERATOR: &str = concat!("autodoc ", env!("CARGO_PKG_VERSION"));
+pub const GENERATOR: &str = concat!("nunki ", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Clone, Default)]
 pub struct RenderOptions {
@@ -39,7 +39,7 @@ pub fn default_footer(ir: &DiagramIR) -> String {
     if let Some(c) = &ir.metadata.commit_hash {
         parts[0] = format!("{repo}@{}", &c[..c.len().min(8)]);
     }
-    let density = autodoc_ir::visual_density(ir.nodes.len(), ir.edges.len());
+    let density = nunki_ir::visual_density(ir.nodes.len(), ir.edges.len());
     parts.push(format!("density {density:.2}"));
     parts.push(ir.metadata.generated_at.clone());
     parts.join(" · ")

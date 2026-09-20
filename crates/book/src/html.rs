@@ -1,16 +1,16 @@
 //! The book reader: one self-contained HTML file. The page shell is static;
 //! `book.js` renders pages from the embedded JSON model with hash routing.
 
-use autodoc_renderer::text::{script_json, xml_escape as esc};
-use autodoc_renderer::theme::{theme_attr, token_css};
-use autodoc_renderer::Accent;
+use nunki_renderer::text::{script_json, xml_escape as esc};
+use nunki_renderer::theme::{theme_attr, token_css};
+use nunki_renderer::Accent;
 
 use crate::model::Book;
 
 pub fn render(book: &Book, accent: &Accent) -> String {
     let data = serde_json::to_value(book).expect("book serializes");
-    let theme = theme_attr(autodoc_ir::Theme::EditorialLight);
-    let diagram_css = autodoc_renderer::svg::svg_style(accent);
+    let theme = theme_attr(nunki_ir::Theme::EditorialLight);
+    let diagram_css = nunki_renderer::svg::svg_style(accent);
     format!(
         r#"<!doctype html>
 <html lang="en" data-theme="{theme}">

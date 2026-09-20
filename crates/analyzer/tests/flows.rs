@@ -4,9 +4,9 @@
 
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::scan::EvidenceRef;
-use autodoc_analyzer::trace::{worth_drawing, Flow, Step, StepKind, TriggerKind};
-use autodoc_analyzer::{scan, ScanOptions, ScanReport};
+use nunki_analyzer::scan::EvidenceRef;
+use nunki_analyzer::trace::{worth_drawing, Flow, Step, StepKind, TriggerKind};
+use nunki_analyzer::{scan, ScanOptions, ScanReport};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)

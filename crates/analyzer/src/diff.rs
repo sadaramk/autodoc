@@ -386,7 +386,7 @@ pub fn diff(before: &ScanReport, after: &ScanReport) -> Diff {
 
 /// The diff as a PR comment: a heading, one list per section, nothing else.
 ///
-/// Rendered here rather than in the CLI so `autodoc diff` and the MCP server
+/// Rendered here rather than in the CLI so `nunki diff` and the MCP server
 /// produce the same comment.
 pub fn markdown(d: &Diff) -> String {
     let mut out = String::new();

@@ -5,9 +5,9 @@
 
 use std::path::Path;
 
-use autodoc_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions};
-use autodoc_ir::*;
-use autodoc_renderer::{render_html, render_svg, RenderOptions};
+use nunki_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions};
+use nunki_ir::*;
+use nunki_renderer::{render_html, render_svg, RenderOptions};
 
 fn repo_root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."))
@@ -334,7 +334,7 @@ fn random_entity_and_state_diagrams_keep_geometry() {
             assert!(!HARD.contains(&issue.kind), "ER seed {seed}: {issue:?}");
         }
         for b in &r.layout.nodes {
-            assert!(b.rows.len() <= autodoc_renderer::layout::MAX_ROWS);
+            assert!(b.rows.len() <= nunki_renderer::layout::MAX_ROWS);
             assert!(b.rect.h >= b.content_h(), "ER seed {seed}: {} rows overflow the card", b.id);
         }
         assert!(r.content.contains("ad-er"));

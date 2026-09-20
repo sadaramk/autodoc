@@ -1,30 +1,30 @@
 //! Model Context Protocol server over stdio (newline-delimited JSON-RPC 2.0).
 //!
 //! Tools:
-//! - `autodoc_scan_repository` — C4 summary, entry points, evidence map, draft IR
-//! - `autodoc_compile_diagram` — validate + render, or structured diagnostics
-//! - `autodoc_verify_evidence` — file/line checks against the working tree and HEAD
+//! - `nunki_scan_repository` — C4 summary, entry points, evidence map, draft IR
+//! - `nunki_compile_diagram` — validate + render, or structured diagnostics
+//! - `nunki_verify_evidence` — file/line checks against the working tree and HEAD
 
 pub mod engine;
 
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 
-use autodoc_analyzer::Depth;
-use autodoc_git::EvidenceQuery;
-use autodoc_ir::Theme;
-use autodoc_renderer::Accent;
+use nunki_analyzer::Depth;
+use nunki_git::EvidenceQuery;
+use nunki_ir::Theme;
+use nunki_renderer::Accent;
 use serde_json::{json, Value};
 
 use engine::{CompileOutcome, CompileRequest, IrInput, OutputFormat};
 
-pub const SERVER_NAME: &str = "autodoc";
+pub const SERVER_NAME: &str = "nunki";
 pub const SUPPORTED_PROTOCOLS: &[&str] = &["2025-06-18", "2025-03-26", "2024-11-05"];
 
-const INSTRUCTIONS: &str = "autodoc turns source code into verifiable, editorial architecture diagrams. \
-Workflow: (1) autodoc_scan_repository to get containers, relationships, an evidence map and a draft DiagramIR; \
+const INSTRUCTIONS: &str = "nunki turns source code into verifiable, editorial architecture diagrams. \
+Workflow: (1) nunki_scan_repository to get containers, relationships, an evidence map and a draft DiagramIR; \
 (2) refine the IR — never emit SVG yourself; keep density <= 0.40 and at most 1-2 isKeyFocalPoint nodes; \
-(3) autodoc_compile_diagram; if it returns status=rejected, fix exactly the elements named in each diagnostic \
+(3) nunki_compile_diagram; if it returns status=rejected, fix exactly the elements named in each diagnostic \
 (apply its JSON Patch when present) and retry; (4) return the output path with a short architectural brief.";
 
 /// JSON-RPC error codes.
@@ -124,7 +124,7 @@ impl Server {
         json!({
             "protocolVersion": version,
             "capabilities": { "tools": { "listChanged": false } },
-            "serverInfo": { "name": SERVER_NAME, "title": "autodoc", "version": env!("CARGO_PKG_VERSION") },
+            "serverInfo": { "name": SERVER_NAME, "title": "nunki", "version": env!("CARGO_PKG_VERSION") },
             "instructions": INSTRUCTIONS,
         })
     }
@@ -136,10 +136,10 @@ impl Server {
             .ok_or((rpc::INVALID_PARAMS, "tools/call requires `name`".to_string()))?;
         let args = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
         let outcome = match name {
-            "autodoc_scan_repository" => self.scan(&args),
-            "autodoc_compile_diagram" => self.compile(&args),
-            "autodoc_verify_evidence" => self.verify(&args),
-            "autodoc_generate_book" => self.book(&args),
+            "nunki_scan_repository" => self.scan(&args),
+            "nunki_compile_diagram" => self.compile(&args),
+            "nunki_verify_evidence" => self.verify(&args),
+            "nunki_generate_book" => self.book(&args),
             other => return Err((rpc::INVALID_PARAMS, format!("unknown tool `{other}`"))),
         };
         // Tool-level failures are results with isError, so the model can read and react.
@@ -199,7 +199,7 @@ impl Server {
             accent,
             strict: args.get("strict").and_then(Value::as_bool).unwrap_or(false),
             verify_evidence: args.get("verifyEvidence").and_then(Value::as_bool).unwrap_or(true),
-            max_density: autodoc_ir::MAX_VISUAL_DENSITY,
+            max_density: nunki_ir::MAX_VISUAL_DENSITY,
         };
         let outcome = engine::compile_diagram(&req).map_err(|e| e.to_string())?;
         let rejected = matches!(outcome, CompileOutcome::Rejected { .. });
@@ -209,21 +209,21 @@ impl Server {
     fn book(&self, args: &Value) -> Result<(Value, bool), String> {
         let repo = self.path_arg(args, "repoPath").ok_or("`repoPath` is required")?;
         let out = self.path_arg(args, "outDir").unwrap_or_else(|| repo.join("docs/architecture"));
-        let opts = autodoc_book::BookOptions {
+        let opts = nunki_book::BookOptions {
             theme: parse_theme(args.get("theme"))?,
             accent: match args.get("accent").and_then(Value::as_str) {
                 Some(a) => Accent::parse(a)?,
                 None => Accent::default(),
             },
             include_tests: args.get("includeTests").and_then(Value::as_bool).unwrap_or(false),
-            max_density: autodoc_ir::MAX_VISUAL_DENSITY,
+            max_density: nunki_ir::MAX_VISUAL_DENSITY,
         };
         if args.get("checkOnly").and_then(Value::as_bool).unwrap_or(false) {
-            let report = autodoc_book::check(&repo, &out, &opts).map_err(|e| e.to_string())?;
+            let report = nunki_book::check(&repo, &out, &opts).map_err(|e| e.to_string())?;
             let failed = !report.ok;
             return Ok((serde_json::to_value(report).map_err(|e| e.to_string())?, failed));
         }
-        let report = autodoc_book::generate(&repo, &out, &opts).map_err(|e| e.to_string())?;
+        let report = nunki_book::generate(&repo, &out, &opts).map_err(|e| e.to_string())?;
         Ok((serde_json::to_value(report).map_err(|e| e.to_string())?, false))
     }
 
@@ -271,7 +271,7 @@ fn error_response(id: Value, code: i64, message: &str) -> Value {
 
 /// DiagramIR schema with `$defs` hoisted so it can nest inside a tool schema.
 fn ir_schema_parts() -> (Value, Value) {
-    let mut schema = autodoc_ir::json_schema();
+    let mut schema = nunki_ir::json_schema();
     let defs = schema.as_object_mut().and_then(|o| o.remove("$defs")).unwrap_or_else(|| json!({}));
     if let Some(o) = schema.as_object_mut() {
         o.remove("$schema");
@@ -287,7 +287,7 @@ pub fn tool_definitions() -> Value {
     let (ir_schema, defs) = ir_schema_parts();
     json!([
         {
-            "name": "autodoc_scan_repository",
+            "name": "nunki_scan_repository",
             "title": "Scan repository architecture",
             "description": "Parse a repository with tree-sitter (Rust, TypeScript/JavaScript, Go, Python) and return a C4 decomposition: containers (deployable units) with entry points, infrastructure (datastores, event buses, vendor APIs), relationships with file+line evidence, a Git evidence map (element id → evidence), and a validated draft DiagramIR to refine.",
             "inputSchema": {
@@ -305,7 +305,7 @@ pub fn tool_definitions() -> Value {
             "annotations": { "readOnlyHint": true, "idempotentHint": true, "openWorldHint": false }
         },
         {
-            "name": "autodoc_compile_diagram",
+            "name": "nunki_compile_diagram",
             "title": "Compile DiagramIR",
             "description": "Validate a DiagramIR (schema, topology, density <= 0.40, accent budget, evidence against the repository) and render a standalone interactive HTML page or an SVG. On failure returns status=rejected with diagnostics: stable codes (ERR_HIGH_DENSITY, ERR_ACCENT_OVERUSE, ERR_MISSING_ENDPOINT, ERR_ORPHAN_NODE, ERR_UNLABELED_CYCLE, ERR_EVIDENCE_*), JSON paths, ranked suggestions and RFC 6902 patches. Fix only what is named and retry.",
             "inputSchema": {
@@ -326,7 +326,7 @@ pub fn tool_definitions() -> Value {
             "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
         },
         {
-            "name": "autodoc_generate_book",
+            "name": "nunki_generate_book",
             "title": "Generate architecture book",
             "description": "Write the repository's architecture book: index.html (overview, architecture, one page per deployable with its component diagram, data & integrations, critical flows, evidence & unknowns), a Markdown mirror, llms.txt, manifest.json and diagrams/*.ir.json + .svg. Every citation is verified against the commit. Hand-edited diagram IR files are kept and re-rendered. With checkOnly, reports whether the book is out of date or cites stale code without writing.",
             "inputSchema": {
@@ -345,7 +345,7 @@ pub fn tool_definitions() -> Value {
             "annotations": { "readOnlyHint": false, "destructiveHint": false, "idempotentHint": true, "openWorldHint": false }
         },
         {
-            "name": "autodoc_verify_evidence",
+            "name": "nunki_verify_evidence",
             "title": "Verify source evidence",
             "description": "Check that file+line references exist in the repository and have not drifted: reports verified, stale (lines changed since the pinned commit or uncommitted), untracked, file-missing, line-out-of-range, symbol-mismatch, with forge permalinks against HEAD.",
             "inputSchema": {
@@ -409,7 +409,7 @@ mod tests {
         let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
         assert_eq!(
             names,
-            ["autodoc_scan_repository", "autodoc_compile_diagram", "autodoc_generate_book", "autodoc_verify_evidence"]
+            ["nunki_scan_repository", "nunki_compile_diagram", "nunki_generate_book", "nunki_verify_evidence"]
         );
         let compile = &tools[1]["inputSchema"];
         assert!(compile["$defs"]["Node"].is_object());
@@ -427,7 +427,7 @@ mod tests {
         assert_eq!(r["error"]["code"], rpc::INVALID_PARAMS);
         let r = call(
             &mut s,
-            json!({"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"autodoc_scan_repository","arguments":{}}}),
+            json!({"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"nunki_scan_repository","arguments":{}}}),
         );
         assert_eq!(r["result"]["isError"], true);
         assert!(r["result"]["structuredContent"]["error"].as_str().unwrap().contains("repoPath"));
@@ -439,13 +439,13 @@ mod tests {
         let mut s = Server::with_cwd(dir.path().into());
         let r = call(
             &mut s,
-            json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"autodoc_compile_diagram","arguments":{"ir":{"version":"1.0.0"},"outputPath":"x.txt","format":"html"}}}),
+            json!({"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"nunki_compile_diagram","arguments":{"ir":{"version":"1.0.0"},"outputPath":"x.txt","format":"html"}}}),
         );
         assert_eq!(r["result"]["isError"], true);
         assert!(r["result"]["structuredContent"]["error"].as_str().unwrap().contains(".html"));
         let r = call(
             &mut s,
-            json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"autodoc_compile_diagram","arguments":{"ir":{"version":"1.0.0"},"outputPath":"x.html","format":"html"}}}),
+            json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"nunki_compile_diagram","arguments":{"ir":{"version":"1.0.0"},"outputPath":"x.html","format":"html"}}}),
         );
         assert_eq!(r["result"]["isError"], true);
         assert_eq!(r["result"]["structuredContent"]["status"], "rejected");

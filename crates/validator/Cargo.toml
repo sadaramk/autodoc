@@ -1,5 +1,5 @@
 [package]
-name = "autodoc-validator"
+name = "nunki-validator"
 description = "Semantic checks, density guardrails and self-healing diagnostics for DiagramIR"
 version.workspace = true
 edition.workspace = true
@@ -8,8 +8,8 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-autodoc-ir.workspace = true
-autodoc-git.workspace = true
+nunki-ir.workspace = true
+nunki-git.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 schemars.workspace = true

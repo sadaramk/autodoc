@@ -17,16 +17,16 @@ lint:
 	docker compose run --rm lint
 
 build:
-	docker compose build autodoc
+	docker compose build nunki
 
 # Regenerate the committed demonstration book in examples/polyglot-shop.
 # The example book ships in this repository, so it must be reproducible on any
 # machine: a book records the repository root it was generated from and the
 # commit it was pinned to. The fixture is copied to a fixed path inside the
 # container, away from this repository's `.git`, so neither leaks into it.
-DEMO_IN_CONTAINER = docker compose run --rm --entrypoint sh autodoc -c \
+DEMO_IN_CONTAINER = docker compose run --rm --entrypoint sh nunki -c \
 	'cp -R /repo/tests/fixtures/polyglot-shop /tmp/polyglot-shop && \
-	 autodoc $(1) /tmp/polyglot-shop --out /repo/examples/polyglot-shop'
+	 nunki $(1) /tmp/polyglot-shop --out /repo/examples/polyglot-shop'
 
 # Both rebuild the image first: a stale binary would regenerate the example
 # from the previously released code and hide the very drift this checks for.
@@ -37,7 +37,7 @@ demo-check: build
 	$(call DEMO_IN_CONTAINER,check)
 
 schema:
-	docker compose run --rm autodoc schema > schema/diagram-ir.schema.json
+	docker compose run --rm nunki schema > schema/diagram-ir.schema.json
 
 clean:
 	docker compose down -v

@@ -1,66 +1,66 @@
-.autodoc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
-.autodoc text{font-family:inherit}
-.autodoc .ad-canvas{fill:var(--ad-canvas)}
-.autodoc .ad-eyebrow{fill:var(--ad-muted);font:500 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
-.autodoc .ad-title{fill:var(--ad-text);font-size:26px;font-weight:650;letter-spacing:-.01em}
-.autodoc .ad-subtitle{fill:var(--ad-muted);font-size:15px}
-.autodoc .ad-zone-box{fill:var(--ad-zone-fill);stroke:var(--ad-zone-stroke);stroke-width:1}
-.autodoc .b-trust .ad-zone-box{stroke-dasharray:5 4}
-.autodoc .b-third .ad-zone-box{fill:none;stroke-dasharray:2 3}
-.autodoc .b-client .ad-zone-box{fill:none}
-.autodoc .ad-zone-label{fill:var(--ad-muted);font:600 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
-.autodoc .ad-zone-kind{fill:var(--ad-muted);opacity:.7;font:500 9.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em;text-anchor:end}
-.autodoc .ad-edge-line{fill:none;stroke:var(--ad-edge);stroke-width:1.25;stroke-linejoin:round;marker-end:url(#ad-arrow)}
-.autodoc .ad-edge-hit{fill:none;stroke:transparent;stroke-width:12}
-.autodoc .t-read .ad-edge-line{marker-end:url(#ad-open);stroke-width:1.1}
-.autodoc .t-write .ad-edge-line{stroke-width:1.7}
-.autodoc .t-event .ad-edge-line{marker-start:url(#ad-dot)}
-.autodoc .is-dashed .ad-edge-line{stroke-dasharray:6 4}
-.autodoc .is-dotted .ad-edge-line{stroke-dasharray:1.5 4;stroke-linecap:round;stroke-width:1.6}
-.autodoc .is-primary .ad-edge-line{stroke:var(--ad-accent);stroke-width:2;marker-end:url(#ad-arrow-accent)}
-.autodoc .is-primary.t-read .ad-edge-line{marker-end:url(#ad-open-accent)}
-.autodoc .is-primary.t-event .ad-edge-line{marker-start:url(#ad-dot-accent)}
-.autodoc .ad-mk{fill:var(--ad-edge)}
-.autodoc .ad-mk-strong{fill:var(--ad-edge-strong)}
-.autodoc .ad-mk-accent{fill:var(--ad-accent)}
-.autodoc .ad-mk-open{fill:none;stroke:var(--ad-edge);stroke-width:1.4}
-.autodoc .ad-mk-open-strong{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4}
-.autodoc .ad-mk-open-accent{fill:none;stroke:var(--ad-accent);stroke-width:1.6}
-.autodoc .ad-edge-label rect{fill:var(--ad-canvas)}
-.autodoc .ad-edge-label text{fill:var(--ad-muted);font-size:11px;font-weight:500;text-anchor:middle}
-.autodoc .ad-edge-label.is-primary text{fill:var(--ad-accent)}
-.autodoc .ad-card{fill:var(--ad-card);stroke:var(--ad-border);stroke-width:1}
-.autodoc .b-storage .ad-card{fill:var(--ad-card-recessed)}
-.autodoc .b-third .ad-card{stroke-dasharray:4 3}
-.autodoc .is-focal .ad-card{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
-.autodoc .ad-node-label{fill:var(--ad-text);font-size:14px;font-weight:600}
-.autodoc .ad-node-subtitle{fill:var(--ad-muted);font-size:12px}
-.autodoc .ad-badge{fill:var(--ad-badge);stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-badge-text{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.autodoc .ad-evidence-glyph{fill:var(--ad-muted);opacity:.55;font:600 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
-.autodoc .ad-legend-glyph{text-anchor:start;opacity:.8}
-.autodoc .is-focal .ad-evidence-glyph{fill:var(--ad-accent);opacity:.8}
-.autodoc .ad-rule{stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-legend-text{fill:var(--ad-muted);font-size:12px}
-.autodoc .ad-legend-focal{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
-.autodoc .ad-footer{fill:var(--ad-muted);opacity:.8;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.autodoc .ad-edge-detail{fill:var(--ad-muted);opacity:.85;font:10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
-.autodoc .ad-lifeline{stroke:var(--ad-border);stroke-width:1.2;stroke-dasharray:4 4}
-.autodoc .is-reply .ad-edge-line{marker-end:url(#ad-open)}
-.autodoc .is-primary.is-reply .ad-edge-line{marker-end:url(#ad-open-accent)}
-.autodoc .ad-edge.is-reply.is-lit:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
-.autodoc .ad-state-mark{fill:var(--ad-text)}
-.autodoc .is-focal .ad-state-mark{fill:var(--ad-accent)}
-.autodoc .ad-state-inner{fill:none;stroke:var(--ad-border);stroke-width:1}
-.autodoc .is-focal .ad-state-inner{stroke:var(--ad-accent)}
-.autodoc .ad-rows-rule{stroke:var(--ad-border);stroke-width:1}
-.autodoc .ad-row-name{fill:var(--ad-text);font-size:12px}
-.autodoc .is-key .ad-row-name{font-weight:600}
-.autodoc .ad-row-key{fill:var(--ad-accent);font:600 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
-.autodoc .ad-row-type{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
-.autodoc.ad-er g.ad-edge.ad-edge .ad-edge-line{marker-start:none;marker-end:none}
-.autodoc.ad-er g.ad-edge.c-s-one .ad-edge-line{marker-start:url(#ad-one)}
-.autodoc.ad-er g.ad-edge.c-s-many .ad-edge-line{marker-start:url(#ad-many)}
-.autodoc.ad-er g.ad-edge.c-t-one .ad-edge-line{marker-end:url(#ad-one)}
-.autodoc.ad-er g.ad-edge.c-t-many .ad-edge-line{marker-end:url(#ad-many)}
-.autodoc .ad-mk-crow{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4;stroke-linecap:round}
+.nunki{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Inter",sans-serif;-webkit-font-smoothing:antialiased}
+.nunki text{font-family:inherit}
+.nunki .ad-canvas{fill:var(--ad-canvas)}
+.nunki .ad-eyebrow{fill:var(--ad-muted);font:500 11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em}
+.nunki .ad-title{fill:var(--ad-text);font-size:26px;font-weight:650;letter-spacing:-.01em}
+.nunki .ad-subtitle{fill:var(--ad-muted);font-size:15px}
+.nunki .ad-zone-box{fill:var(--ad-zone-fill);stroke:var(--ad-zone-stroke);stroke-width:1}
+.nunki .b-trust .ad-zone-box{stroke-dasharray:5 4}
+.nunki .b-third .ad-zone-box{fill:none;stroke-dasharray:2 3}
+.nunki .b-client .ad-zone-box{fill:none}
+.nunki .ad-zone-label{fill:var(--ad-muted);font:600 10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em}
+.nunki .ad-zone-kind{fill:var(--ad-muted);opacity:.7;font:500 9.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.1em;text-anchor:end}
+.nunki .ad-edge-line{fill:none;stroke:var(--ad-edge);stroke-width:1.25;stroke-linejoin:round;marker-end:url(#ad-arrow)}
+.nunki .ad-edge-hit{fill:none;stroke:transparent;stroke-width:12}
+.nunki .t-read .ad-edge-line{marker-end:url(#ad-open);stroke-width:1.1}
+.nunki .t-write .ad-edge-line{stroke-width:1.7}
+.nunki .t-event .ad-edge-line{marker-start:url(#ad-dot)}
+.nunki .is-dashed .ad-edge-line{stroke-dasharray:6 4}
+.nunki .is-dotted .ad-edge-line{stroke-dasharray:1.5 4;stroke-linecap:round;stroke-width:1.6}
+.nunki .is-primary .ad-edge-line{stroke:var(--ad-accent);stroke-width:2;marker-end:url(#ad-arrow-accent)}
+.nunki .is-primary.t-read .ad-edge-line{marker-end:url(#ad-open-accent)}
+.nunki .is-primary.t-event .ad-edge-line{marker-start:url(#ad-dot-accent)}
+.nunki .ad-mk{fill:var(--ad-edge)}
+.nunki .ad-mk-strong{fill:var(--ad-edge-strong)}
+.nunki .ad-mk-accent{fill:var(--ad-accent)}
+.nunki .ad-mk-open{fill:none;stroke:var(--ad-edge);stroke-width:1.4}
+.nunki .ad-mk-open-strong{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4}
+.nunki .ad-mk-open-accent{fill:none;stroke:var(--ad-accent);stroke-width:1.6}
+.nunki .ad-edge-label rect{fill:var(--ad-canvas)}
+.nunki .ad-edge-label text{fill:var(--ad-muted);font-size:11px;font-weight:500;text-anchor:middle}
+.nunki .ad-edge-label.is-primary text{fill:var(--ad-accent)}
+.nunki .ad-card{fill:var(--ad-card);stroke:var(--ad-border);stroke-width:1}
+.nunki .b-storage .ad-card{fill:var(--ad-card-recessed)}
+.nunki .b-third .ad-card{stroke-dasharray:4 3}
+.nunki .is-focal .ad-card{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
+.nunki .ad-node-label{fill:var(--ad-text);font-size:14px;font-weight:600}
+.nunki .ad-node-subtitle{fill:var(--ad-muted);font-size:12px}
+.nunki .ad-badge{fill:var(--ad-badge);stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-badge-text{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.nunki .ad-evidence-glyph{fill:var(--ad-muted);opacity:.55;font:600 10px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
+.nunki .ad-legend-glyph{text-anchor:start;opacity:.8}
+.nunki .is-focal .ad-evidence-glyph{fill:var(--ad-accent);opacity:.8}
+.nunki .ad-rule{stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-legend-text{fill:var(--ad-muted);font-size:12px}
+.nunki .ad-legend-focal{fill:var(--ad-accent-tint);stroke:var(--ad-accent);stroke-width:1.5}
+.nunki .ad-footer{fill:var(--ad-muted);opacity:.8;font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.nunki .ad-edge-detail{fill:var(--ad-muted);opacity:.85;font:10.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:middle}
+.nunki .ad-lifeline{stroke:var(--ad-border);stroke-width:1.2;stroke-dasharray:4 4}
+.nunki .is-reply .ad-edge-line{marker-end:url(#ad-open)}
+.nunki .is-primary.is-reply .ad-edge-line{marker-end:url(#ad-open-accent)}
+.nunki .ad-edge.is-reply.is-lit:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
+.nunki .ad-state-mark{fill:var(--ad-text)}
+.nunki .is-focal .ad-state-mark{fill:var(--ad-accent)}
+.nunki .ad-state-inner{fill:none;stroke:var(--ad-border);stroke-width:1}
+.nunki .is-focal .ad-state-inner{stroke:var(--ad-accent)}
+.nunki .ad-rows-rule{stroke:var(--ad-border);stroke-width:1}
+.nunki .ad-row-name{fill:var(--ad-text);font-size:12px}
+.nunki .is-key .ad-row-name{font-weight:600}
+.nunki .ad-row-key{fill:var(--ad-accent);font:600 9px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em}
+.nunki .ad-row-type{fill:var(--ad-muted);font:11px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-anchor:end}
+.nunki.ad-er g.ad-edge.ad-edge .ad-edge-line{marker-start:none;marker-end:none}
+.nunki.ad-er g.ad-edge.c-s-one .ad-edge-line{marker-start:url(#ad-one)}
+.nunki.ad-er g.ad-edge.c-s-many .ad-edge-line{marker-start:url(#ad-many)}
+.nunki.ad-er g.ad-edge.c-t-one .ad-edge-line{marker-end:url(#ad-one)}
+.nunki.ad-er g.ad-edge.c-t-many .ad-edge-line{marker-end:url(#ad-many)}
+.nunki .ad-mk-crow{fill:none;stroke:var(--ad-edge-strong);stroke-width:1.4;stroke-linecap:round}

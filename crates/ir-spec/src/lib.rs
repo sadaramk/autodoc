@@ -435,7 +435,7 @@ mod tests {
         let fresh = serde_json::to_string_pretty(&json_schema()).unwrap() + "\n";
         assert!(
             committed == fresh,
-            "schema/diagram-ir.schema.json is stale; run `autodoc schema > schema/diagram-ir.schema.json`"
+            "schema/diagram-ir.schema.json is stale; run `nunki schema > schema/diagram-ir.schema.json`"
         );
     }
 }

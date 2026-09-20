@@ -1,10 +1,10 @@
 //! The IR examples shipped in the agent skill must stay valid.
 
-use autodoc_validator::{validate_json, ValidateOptions};
+use nunki_validator::{validate_json, ValidateOptions};
 
 #[test]
 fn reference_container_example_is_valid() {
-    let doc = include_str!("../../../skills/autodoc/reference.md");
+    let doc = include_str!("../../../skills/nunki/reference.md");
     let start = doc.find("```json\n{\n  \"version\"").expect("example block") + "```json\n".len();
     let end = start + doc[start..].find("```").unwrap();
     let (ir, report) =

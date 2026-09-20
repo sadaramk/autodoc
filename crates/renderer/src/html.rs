@@ -3,7 +3,7 @@
 
 use std::collections::BTreeMap;
 
-use autodoc_ir::DiagramIR;
+use nunki_ir::DiagramIR;
 use serde::Serialize;
 use serde_json::json;
 
@@ -106,7 +106,7 @@ pub fn render(
 <p class="hint">Scroll to zoom · drag to pan · hover to trace · click a node for source</p>
 <aside class="drawer" role="dialog" aria-labelledby="drawer-title" aria-hidden="true"><header></header><div class="body"></div></aside>
 <div class="toast" role="status" aria-live="polite"></div>
-<script type="application/json" id="autodoc-data">{data}</script>
+<script type="application/json" id="nunki-data">{data}</script>
 <script>{js}</script>
 </body>
 </html>

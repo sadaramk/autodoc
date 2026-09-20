@@ -1,4 +1,4 @@
-//! `autodoc` — scan repositories, validate DiagramIR, render editorial
+//! `nunki` — scan repositories, validate DiagramIR, render editorial
 //! diagrams, and serve the same engine over MCP.
 
 mod config;
@@ -9,17 +9,17 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 use anyhow::{bail, Context, Result};
-use autodoc_analyzer::Depth;
-use autodoc_ir::Theme;
-use autodoc_mcp::engine::{self, CompileOutcome, CompileRequest, IrInput, OutputFormat};
-use autodoc_renderer::Accent;
-use autodoc_validator::{validate_json, ValidateOptions};
 use clap::{Parser, Subcommand, ValueEnum};
+use nunki_analyzer::Depth;
+use nunki_ir::Theme;
+use nunki_mcp::engine::{self, CompileOutcome, CompileRequest, IrInput, OutputFormat};
+use nunki_renderer::Accent;
+use nunki_validator::{validate_json, ValidateOptions};
 
 use config::Config;
 
 #[derive(Parser)]
-#[command(name = "autodoc", version, about = "Verifiable, editorial architecture diagrams from source code")]
+#[command(name = "nunki", version, about = "Verifiable, editorial architecture diagrams from source code")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -91,11 +91,11 @@ impl From<ThemeArg> for Theme {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Write an autodoc.toml with editorial defaults into a repository.
+    /// Write an nunki.toml with editorial defaults into a repository.
     Init {
         #[arg(default_value = ".")]
         path: PathBuf,
-        /// Overwrite an existing autodoc.toml.
+        /// Overwrite an existing nunki.toml.
         #[arg(long)]
         force: bool,
     },
@@ -340,13 +340,13 @@ fn run(cli: Cli) -> Result<ExitCode> {
             Ok(if res.all_verified { ExitCode::SUCCESS } else { ExitCode::from(1) })
         }
         Command::Schema => {
-            println!("{}", serde_json::to_string_pretty(&autodoc_ir::json_schema())?);
+            println!("{}", serde_json::to_string_pretty(&nunki_ir::json_schema())?);
             Ok(ExitCode::SUCCESS)
         }
         Command::Serve => {
             let stdin = std::io::stdin();
             let stdout = std::io::stdout();
-            autodoc_mcp::Server::default().serve(stdin.lock(), stdout.lock())?;
+            nunki_mcp::Server::default().serve(stdin.lock(), stdout.lock())?;
             Ok(ExitCode::SUCCESS)
         }
     }
@@ -385,12 +385,12 @@ fn init(path: &Path, force: bool) -> Result<ExitCode> {
     println!("Created {}", file.display());
     println!();
     println!("Next steps:");
-    println!("  autodoc generate {}            # system, container and component diagrams", path.display());
-    println!("  autodoc analyze {} --emit-ir architecture.ir.json", path.display());
-    println!("  autodoc render architecture.ir.json");
+    println!("  nunki generate {}            # system, container and component diagrams", path.display());
+    println!("  nunki analyze {} --emit-ir architecture.ir.json", path.display());
+    println!("  nunki render architecture.ir.json");
     println!();
     println!("Use it from an agent (MCP over stdio):");
-    println!("  claude mcp add autodoc -- autodoc serve");
+    println!("  claude mcp add nunki -- nunki serve");
     Ok(ExitCode::SUCCESS)
 }
 
@@ -399,8 +399,8 @@ fn book_options(
     accent: Option<&str>,
     theme: Option<ThemeArg>,
     include_tests: bool,
-) -> Result<autodoc_book::BookOptions> {
-    Ok(autodoc_book::BookOptions {
+) -> Result<nunki_book::BookOptions> {
+    Ok(nunki_book::BookOptions {
         theme: theme.map(Theme::from).unwrap_or(cfg.style.theme),
         accent: parse_accent(accent, cfg)?,
         include_tests: include_tests || cfg.analysis.include_tests,
@@ -425,7 +425,7 @@ fn generate(
         }
     };
     let opts = book_options(&cfg, accent.as_deref(), theme, include_tests)?;
-    let report = autodoc_book::generate(path, &out, &opts)?;
+    let report = nunki_book::generate(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
     } else {
@@ -443,23 +443,23 @@ fn generate(
 /// into a review can still be checked against the code.
 fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option<PathBuf>) -> Result<ExitCode> {
     let text = std::fs::read_to_string(ir).with_context(|| format!("reading {}", ir.display()))?;
-    let diagram: autodoc_ir::DiagramIR =
+    let diagram: nunki_ir::DiagramIR =
         serde_json::from_str(&text).with_context(|| format!("{} is not a DiagramIR", ir.display()))?;
     // The current directory is the wrong default: it is usually the repository
-    // autodoc is being run from, not the one the diagram describes, and a link
+    // nunki is being run from, not the one the diagram describes, and a link
     // to the right path in the wrong repository is worse than no link.
     let start = repo.unwrap_or_else(|| ir.parent().unwrap_or(Path::new(".")).to_path_buf());
-    let found = autodoc_git::repo_context(&start);
+    let found = nunki_git::repo_context(&start);
     // From the repository root, not from wherever the IR sits: evidence paths are
     // relative to the scanned root, and a context rooted in `docs/architecture/
     // diagrams` would prepend that to every link.
     let root = found.git_root.clone().unwrap_or(start);
-    let ctx = autodoc_git::repo_context(&root);
+    let ctx = nunki_git::repo_context(&root);
     let commit = diagram.metadata.commit_hash.clone();
     // A commit the repository does not have means the evidence was pinned
     // somewhere else, so the line numbers would not be the ones being linked to.
-    let known = commit.as_deref().is_some_and(|c| autodoc_git::commit_exists(&ctx, c));
-    let forge = ctx.remote_url.as_deref().and_then(autodoc_git::web_base).is_some();
+    let known = commit.as_deref().is_some_and(|c| nunki_git::commit_exists(&ctx, c));
+    let forge = ctx.remote_url.as_deref().and_then(nunki_git::web_base).is_some();
     if !(known && forge) {
         eprintln!(
             "note: no permalinks — {}. Shapes still carry file:line.",
@@ -469,17 +469,17 @@ fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option
                 format!(
                     "{} does not have commit {}",
                     root.display(),
-                    commit.as_deref().map(autodoc_git::short).unwrap_or("(none)")
+                    commit.as_deref().map(nunki_git::short).unwrap_or("(none)")
                 )
             }
         );
     }
-    let link = |e: &autodoc_ir::Evidence| -> Option<String> {
+    let link = |e: &nunki_ir::Evidence| -> Option<String> {
         (known && forge).then(|| ctx.permalink(&e.file_path, e.start_line, e.end_line, commit.as_deref()))
     };
     let body = match format {
-        ExportFormat::Drawio => autodoc_renderer::drawio::to_xml(&diagram, &link),
-        ExportFormat::DrawioCsv => autodoc_renderer::drawio::to_csv(&diagram, &link),
+        ExportFormat::Drawio => nunki_renderer::drawio::to_xml(&diagram, &link),
+        ExportFormat::DrawioCsv => nunki_renderer::drawio::to_csv(&diagram, &link),
     };
     match output.as_deref().map(|p| p.to_string_lossy().into_owned()) {
         Some(ref o) if o == "-" => print!("{body}"),
@@ -502,30 +502,30 @@ fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option
 /// touch the caller's working tree, and in CI the checkout is the thing being
 /// tested.
 fn diff(path: &Path, base: &str, head: &str, include_tests: bool, json: bool, exit_code: bool) -> Result<ExitCode> {
-    let ctx = autodoc_git::repo_context(path);
+    let ctx = nunki_git::repo_context(path);
     let git_root =
         ctx.git_root.clone().with_context(|| format!("{} is not inside a git repository", path.display()))?;
     let prefix = ctx.prefix.clone();
     let tmp = tempfile::tempdir().context("cannot create a temporary directory for the comparison")?;
 
-    let opts = autodoc_analyzer::ScanOptions { behavior: true, include_tests, ..Default::default() };
-    let scan_at = |rev: &str| -> Result<autodoc_analyzer::ScanReport> {
-        let wt = autodoc_git::worktree_at(&git_root, rev, tmp.path())
+    let opts = nunki_analyzer::ScanOptions { behavior: true, include_tests, ..Default::default() };
+    let scan_at = |rev: &str| -> Result<nunki_analyzer::ScanReport> {
+        let wt = nunki_git::worktree_at(&git_root, rev, tmp.path())
             .with_context(|| format!("cannot read revision `{rev}`"))?;
         let root = if prefix.is_empty() { wt.path().to_path_buf() } else { wt.path().join(&prefix) };
-        let report = autodoc_analyzer::scan(&root, &opts).with_context(|| format!("cannot scan `{rev}`"))?;
+        let report = nunki_analyzer::scan(&root, &opts).with_context(|| format!("cannot scan `{rev}`"))?;
         Ok(report)
     };
     let before = scan_at(base)?;
     let after = scan_at(head)?;
 
-    let mut d = autodoc_analyzer::diff::diff(&before, &after);
+    let mut d = nunki_analyzer::diff::diff(&before, &after);
     d.base = base.to_string();
     d.head = head.to_string();
     if json {
         println!("{}", serde_json::to_string_pretty(&d)?);
     } else {
-        print!("{}", autodoc_analyzer::diff::markdown(&d));
+        print!("{}", nunki_analyzer::diff::markdown(&d));
     }
     Ok(if exit_code && !d.is_empty() { ExitCode::from(1) } else { ExitCode::SUCCESS })
 }
@@ -540,7 +540,7 @@ fn check(path: &Path, out: Option<PathBuf>, json: bool) -> Result<ExitCode> {
         }
     };
     let opts = book_options(&cfg, None, None, false)?;
-    let report = autodoc_book::check(path, &out, &opts)?;
+    let report = nunki_book::check(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
     } else {

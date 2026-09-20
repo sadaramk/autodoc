@@ -1,6 +1,6 @@
 ---
 name: Something wasn't detected
-about: A framework, datastore, route, entity or deployment autodoc didn't pick up
+about: A framework, datastore, route, entity or deployment nunki didn't pick up
 labels: coverage
 ---
 

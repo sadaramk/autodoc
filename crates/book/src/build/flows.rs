@@ -4,10 +4,10 @@
 
 use std::collections::BTreeMap;
 
-use autodoc_analyzer::scan::slug;
-use autodoc_analyzer::trace::{worth_drawing, Flow, StepKind, TriggerKind, MAX_FLOWS};
-use autodoc_analyzer::{draft_sequence_ir, DraftOptions};
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::scan::slug;
+use nunki_analyzer::trace::{worth_drawing, Flow, StepKind, TriggerKind, MAX_FLOWS};
+use nunki_analyzer::{draft_sequence_ir, DraftOptions};
+use nunki_validator::ValidateOptions;
 
 use super::Builder;
 use crate::authored::given;

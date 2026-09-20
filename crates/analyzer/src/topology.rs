@@ -843,7 +843,7 @@ pub fn draft_topology_ir(
     env: &Environment,
     opts: &crate::draft::DraftOptions,
 ) -> crate::draft::Draft {
-    use autodoc_ir::{
+    use nunki_ir::{
         now_rfc3339, visual_density, BoundaryType, Container, DiagramIR, DiagramMetadata, DiagramType, Edge, EdgeStyle,
         EdgeType, IrVersion, Node,
     };
@@ -996,7 +996,7 @@ pub fn draft_topology_ir(
     // Workloads nothing links to still run: keep them visible via their group.
     let linked: BTreeSet<String> = ir.edges.iter().flat_map(|e| [e.source.clone(), e.target.clone()]).collect();
     let lone: Vec<String> = ir.nodes.iter().filter(|n| !linked.contains(&n.id)).map(|n| n.id.clone()).collect();
-    let budget = autodoc_ir::element_budget();
+    let budget = nunki_ir::element_budget();
     if ir.nodes.len() + ir.edges.len() > budget {
         let before = ir.edges.len();
         ir.edges.retain(|e| e.style != Some(EdgeStyle::Dashed));

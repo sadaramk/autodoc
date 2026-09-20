@@ -5,7 +5,7 @@ never do. Dates are deliberately absent; the ordering is the commitment.
 
 The measure for every item below is the same one the tool applies to itself: a
 claim that cannot be traced to the code is a bug, not a feature. Anything that
-would make autodoc confident about something it has not read does not ship,
+would make nunki confident about something it has not read does not ship,
 however useful it sounds.
 
 ## Shipped
@@ -33,7 +33,7 @@ not in a note.
 **C# is the biggest hole.** `.cs` is recognised and never parsed, which is why
 the example-voting-app book cannot see its worker. Ruby, PHP and Elixir are in
 the same position. C# first, because it most often appears in polyglot systems
-that autodoc otherwise documents well.
+that nunki otherwise documents well.
 
 **`diff` as a PR comment out of the box.** The command produces the Markdown;
 posting it is still the caller's job. A documented workflow — or an action input

@@ -8,11 +8,29 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-20
+
+### Changed
+
+- **Renamed from `autodoc` to `nunki`.** "autodoc" is the name of Sphinx's
+  best-known extension and a generic term for a whole category of tools, so the
+  project was unfindable by name — the one thing a name has to do. Nunki is the
+  oldest star name still in use, Babylonian in origin, carried down through four
+  thousand years of astronomical tables: a name that survived its own chain of
+  transmission, for a tool about tracing claims back to their source.
+
+  The binary, the crates, the config file (`nunki.toml`), the MCP tool names and
+  the `NUNKI_*` environment variables all follow. GitHub redirects the old
+  repository URLs, and the 0.2.x release assets keep their original names.
+
+  Done now because the cost only rises: no listing, no published crates and no
+  known users today.
+
 ## [0.2.7] - 2026-09-20
 
 ### Fixed
 
-- Pinning the action pins the binary. `uses: sadaramk/autodoc@v0.2.6` downloaded
+- Pinning the action pins the binary. `uses: sadaramk/nunki@v0.2.6` downloaded
   whatever the newest release was, so a workflow that pinned a version did not
   get it — the wrong default for any tool, and the wrong one twice over for this
   one. An exact `vX.Y.Z` ref now selects that release; a moving tag or a branch
@@ -20,12 +38,12 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
-- A moving major tag, so `uses: sadaramk/autodoc@v0` tracks the newest 0.x. The
+- A moving major tag, so `uses: sadaramk/nunki@v0` tracks the newest 0.x. The
   release moves it.
 
 ### Added
 
-- `autodoc export --format drawio` writes a `.drawio` file rather than a CSV,
+- `nunki export --format drawio` writes a `.drawio` file rather than a CSV,
   and is the default. CSV cannot express an edge route or a label position, so
   draw.io re-routed every connector through the boxes and dropped every label on
   its own midpoint, printing them over the node names. The file carries the
@@ -34,7 +52,7 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
-- The draw.io export places shapes where autodoc's own layout puts them, with
+- The draw.io export places shapes where nunki's own layout puts them, with
   the boundaries and sizes from the book. It previously left the layout to
   draw.io, which produced crossed edges and labels printed over one another
   because its flow layouts do not respect boundary groups — and its `width` /
@@ -50,13 +68,13 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
-- `autodoc export IR --format drawio` writes draw.io's CSV import: real shapes
+- `nunki export IR --format drawio` writes draw.io's CSV import: real shapes
   with a layout applied, not a flattened image. Every shape carries its
   `file:line` as shape data and links to the line it came from, so a diagram
   pasted into a slide can still be checked. One way on purpose — reading a
   drawing back would mean deciding whether the file or the source is right about
   the architecture, and the source is.
-- `autodoc diff [PATH] --base REV [--head REV]` reports what changed
+- `nunki diff [PATH] --base REV [--head REV]` reports what changed
   architecturally between two revisions: services, connections, routes, request
   and response shapes, authentication requirements, tables and columns. Markdown
   for a PR comment, `--json` for a bot, `--exit-code` to gate a merge. Both
@@ -73,7 +91,7 @@ All notable changes to this project are recorded here. The format follows
 
 ## [0.2.5] - 2026-09-20
 
-Two themes: the book no longer claims more than it read, and installing autodoc
+Two themes: the book no longer claims more than it read, and installing nunki
 no longer needs a Rust toolchain.
 
 ### Added
@@ -83,7 +101,7 @@ no longer needs a Rust toolchain.
   generates and checks a book before it is published.
 - `curl … /releases/latest/download/install.sh | sh` installs one, verifying the
   published checksum first.
-- A composite GitHub Action, so CI is `uses: sadaramk/autodoc@v0.2.5` instead of
+- A composite GitHub Action, so CI is `uses: sadaramk/nunki@v0.2.5` instead of
   a two-minute `cargo install`. It downloads the binary for the runner, verifies
   the checksum, and runs any subcommand.
 - The API reference names the routes it does not document, with the reason and a
@@ -101,7 +119,7 @@ no longer needs a Rust toolchain.
   like a route at `/`, so caddy's book documented one operation — `POST /`,
   "handled by `int64`" — which is an outbound FastCGI client call.
 - An empty repository is refused rather than documented. Pointed at a directory
-  with no manifest, no container file and no source in a language autodoc reads,
+  with no manifest, no container file and no source in a language nunki reads,
   it produced a six-page book around an empty diagram and exited 0, which is
   what a mistyped path or a failed checkout looks like.
 - A failure is reported once. `EngineError` and `BookError` derived their message
@@ -177,14 +195,14 @@ output, which is the failure this project exists to avoid.
 
 ## [0.2.2] - 2026-09-19
 
-A security release. Upgrade if you point autodoc at a repository you did not
+A security release. Upgrade if you point nunki at a repository you did not
 write — which is what it is for.
 
 ### Security
 
 - **A scanned repository could make git run a command of its choosing.** git
   executes `core.fsmonitor` from a repository's own `.git/config`, so
-  `autodoc generate` on a prepared repository was arbitrary code execution as
+  `nunki generate` on a prepared repository was arbitrary code execution as
   the user running it. Every invocation now overrides the configuration keys
   that can execute something, and diffs run `--no-textconv --no-ext-diff`. A
   clone does not carry the source repository's config, so this reached you
@@ -194,7 +212,7 @@ write — which is what it is for.
   resolves outside while spelling like an ordinary path — and the verifier
   quotes what it finds into the book as a snippet. Resolution must now end
   inside the repository.
-- **A repository's own `autodoc.toml` could choose where autodoc writes.** An
+- **A repository's own `nunki.toml` could choose where nunki writes.** An
   absolute `output.dir` discarded the base path. A configured output directory
   must be relative and inside the repository; `--out` is unrestricted.
 
@@ -227,7 +245,7 @@ write — which is what it is for.
 
 ### Fixed
 
-- `autodoc check` can pass in CI. A book recorded `HEAD`, so committing the book
+- `nunki check` can pass in CI. A book recorded `HEAD`, so committing the book
   moved the commit it claimed to describe and left it stale from birth: the check
   failed however many times the book was regenerated, and there was no way out of
   the loop. A book now records the last commit that changed something it
@@ -310,11 +328,11 @@ First public release.
 
 ### Added
 
-- **Architecture books.** `autodoc generate` writes a self-contained book:
+- **Architecture books.** `nunki generate` writes a self-contained book:
   interactive HTML, a Markdown mirror for GitHub, `llms.txt` for agents, and the
   typed `DiagramIR` behind every figure, which can be edited by hand and kept.
 - **Verified evidence.** Every claim links to a file and line, pinned to a
-  commit and verified against it. `autodoc check` fails when the code has moved
+  commit and verified against it. `nunki check` fails when the code has moved
   under the documentation, which makes it usable in CI.
 - **Languages.** Rust, TypeScript, Go, Python, Java and Kotlin.
 - **Frameworks.** Spring MVC and WebFlux, JAX-RS, Quarkus, Micronaut, Dropwizard,
@@ -337,13 +355,14 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.7...HEAD
-[0.2.7]: https://github.com/sadaramk/autodoc/compare/v0.2.6...v0.2.7
-[0.2.6]: https://github.com/sadaramk/autodoc/compare/v0.2.5...v0.2.6
-[0.2.5]: https://github.com/sadaramk/autodoc/compare/v0.2.4...v0.2.5
-[0.2.4]: https://github.com/sadaramk/autodoc/compare/v0.2.3...v0.2.4
-[0.2.3]: https://github.com/sadaramk/autodoc/compare/v0.2.2...v0.2.3
-[0.2.2]: https://github.com/sadaramk/autodoc/compare/v0.2.1...v0.2.2
-[0.2.1]: https://github.com/sadaramk/autodoc/compare/v0.2.0...v0.2.1
-[0.2.0]: https://github.com/sadaramk/autodoc/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/sadaramk/autodoc/releases/tag/v0.1.0
+[Unreleased]: https://github.com/sadaramk/nunki/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/sadaramk/nunki/compare/v0.2.7...v0.3.0
+[0.2.7]: https://github.com/sadaramk/nunki/compare/v0.2.6...v0.2.7
+[0.2.6]: https://github.com/sadaramk/nunki/compare/v0.2.5...v0.2.6
+[0.2.5]: https://github.com/sadaramk/nunki/compare/v0.2.4...v0.2.5
+[0.2.4]: https://github.com/sadaramk/nunki/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/sadaramk/nunki/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/sadaramk/nunki/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/sadaramk/nunki/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/sadaramk/nunki/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/sadaramk/nunki/releases/tag/v0.1.0

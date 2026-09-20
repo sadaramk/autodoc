@@ -6,9 +6,9 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use autodoc_analyzer::scan::{EvidenceRef, RelationSource};
-use autodoc_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
-use autodoc_ir::EdgeType;
+use nunki_analyzer::scan::{EvidenceRef, RelationSource};
+use nunki_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
+use nunki_ir::EdgeType;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)
@@ -97,9 +97,9 @@ fn polyglot_shop_drafts_are_valid_at_every_depth() {
     for depth in [Depth::System, Depth::Container, Depth::Component] {
         let r = scan_at(&root, depth);
         let d = draft_ir(&r, &DraftOptions { generated_at: Some("2026-01-01T00:00:00Z".into()), ..Default::default() });
-        let v = autodoc_validator::validate(
+        let v = nunki_validator::validate(
             &d.ir,
-            &autodoc_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
+            &nunki_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
         );
         assert!(v.valid, "{depth:?}: {:#?}", v.diagnostics);
         assert_eq!(v.warning_count, 0, "{depth:?}: {:#?}", v.diagnostics);

@@ -1,5 +1,5 @@
 [package]
-name = "autodoc-analyzer"
+name = "nunki-analyzer"
 description = "Tree-sitter AST scanner: symbols, imports, entry points, C4 decomposition"
 version.workspace = true
 edition.workspace = true
@@ -11,8 +11,8 @@ rust-version.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
-autodoc-ir.workspace = true
-autodoc-git.workspace = true
+nunki-ir.workspace = true
+nunki-git.workspace = true
 schemars.workspace = true
 thiserror.workspace = true
 ignore.workspace = true
@@ -28,4 +28,4 @@ roxmltree.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-autodoc-validator.workspace = true
+nunki-validator.workspace = true

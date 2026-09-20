@@ -1,5 +1,5 @@
 [package]
-name = "autodoc-ir"
+name = "nunki-ir"
 description = "Typed DiagramIR definition, parser with JSON-path errors, and JSON Schema"
 version.workspace = true
 edition.workspace = true

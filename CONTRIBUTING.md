@@ -27,7 +27,7 @@ ones that gate a merge.
   heuristics. If the code doesn't say it, the book shows a gap.
 - **Add a fixture.** Behaviour changes come with a small repository under `tests/fixtures/` (each
   fixture has a README row explaining what it exercises), not with a change to an unrelated one.
-- **Check a real repository.** For analyzer heuristics, run `autodoc generate` against a public
+- **Check a real repository.** For analyzer heuristics, run `nunki generate` against a public
   repository in the language you touched and say in the PR what you verified by reading its source.
 - **Keep the diagrams honest.** Figures are compiled from typed `DiagramIR`; the validator enforces
   density, accents and evidence. If a figure needs a new shape, extend the IR and its JSON Schema and
@@ -56,11 +56,11 @@ crates/
   validator/      semantic checks, density guardrail, self-healing diagnostics, JSON Patch
   renderer/       layout engine, editorial SVG, interactive HTML (vanilla JS)
   book/           architecture book: page model, citations, HTML reader, Markdown, llms.txt, check
-  mcp-server/     engine facade + MCP stdio server (`autodoc-mcp` binary)
-  cli/            `autodoc` binary
+  mcp-server/     engine facade + MCP stdio server (`nunki-mcp` binary)
+  cli/            `nunki` binary
 packages/ir-spec-ts/   zod mirror of DiagramIR
 schema/                committed JSON Schema
-skills/autodoc/        SKILL.md + reference.md
+skills/nunki/        SKILL.md + reference.md
 tests/
   contract/            valid/invalid IR fixtures shared by Rust and TypeScript
   fixtures/            polyglot-shop, single-language minis, real-world/ shapes from public-repo testing
@@ -80,7 +80,7 @@ make demo        # regenerate the examples/polyglot-shop book
 
 ## The architecture book
 
-`autodoc generate` writes the same structure for every repository:
+`nunki generate` writes the same structure for every repository:
 
 ```
 docs/architecture/
@@ -109,11 +109,11 @@ docs/architecture/
 In the reader, clicking a card in a figure opens that container's page; hovering traces its upstream and downstream
 path; every `file:12–30` chip opens the verified snippet with a permalink. The structure comes from the scan, not from
 an LLM, so two runs on the same commit produce byte-identical files (only `manifest.json` records the generation
-time), a removed service's page is deleted, and `autodoc check` can gate CI.
+time), a removed service's page is deleted, and `nunki check` can gate CI.
 
 ### Measured vs authored
 
-Code says what the system does, not who it is for or why. `autodoc generate` creates `authored.json` next to the
+Code says what the system does, not who it is for or why. `nunki generate` creates `authored.json` next to the
 book once, listing every operation it found, and never overwrites or prunes it. Answers written there (operation
 names, actors, purposes, acceptance criteria; the problem, goals, stakeholders and metrics) appear badged
 *authored*; anything left empty is shown as *needs input* — never filled in by inference.
@@ -121,21 +121,21 @@ names, actors, purposes, acceptance criteria; the problem, goals, stakeholders a
 ## MCP
 
 ```bash
-claude mcp add autodoc -- autodoc serve          # Claude Code
+claude mcp add nunki -- nunki serve          # Claude Code
 ```
 
 ```json
-{ "mcpServers": { "autodoc": { "command": "autodoc", "args": ["serve"] } } }   // Cursor and others
+{ "mcpServers": { "nunki": { "command": "nunki", "args": ["serve"] } } }   // Cursor and others
 ```
 
 | Tool | Input | Output |
 |------|-------|--------|
-| `autodoc_scan_repository` | `repoPath`, `depth`, `focus?`, `theme?`, `includeTests?` | C4 report (containers, infrastructure, relationships, entry points), `evidenceMap`, validated `draftIr` |
-| `autodoc_compile_diagram` | `ir`, `outputPath`, `format`, `repoPath?`, `accent?`, `strict?` | `status: compiled` with path, density and evidence counts — or `status: rejected` with diagnostics (`isError: true`) |
-| `autodoc_generate_book` | `repoPath`, `outDir?`, `accent?`, `theme?`, `includeTests?`, `checkOnly?` | pages/figures written, evidence health, kept hand-edited diagrams; or the `check` report |
-| `autodoc_verify_evidence` | `evidenceList[{filePath, line, endLine?, symbolName?}]`, `repoPath?`, `commitHash?` | per-item state (`verified`, `stale`, `untracked`, `file-missing`, `line-out-of-range`, `symbol-mismatch`) with permalinks |
+| `nunki_scan_repository` | `repoPath`, `depth`, `focus?`, `theme?`, `includeTests?` | C4 report (containers, infrastructure, relationships, entry points), `evidenceMap`, validated `draftIr` |
+| `nunki_compile_diagram` | `ir`, `outputPath`, `format`, `repoPath?`, `accent?`, `strict?` | `status: compiled` with path, density and evidence counts — or `status: rejected` with diagnostics (`isError: true`) |
+| `nunki_generate_book` | `repoPath`, `outDir?`, `accent?`, `theme?`, `includeTests?`, `checkOnly?` | pages/figures written, evidence health, kept hand-edited diagrams; or the `check` report |
+| `nunki_verify_evidence` | `evidenceList[{filePath, line, endLine?, symbolName?}]`, `repoPath?`, `commitHash?` | per-item state (`verified`, `stale`, `untracked`, `file-missing`, `line-out-of-range`, `symbol-mismatch`) with permalinks |
 
-The agent protocol lives in [`skills/autodoc/SKILL.md`](skills/autodoc/SKILL.md); the IR field guide, diagnostic
-catalog and worked examples in [`skills/autodoc/reference.md`](skills/autodoc/reference.md).
-To install the skill for Claude Code: `cp -r skills/autodoc ~/.claude/skills/autodoc`.
+The agent protocol lives in [`skills/nunki/SKILL.md`](skills/nunki/SKILL.md); the IR field guide, diagnostic
+catalog and worked examples in [`skills/nunki/reference.md`](skills/nunki/reference.md).
+To install the skill for Claude Code: `cp -r skills/nunki ~/.claude/skills/nunki`.
 

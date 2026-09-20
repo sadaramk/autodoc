@@ -24,7 +24,7 @@ use crate::data::DataModel;
 use crate::extract::{Receiver, SymbolKind, TypeDef};
 use crate::scan::{EvidenceRef, InfraSummary, Relationship};
 use crate::source::SourceIndex;
-use autodoc_ir::EdgeType;
+use nunki_ir::EdgeType;
 
 /// Participants and messages a readable sequence diagram can hold.
 pub const MAX_PARTICIPANTS: usize = 8;

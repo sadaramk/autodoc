@@ -27,7 +27,7 @@ fn valid_fixtures_parse() {
     assert!(files.len() >= 4);
     for f in files {
         let text = fs::read_to_string(&f).unwrap();
-        if let Err(e) = autodoc_ir::parse_ir(&text) {
+        if let Err(e) = nunki_ir::parse_ir(&text) {
             panic!("{} should parse: {e}", f.display());
         }
     }
@@ -43,7 +43,7 @@ fn invalid_fixtures_fail_at_the_same_path() {
     for f in files {
         let name = f.file_name().unwrap().to_string_lossy().to_string();
         let path = expected.get(&name).unwrap_or_else(|| panic!("no expected path for {name}"));
-        let err = match autodoc_ir::parse_ir(&fs::read_to_string(&f).unwrap()) {
+        let err = match nunki_ir::parse_ir(&fs::read_to_string(&f).unwrap()) {
             Ok(_) => panic!("{name} should be rejected"),
             Err(e) => e,
         };

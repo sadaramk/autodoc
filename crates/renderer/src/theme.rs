@@ -1,6 +1,6 @@
 //! Editorial palettes. Neutral slates everywhere; exactly one accent hue.
 
-use autodoc_ir::Theme;
+use nunki_ir::Theme;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum Accent {
@@ -150,7 +150,7 @@ mod tests {
         let p = palette(Theme::EditorialLight, &Accent::Indigo);
         assert_eq!(p.accent, "#4F46E5");
         assert_eq!(p.accent_tint, "#F4F4FD");
-        let css = token_css(".autodoc", &Accent::Coral);
+        let css = token_css(".nunki", &Accent::Coral);
         assert!(css.contains("--ad-accent:#E11D48") && css.contains("--ad-accent:#FB7185"));
     }
 }

@@ -4,12 +4,12 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use autodoc_analyzer::api::{ApiModel, Confidence, Model, Operation, TypeRef};
-use autodoc_analyzer::capability::groups_of;
-use autodoc_analyzer::scan::{slug, ScanReport};
-use autodoc_analyzer::trace::worth_drawing;
-use autodoc_analyzer::{draft_capability_ir, DraftOptions};
-use autodoc_validator::ValidateOptions;
+use nunki_analyzer::api::{ApiModel, Confidence, Model, Operation, TypeRef};
+use nunki_analyzer::capability::groups_of;
+use nunki_analyzer::scan::{slug, ScanReport};
+use nunki_analyzer::trace::worth_drawing;
+use nunki_analyzer::{draft_capability_ir, DraftOptions};
+use nunki_validator::ValidateOptions;
 
 use super::access::Row;
 use super::behavior::{confidence_badge, flow_figure_id};
@@ -75,7 +75,7 @@ impl ApiIndex {
         for unit in units {
             let groups = groups_of(api, unit);
             let total: usize = groups.iter().map(|(_, o)| o.len()).sum();
-            let split = total > threshold("AUTODOC_API_SPLIT_OVER", SPLIT_OVER);
+            let split = total > threshold("NUNKI_API_SPLIT_OVER", SPLIT_OVER);
             if split {
                 ix.split.insert(unit.to_string());
             }
@@ -252,7 +252,7 @@ impl<'a> Builder<'a> {
             blocks.push(f);
             // When persistence sits in a shared library, no operation reaches a
             // store directly: say where the data access happens instead.
-            let through = autodoc_analyzer::capability::data_access_through_libraries(self.report, unit);
+            let through = nunki_analyzer::capability::data_access_through_libraries(self.report, unit);
             if !through.is_empty() {
                 let mut inl = vec![Inline::text(
                     "These operations reach no store directly. Data access happens in the libraries this service links: ",
@@ -525,7 +525,7 @@ impl<'a> Builder<'a> {
         }
     }
 
-    fn excluded_blocks(&mut self, blocks: &mut Vec<Block>, excluded: &[&autodoc_analyzer::api::Excluded]) {
+    fn excluded_blocks(&mut self, blocks: &mut Vec<Block>, excluded: &[&nunki_analyzer::api::Excluded]) {
         if excluded.is_empty() {
             return;
         }
@@ -692,7 +692,7 @@ impl<'a> Builder<'a> {
         }
     }
 
-    fn rules_cell(&mut self, rules: &[autodoc_analyzer::api::Rule]) -> Vec<Inline> {
+    fn rules_cell(&mut self, rules: &[nunki_analyzer::api::Rule]) -> Vec<Inline> {
         if rules.is_empty() {
             return vec![Inline::text("—")];
         }

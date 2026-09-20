@@ -1,9 +1,9 @@
 # Heuristics and limits
 
-How autodoc decides what it decides, and where it stops. For the shorter version aimed at readers of
+How nunki decides what it decides, and where it stops. For the shorter version aimed at readers of
 a book rather than of this repository, see
-[what it reads](https://sadaramk.github.io/autodoc/support.html) and
-[how it works](https://sadaramk.github.io/autodoc/how.html).
+[what it reads](https://sadaramk.github.io/nunki/support.html) and
+[how it works](https://sadaramk.github.io/nunki/how.html).
 
 Relationships are inferred statically and labelled with where they came from (`code`, `compose`, `manifest`):
 

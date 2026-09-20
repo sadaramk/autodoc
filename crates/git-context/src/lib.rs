@@ -92,7 +92,7 @@ pub fn web_base(remote: &str) -> Option<String> {
 /// The repository being documented is untrusted input, and `.git/config` travels
 /// with a tarball, a vendored copy or an archive — anything but a fresh clone.
 /// `core.fsmonitor` alone turns `git status` into arbitrary code execution as the
-/// user running autodoc, so every invocation overrides these keys: `-c` beats
+/// user running nunki, so every invocation overrides these keys: `-c` beats
 /// repository configuration.
 const NO_EXEC: &[&str] = &[
     "-c",
@@ -631,7 +631,7 @@ mod tests {
 
     #[test]
     fn permalink_prefers_forge_then_portable_form() {
-        let mut ctx = repo_context(Path::new("/nonexistent-autodoc"));
+        let mut ctx = repo_context(Path::new("/nonexistent-nunki"));
         ctx.prefix = "services/api".into();
         ctx.head_commit = Some("0123456789abcdef0123".into());
         assert_eq!(ctx.permalink("src/a.ts", 4, 9, None), "services/api/src/a.ts#L4-L9@0123456789ab");

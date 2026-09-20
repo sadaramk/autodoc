@@ -5,10 +5,10 @@
 
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::lang::Language;
-use autodoc_analyzer::scan::{EvidenceRef, RelationSource, Relationship};
-use autodoc_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
-use autodoc_ir::EdgeType;
+use nunki_analyzer::lang::Language;
+use nunki_analyzer::scan::{EvidenceRef, RelationSource, Relationship};
+use nunki_analyzer::{draft_ir, scan, Depth, DraftOptions, ScanOptions, ScanReport, UnitKind};
+use nunki_ir::EdgeType;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures/real-world")).join(name)
@@ -32,7 +32,7 @@ fn assert_evidence_real(root: &Path, e: &EvidenceRef) {
     }
 }
 
-fn unit<'a>(r: &'a ScanReport, id: &str) -> &'a autodoc_analyzer::scan::UnitSummary {
+fn unit<'a>(r: &'a ScanReport, id: &str) -> &'a nunki_analyzer::scan::UnitSummary {
     r.containers.iter().find(|u| u.id == id).unwrap_or_else(|| {
         panic!("unit `{id}` missing; have {:?}", r.containers.iter().map(|u| &u.id).collect::<Vec<_>>())
     })
@@ -62,11 +62,11 @@ fn assert_all_evidence_real(root: &Path, r: &ScanReport) {
     }
 }
 
-fn assert_draft_valid(root: &Path, r: &ScanReport) -> autodoc_ir::DiagramIR {
+fn assert_draft_valid(root: &Path, r: &ScanReport) -> nunki_ir::DiagramIR {
     let d = draft_ir(r, &DraftOptions { generated_at: Some("2026-01-01T00:00:00Z".into()), ..Default::default() });
-    let v = autodoc_validator::validate(
+    let v = nunki_validator::validate(
         &d.ir,
-        &autodoc_validator::ValidateOptions { repo_root: Some(root.to_path_buf()), ..Default::default() },
+        &nunki_validator::ValidateOptions { repo_root: Some(root.to_path_buf()), ..Default::default() },
     );
     assert!(v.valid, "{}: {:#?}\nnotes: {:#?}", root.display(), v.diagnostics, d.notes);
     d.ir
@@ -312,7 +312,7 @@ fn spring_request_flows_follow_feign_calls_to_the_line_that_makes_them() {
     let call = flow
         .steps
         .iter()
-        .find(|s| s.from == "accounts" && s.to == "stats" && s.kind == autodoc_analyzer::trace::StepKind::Call)
+        .find(|s| s.from == "accounts" && s.to == "stats" && s.kind == nunki_analyzer::trace::StepKind::Call)
         .unwrap_or_else(|| panic!("accounts → stats call in {:#?}", flow.steps));
     assert_eq!(call.label, "PUT /statistics/{accountName}");
     assert_eq!(call.evidence.file_path, "accounts/src/main/java/com/acme/accounts/web/AccountController.java");
@@ -395,14 +395,14 @@ fn runtime_topology_from_compose_overlays_and_kubernetes_manifests() {
     assert!(text.lines().nth(cron.evidence.start_line as usize - 1).unwrap().starts_with("kind: CronJob"));
 
     for env in &topo.environments {
-        let d = autodoc_analyzer::topology::draft_topology_ir(
+        let d = nunki_analyzer::topology::draft_topology_ir(
             &r,
             env,
             &DraftOptions { generated_at: Some("2026-01-01T00:00:00Z".into()), ..Default::default() },
         );
-        let v = autodoc_validator::validate(
+        let v = nunki_validator::validate(
             &d.ir,
-            &autodoc_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
+            &nunki_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
         );
         assert!(v.valid, "{}: {:#?}", env.id, v.diagnostics);
         let drawn = d.ir.edges.iter().any(|e| e.source == "external");

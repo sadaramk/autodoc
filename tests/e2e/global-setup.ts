@@ -9,9 +9,9 @@ export const PATHS_FILE = join(here, ".e2e-paths.json");
 
 /** Builds a git-backed copy of the demo repo and renders every view with the real binary. */
 export default function globalSetup(): void {
-  const bin = process.env.AUTODOC_BIN ?? resolve(here, "../../target/debug/autodoc");
-  if (!existsSync(bin)) throw new Error(`autodoc binary not found at ${bin}; build it or set AUTODOC_BIN`);
-  const work = mkdtempSync(join(tmpdir(), "autodoc-e2e-"));
+  const bin = process.env.NUNKI_BIN ?? resolve(here, "../../target/debug/nunki");
+  if (!existsSync(bin)) throw new Error(`nunki binary not found at ${bin}; build it or set NUNKI_BIN`);
+  const work = mkdtempSync(join(tmpdir(), "nunki-e2e-"));
   const repo = join(work, "polyglot-shop");
   cpSync(resolve(here, "../fixtures/polyglot-shop"), repo, { recursive: true });
   const git = (...args: string[]) =>

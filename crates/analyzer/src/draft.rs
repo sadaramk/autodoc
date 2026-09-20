@@ -3,7 +3,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 
-use autodoc_ir::*;
+use nunki_ir::*;
 
 use crate::catalog::InfraCategory;
 use crate::scan::{display_name, ComponentView, Depth, InfraSummary, ScanReport, UnitKind, UnitSummary};

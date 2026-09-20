@@ -4,7 +4,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use autodoc_ir::{
+use nunki_ir::{
     now_rfc3339, visual_density, BoundaryType, Container, DiagramIR, DiagramMetadata, DiagramType, Edge, EdgeType,
     IrVersion, Node,
 };
@@ -270,7 +270,7 @@ pub fn draft_capability_ir(report: &ScanReport, unit: &str, opts: &DraftOptions)
         return None;
     }
     // Keep the largest groups; fold the rest into "Other (k)" until the figure fits the density budget.
-    let budget = autodoc_ir::element_budget();
+    let budget = nunki_ir::element_budget();
     let mut keep = groups.len();
     loop {
         let (ir, notes) = build(report, api, unit, &groups, keep, opts);

@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "diagramType": "container",
   "title": "Polyglot Shop — containers",
-  "subtitle": "A small checkout platform used as the autodoc demo repository",
+  "subtitle": "A small checkout platform used as the nunki demo repository",
   "theme": "editorial-light",
   "metadata": {
     "targetRepo": "/tmp/polyglot-shop",

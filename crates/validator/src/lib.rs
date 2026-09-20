@@ -8,8 +8,8 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::PathBuf;
 
-use autodoc_git::{EvidenceQuery, EvidenceReport, EvidenceState, RepoContext};
-use autodoc_ir::*;
+use nunki_git::{EvidenceQuery, EvidenceReport, EvidenceState, RepoContext};
+use nunki_ir::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -149,7 +149,7 @@ pub struct ValidateOptions {
     pub strict: bool,
     /// Git snapshots shared across validations in one operation (many figures
     /// of one book); `None` reads git fresh for this validation.
-    pub evidence_cache: Option<std::sync::Arc<autodoc_git::EvidenceCache>>,
+    pub evidence_cache: Option<std::sync::Arc<nunki_git::EvidenceCache>>,
 }
 
 impl Default for ValidateOptions {
@@ -197,9 +197,9 @@ fn schema_hint(message: &str) -> String {
     } else if message.contains("unknown variant") {
         "Use one of the enum values listed in the message.".into()
     } else if message.contains("missing field") {
-        "Add the required field; see `autodoc schema` for the full JSON Schema.".into()
+        "Add the required field; see `nunki schema` for the full JSON Schema.".into()
     } else {
-        "Fix the value at `path` to match the DiagramIR JSON Schema (`autodoc schema`).".into()
+        "Fix the value at `path` to match the DiagramIR JSON Schema (`nunki schema`).".into()
     }
 }
 
@@ -296,7 +296,7 @@ fn check_fields_and_ids(ir: &DiagramIR, diags: &mut Vec<Diagnostic>) {
     if ir.nodes.is_empty() {
         diags.push(
             Diagnostic::new(codes::EMPTY_DIAGRAM, Severity::Error, "$.nodes", "diagram has no nodes")
-                .suggest("Run autodoc_scan_repository and add nodes for the containers it reports."),
+                .suggest("Run nunki_scan_repository and add nodes for the containers it reports."),
         );
     }
     let mut seen: HashMap<String, String> = HashMap::new();
@@ -1145,7 +1145,7 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
                         format!("focal node `{}` has no source evidence", n.id),
                     )
                     .ids([n.id.as_str()])
-                    .suggest("Pin the focal point to its entry point from autodoc_scan_repository's evidenceMap."),
+                    .suggest("Pin the focal point to its entry point from nunki_scan_repository's evidenceMap."),
                 );
             }
             continue;
@@ -1203,10 +1203,10 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
     };
     let ctx: RepoContext = match &opts.evidence_cache {
         Some(cache) => cache.context(root),
-        None => autodoc_git::repo_context(root),
+        None => nunki_git::repo_context(root),
     };
     let mut verifier =
-        autodoc_git::Verifier::cached(&ctx, ir.metadata.commit_hash.as_deref(), opts.evidence_cache.as_deref());
+        nunki_git::Verifier::cached(&ctx, ir.metadata.commit_hash.as_deref(), opts.evidence_cache.as_deref());
     let pinned = ir.metadata.commit_hash.as_deref();
     if let (Some(pin), Some(head)) = (pinned, ctx.head_commit.as_deref()) {
         if !head.starts_with(pin) && !pin.starts_with(head) {
@@ -1217,8 +1217,8 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
                     "$.metadata.commitHash",
                     format!(
                         "diagram is pinned to {} but HEAD is {}; evidence was checked for drift",
-                        autodoc_git::short(pin),
-                        autodoc_git::short(head)
+                        nunki_git::short(pin),
+                        nunki_git::short(head)
                     ),
                 )
                 .suggest("Re-scan and update commitHash once stale evidence is fixed.")
@@ -1260,7 +1260,7 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
                     format!("`{id}`: {}", r.detail),
                 )
                 .ids([id])
-                .suggest("Use a repository-relative path exactly as reported by autodoc_scan_repository.")
+                .suggest("Use a repository-relative path exactly as reported by nunki_scan_repository.")
                 .patch(vec![json!({"op": "remove", "path": format!("/{kind}/{i}/evidence")})]),
             ),
             EvidenceState::OutsideRepo => diags.push(

@@ -1,6 +1,6 @@
 name: Release
 
-# Binaries for a tag, so using autodoc does not require a Rust toolchain.
+# Binaries for a tag, so using nunki does not require a Rust toolchain.
 # `cargo install --git` needs one and takes minutes; CI wants a download.
 on:
   push:
@@ -65,7 +65,7 @@ jobs:
         env:
           CC_x86_64_unknown_linux_musl: ${{ matrix.cc }}
           CC_aarch64_unknown_linux_musl: ${{ matrix.cc }}
-        run: cargo build --release --locked -p autodoc-cli --target ${{ matrix.target }}
+        run: cargo build --release --locked -p nunki-cli --target ${{ matrix.target }}
 
       # A binary that cannot document a repository is not worth publishing, so
       # every target proves itself before it is uploaded. The x86_64 Linux and
@@ -75,7 +75,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bin="target/${{ matrix.target }}/release/autodoc"
+          bin="target/${{ matrix.target }}/release/nunki"
           if [ -f "$bin.exe" ]; then bin="$bin.exe"; fi
           "$bin" --version
           "$bin" generate tests/fixtures/polyglot-shop --out "$RUNNER_TEMP/book"
@@ -88,12 +88,12 @@ jobs:
         run: |
           set -euo pipefail
           version="${TAG#v}"
-          name="autodoc-$version-${{ matrix.target }}"
+          name="nunki-$version-${{ matrix.target }}"
           mkdir -p "dist/$name"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp "target/${{ matrix.target }}/release/autodoc.exe" "dist/$name/"
+            cp "target/${{ matrix.target }}/release/nunki.exe" "dist/$name/"
           else
-            cp "target/${{ matrix.target }}/release/autodoc" "dist/$name/"
+            cp "target/${{ matrix.target }}/release/nunki" "dist/$name/"
           fi
           cp README.md LICENSE CHANGELOG.md "dist/$name/"
           cd dist
@@ -129,7 +129,7 @@ jobs:
       - name: Checksums
         run: |
           cd dist
-          sha256sum autodoc-* > sums
+          sha256sum nunki-* > sums
           mv sums SHA256SUMS
           cat SHA256SUMS
 
@@ -161,7 +161,7 @@ jobs:
           body_path: notes.md
           fail_on_unmatched_files: true
 
-      # A moving major tag is the convention for an action: `uses: …/autodoc@v0`
+      # A moving major tag is the convention for an action: `uses: …/nunki@v0`
       # tracks the newest 0.x without editing every workflow on each release.
       # Pinning an exact tag still pins the binary — the entrypoint only treats a
       # full vX.Y.Z ref as a version, so `@v0` resolves to the newest release.

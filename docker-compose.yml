@@ -40,7 +40,7 @@ services:
       - ./tests/e2e/test-results:/workspace/tests/e2e/test-results
     command: npx playwright test
 
-  autodoc:
+  nunki:
     build: { context: ., target: runtime }
     volumes:
       - .:/repo

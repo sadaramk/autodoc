@@ -7,12 +7,12 @@
 
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::api::ApiModel;
-use autodoc_analyzer::data::DataModel;
-use autodoc_analyzer::extract::{self, FileFacts};
-use autodoc_analyzer::lang::{Grammar, Language};
-use autodoc_analyzer::scan::EvidenceRef;
-use autodoc_analyzer::{scan, ScanOptions, ScanReport, UnitKind};
+use nunki_analyzer::api::ApiModel;
+use nunki_analyzer::data::DataModel;
+use nunki_analyzer::extract::{self, FileFacts};
+use nunki_analyzer::lang::{Grammar, Language};
+use nunki_analyzer::scan::EvidenceRef;
+use nunki_analyzer::{scan, ScanOptions, ScanReport, UnitKind};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)
@@ -419,7 +419,7 @@ fn kotlin_jpa_and_mongo_entities_with_repository_access() {
     );
 
     // Repository calls are the reads and writes, at the line that makes them.
-    let sites = |a: &[autodoc_analyzer::data::Access]| -> Vec<(String, u32)> {
+    let sites = |a: &[nunki_analyzer::data::Access]| -> Vec<(String, u32)> {
         let mut v: Vec<(String, u32)> =
             a.iter().map(|x| (x.evidence.file_path.clone(), x.evidence.start_line)).collect();
         v.sort();
@@ -509,7 +509,7 @@ fn exposed_table_objects_columns_and_access() {
     assert_eq!(tags.relations.len(), 1);
 
     // DSL statements and the DAO that fronts them.
-    let at = |a: &[autodoc_analyzer::data::Access], line: u32| a.iter().any(|x| x.evidence.start_line == line);
+    let at = |a: &[nunki_analyzer::data::Access], line: u32| a.iter().any(|x| x.evidence.start_line == line);
     assert!(
         at(&entries.writes, 14),
         "`Entries.insert {{ }}`: {:?}",
@@ -586,7 +586,7 @@ fn kotlin_clients_call_other_services_and_expect_their_types() {
     let root = fixture("kotlin/kotlin-modules");
     let report = scan(&root, &ScanOptions { behavior: true, ..Default::default() }).unwrap();
     let api = report.api.as_ref().expect("api model");
-    let calls: Vec<&autodoc_analyzer::api::ClientCall> = api.client_calls.iter().filter(|c| c.unit == "app").collect();
+    let calls: Vec<&nunki_analyzer::api::ClientCall> = api.client_calls.iter().filter(|c| c.unit == "app").collect();
 
     let feign = calls
         .iter()

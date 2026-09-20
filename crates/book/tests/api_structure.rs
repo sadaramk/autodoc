@@ -5,8 +5,8 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use autodoc_book::model::{Block, Book, Inline};
-use autodoc_book::{plan, BookOptions};
+use nunki_book::model::{Block, Book, Inline};
+use nunki_book::{plan, BookOptions};
 
 fn fixtures() -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).to_path_buf()
@@ -78,9 +78,9 @@ fn headings(book: &Book, id: &str) -> Vec<String> {
 
 #[test]
 fn large_services_split_into_capability_pages_with_access_matrices() {
-    std::env::set_var("AUTODOC_API_SPLIT_OVER", "3");
-    std::env::set_var("AUTODOC_FR_SPLIT_OVER", "3");
-    std::env::set_var("AUTODOC_RULES_SPLIT_OVER", "2");
+    std::env::set_var("NUNKI_API_SPLIT_OVER", "3");
+    std::env::set_var("NUNKI_FR_SPLIT_OVER", "3");
+    std::env::set_var("NUNKI_RULES_SPLIT_OVER", "2");
     let out = tempfile::tempdir().unwrap();
     let planned = plan(&fixtures().join("api-frameworks/spring-mvc"), out.path(), &BookOptions::default()).unwrap();
     let book = &planned.built.book;
@@ -155,7 +155,7 @@ fn capability_maps_render_with_clean_geometry() {
         let caps: Vec<_> = planned.built.diagrams.iter().filter(|d| d.id.starts_with("capabilities-")).collect();
         assert!(!caps.is_empty(), "{fixture}: no capability map");
         for d in caps {
-            let r = autodoc_renderer::render_svg(&d.ir, &autodoc_renderer::RenderOptions::default());
+            let r = nunki_renderer::render_svg(&d.ir, &nunki_renderer::RenderOptions::default());
             let issues = r.layout.check_geometry();
             assert!(issues.is_empty(), "{fixture}/{}: {issues:#?}", d.id);
         }

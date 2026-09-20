@@ -1,5 +1,5 @@
 {
-  "name": "@autodoc-engine/e2e",
+  "name": "@nunki/e2e",
   "private": true,
   "type": "module",
   "description": "Browser journeys for the standalone interactive HTML output",

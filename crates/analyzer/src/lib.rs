@@ -33,7 +33,7 @@ pub enum ScanError {
     Root(String, String),
     #[error(
         "nothing to document in {0}: no build manifest, container file or source \
-         in a language autodoc reads (Rust, TypeScript, Go, Python, Java, Kotlin)"
+         in a language nunki reads (Rust, TypeScript, Go, Python, Java, Kotlin)"
     )]
     Empty(String),
     #[error("unknown focus unit `{0}`; available: {available}", available = .1.join(", "))]

@@ -1,72 +1,72 @@
-<mxfile host="autodoc" agent="autodoc 0.2.7">
+<mxfile host="nunki" agent="nunki 0.2.7">
   <diagram name="Polyglot Shop — containers">
     <mxGraphModel dx="1322" dy="992" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="autodoc-clients" value="Clients" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
+        <mxCell id="nunki-clients" value="Clients" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
           <mxGeometry x="48" y="416" width="236" height="160" as="geometry" />
         </mxCell>
-        <mxCell id="autodoc-platform" value="Polyglot Shop platform" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
+        <mxCell id="nunki-platform" value="Polyglot Shop platform" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
           <mxGeometry x="395" y="216" width="236" height="560" as="geometry" />
         </mxCell>
-        <mxCell id="autodoc-data" value="Data &amp; messaging" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
+        <mxCell id="nunki-data" value="Data &amp; messaging" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
           <mxGeometry x="1038" y="152" width="236" height="408" as="geometry" />
         </mxCell>
-        <mxCell id="autodoc-external" value="Third-party services" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
+        <mxCell id="nunki-external" value="Third-party services" style="rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;" vertex="1" parent="1">
           <mxGeometry x="1038" y="616" width="236" height="224" as="geometry" />
         </mxCell>
-        <object label="API Gateway" tech="TypeScript · Express" evidence="api-gateway/src/server.ts:19-24" id="autodoc-api-gateway">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#4f46e5;fontColor=#0f172a;strokeWidth=2;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-platform">
+        <object label="API Gateway" tech="TypeScript · Express" evidence="api-gateway/src/server.ts:19-24" id="nunki-api-gateway">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#4f46e5;fontColor=#0f172a;strokeWidth=2;align=center;verticalAlign=middle;" vertex="1" parent="nunki-platform">
             <mxGeometry x="20" y="44" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Fulfillment" tech="Python" evidence="fulfillment/fulfillment/__main__.py:22-23" id="autodoc-fulfillment">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-platform">
+        <object label="Fulfillment" tech="Python" evidence="fulfillment/fulfillment/__main__.py:22-23" id="nunki-fulfillment">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-platform">
             <mxGeometry x="20" y="320" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Ledger Audit" tech="Rust · Axum" evidence="ledger-audit/src/main.rs:10-21" id="autodoc-ledger-audit">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-platform">
+        <object label="Ledger Audit" tech="Rust · Axum" evidence="ledger-audit/src/main.rs:10-21" id="nunki-ledger-audit">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-platform">
             <mxGeometry x="20" y="444" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Payments" tech="Go · net/http" evidence="payments/cmd/payments/main.go:17-30" id="autodoc-payments">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-platform">
+        <object label="Payments" tech="Go · net/http" evidence="payments/cmd/payments/main.go:17-30" id="nunki-payments">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-platform">
             <mxGeometry x="20" y="196" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Web" tech="TypeScript · React" evidence="web/src/main.tsx:9" id="autodoc-web">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-clients">
+        <object label="Web" tech="TypeScript · React" evidence="web/src/main.tsx:9" id="nunki-web">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-clients">
             <mxGeometry x="20" y="44" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="PostgreSQL" tech="compose: db" evidence="api-gateway/src/db.ts:1" id="autodoc-postgres">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-data">
+        <object label="PostgreSQL" tech="compose: db" evidence="api-gateway/src/db.ts:1" id="nunki-postgres">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-data">
             <mxGeometry x="20" y="44" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Redis" tech="compose: redis" evidence="api-gateway/src/cache.ts:1" id="autodoc-redis">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-data">
+        <object label="Redis" tech="compose: redis" evidence="api-gateway/src/cache.ts:1" id="nunki-redis">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-data">
             <mxGeometry x="20" y="168" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Kafka" tech="compose: kafka" evidence="api-gateway/src/events.ts:1" id="autodoc-kafka">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-data">
+        <object label="Kafka" tech="compose: kafka" evidence="api-gateway/src/events.ts:1" id="nunki-kafka">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-data">
             <mxGeometry x="20" y="292" width="196" height="96" as="geometry" />
           </mxCell>
         </object>
-        <object label="Stripe" evidence="payments/internal/charge/charge.go:5" id="autodoc-stripe">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-external">
+        <object label="Stripe" evidence="payments/internal/charge/charge.go:5" id="nunki-stripe">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-external">
             <mxGeometry x="20" y="44" width="196" height="66" as="geometry" />
           </mxCell>
         </object>
-        <object label="SendGrid" evidence="fulfillment/fulfillment/notify.py:5" id="autodoc-sendgrid">
-          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="autodoc-external">
+        <object label="SendGrid" evidence="fulfillment/fulfillment/notify.py:5" id="nunki-sendgrid">
+          <mxCell style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;" vertex="1" parent="nunki-external">
             <mxGeometry x="20" y="138" width="196" height="66" as="geometry" />
           </mxCell>
         </object>
-        <mxCell id="autodoc-e0" value="publishes order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-api-gateway" target="autodoc-kafka">
+        <mxCell id="nunki-e0" value="publishes order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-kafka">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="808" y="332" />
@@ -75,12 +75,12 @@
             <mxPoint as="offset" x="-99" y="-83" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-api-gateway" target="autodoc-payments">
+        <mxCell id="nunki-e1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-payments">
           <mxGeometry relative="1" as="geometry">
             <mxPoint as="offset" x="30" y="-6" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e2" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-api-gateway" target="autodoc-postgres">
+        <mxCell id="nunki-e2" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="832" y="284" />
@@ -89,7 +89,7 @@
             <mxPoint as="offset" x="-111" y="21" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e3" value="reads &amp; writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-api-gateway" target="autodoc-redis">
+        <mxCell id="nunki-e3" value="reads &amp; writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-redis">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="820" y="308" />
@@ -98,7 +98,7 @@
             <mxPoint as="offset" x="113" y="1" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e4" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-fulfillment" target="autodoc-postgres">
+        <mxCell id="nunki-e4" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="856" y="560" />
@@ -107,7 +107,7 @@
             <mxPoint as="offset" x="-123" y="116" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e5" value="sends email" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-fulfillment" target="autodoc-sendgrid">
+        <mxCell id="nunki-e5" value="sends email" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-sendgrid">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="784" y="608" />
@@ -116,7 +116,7 @@
             <mxPoint as="offset" x="-87" y="-125" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e6" value="delivers order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-kafka" target="autodoc-fulfillment">
+        <mxCell id="nunki-e6" value="delivers order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-kafka" target="nunki-fulfillment">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="880" y="508" />
@@ -125,7 +125,7 @@
             <mxPoint as="offset" x="97" y="-91" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e7" value="reads payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-ledger-audit" target="autodoc-postgres">
+        <mxCell id="nunki-e7" value="reads payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-ledger-audit" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="868" y="708" />
@@ -134,7 +134,7 @@
             <mxPoint as="offset" x="-206" y="169" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e8" value="writes payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-payments" target="autodoc-postgres">
+        <mxCell id="nunki-e8" value="writes payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="844" y="444" />
@@ -143,7 +143,7 @@
             <mxPoint as="offset" x="-117" y="80" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e9" value="charges cards" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-payments" target="autodoc-stripe">
+        <mxCell id="nunki-e9" value="charges cards" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-stripe">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="796" y="476" />
@@ -152,7 +152,7 @@
             <mxPoint as="offset" x="-93" y="-162" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="autodoc-e10" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="autodoc-web" target="autodoc-api-gateway">
+        <mxCell id="nunki-e10" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-web" target="nunki-api-gateway">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="353" y="508" />

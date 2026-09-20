@@ -1,4 +1,4 @@
-# autodoc-engine
+# nunki
 
 Rust workspace (`crates/*`), a TypeScript zod mirror (`packages/ir-spec-ts`), Playwright journeys (`tests/e2e`).
 
@@ -17,7 +17,7 @@ memory with whatever else is running — a full `cargo test --workspace` is wher
 builds get OOM-killed, and `-j 1` makes it slow rather than reliable. Prefer:
 
 ```bash
-docker compose run --rm test cargo test -p autodoc-analyzer --test flows
+docker compose run --rm test cargo test -p nunki-analyzer --test flows
 docker compose run --rm lint          # always cheap, always before pushing
 ```
 
@@ -39,7 +39,7 @@ A tag builds and publishes; nothing is uploaded by hand.
 2. Bump `version` in the root `Cargo.toml`, then `cargo build` so `Cargo.lock` follows
    (the release builds with `--locked`).
 3. `make demo` — the generator version is embedded in the examples, so they change.
-4. Bump the `sadaramk/autodoc@vx.y.z` references in `README.md` and `docs/start.html`
+4. Bump the `sadaramk/nunki@vx.y.z` references in `README.md` and `docs/start.html`
    when the release adds a subcommand the snippets use.
 5. Commit, `git tag -a vx.y.z`, push both. `release.yml` builds five targets, each of
    which generates and checks a book before it is uploaded, and attaches
@@ -52,8 +52,8 @@ the CI job that exercises it must only use subcommands that release already has.
 
 Each must pass before merge.
 
-1. **Generate the architecture book** — `autodoc generate` → book with verified citations and permalinks; unchanged
-   commit rewrites nothing; hand-edited IR kept; `autodoc check` fails on drift.
+1. **Generate the architecture book** — `nunki generate` → book with verified citations and permalinks; unchanged
+   commit rewrites nothing; hand-edited IR kept; `nunki check` fails on drift.
    `crates/cli/tests/journeys.rs::journey_init_generate_book_edit_and_check_in_ci`, `crates/book/tests/book.rs`
 2. **Agent self-heal** — a rejected IR's patches make it compile.
    `journeys.rs::journey_agent_self_heals_a_rejected_ir`
@@ -72,7 +72,7 @@ Each must pass before merge.
 
 ## Change → what to run
 
-- `ir-spec` field changes: regenerate `schema/diagram-ir.schema.json` (`autodoc schema`), update
+- `ir-spec` field changes: regenerate `schema/diagram-ir.schema.json` (`nunki schema`), update
   `packages/ir-spec-ts/src/index.ts`, run `test` and `test-ts` (contract fixtures in `tests/contract`).
 - `renderer` layout: `crates/renderer/tests/geometry.rs` (fixtures, 300 random graphs, random sequence / ER /
   lifecycle diagrams) and `make e2e`.

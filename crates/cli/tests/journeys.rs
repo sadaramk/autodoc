@@ -1,4 +1,4 @@
-//! Journey tests: drive the built `autodoc` binary exactly as a user or an
+//! Journey tests: drive the built `nunki` binary exactly as a user or an
 //! agent would, against a real git repository copied from the fixtures.
 
 use std::io::{BufRead, BufReader, Write};
@@ -7,7 +7,7 @@ use std::process::{Command, Output, Stdio};
 
 use serde_json::{json, Value};
 
-const BIN: &str = env!("CARGO_BIN_EXE_autodoc");
+const BIN: &str = env!("CARGO_BIN_EXE_nunki");
 
 fn fixtures() -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).to_path_buf()
@@ -62,7 +62,7 @@ fn copy_dir(from: &Path, to: &Path) {
     }
 }
 
-fn autodoc(args: &[&str], cwd: &Path) -> Output {
+fn nunki(args: &[&str], cwd: &Path) -> Output {
     Command::new(BIN).args(args).current_dir(cwd).output().unwrap()
 }
 
@@ -73,14 +73,14 @@ fn text(o: &Output) -> String {
 #[test]
 fn journey_init_generate_book_edit_and_check_in_ci() {
     let (_tmp, repo) = shop_repo();
-    let o = autodoc(&["init", "."], &repo);
+    let o = nunki(&["init", "."], &repo);
     assert!(o.status.success(), "{}", text(&o));
-    assert!(repo.join("autodoc.toml").is_file());
-    let again = autodoc(&["init", "."], &repo);
+    assert!(repo.join("nunki.toml").is_file());
+    let again = nunki(&["init", "."], &repo);
     assert_eq!(again.status.code(), Some(2), "init refuses to overwrite");
 
     // 1. Generate the book.
-    let o = autodoc(&["generate", ".", "--json"], &repo);
+    let o = nunki(&["generate", ".", "--json"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     let report: Value = serde_json::from_slice(&o.stdout).unwrap();
     assert_eq!(report["evidence"]["verified"], report["evidence"]["total"], "{report}");
@@ -119,10 +119,10 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
     assert!(md.contains("https://github.com/acme/polyglot-shop/blob/"), "forge permalinks in Markdown citations: {md}");
 
     // 2. Regenerating an unchanged commit rewrites nothing.
-    let o = autodoc(&["generate", ".", "--json"], &repo);
+    let o = nunki(&["generate", ".", "--json"], &repo);
     let again: Value = serde_json::from_slice(&o.stdout).unwrap();
     assert_eq!(again["written"].as_array().unwrap().len(), 0, "{again}");
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert!(o.status.success(), "{}", text(&o));
 
     // 2b. Committing the book is the first thing CI does with it, and it moves
@@ -131,11 +131,11 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
     // was regenerated — the loop had no exit.
     git(&repo, &["add", "docs"]);
     git(&repo, &["commit", "-qm", "add generated documentation"]);
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert!(o.status.success(), "committing the book must not invalidate it: {}", text(&o));
 
     git(&repo, &["commit", "-q", "--allow-empty", "-m", "unrelated"]);
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert!(o.status.success(), "a commit touching nothing documented must not invalidate it: {}", text(&o));
 
     // 3. A hand-edited diagram survives regeneration and is rendered.
@@ -143,7 +143,7 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
     let edited =
         std::fs::read_to_string(&ir_path).unwrap().replacen("Polyglot Shop — containers", "Checkout platform", 1);
     std::fs::write(&ir_path, &edited).unwrap();
-    let o = autodoc(&["generate", "."], &repo);
+    let o = nunki(&["generate", "."], &repo);
     assert!(text(&o).contains("kept hand-edited diagrams/containers.ir.json"), "{}", text(&o));
     assert_eq!(std::fs::read_to_string(&ir_path).unwrap(), edited);
     assert!(std::fs::read_to_string(out.join("index.html")).unwrap().contains("Checkout platform"));
@@ -152,13 +152,13 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
     let server = repo.join("api-gateway/src/server.ts");
     std::fs::write(&server, std::fs::read_to_string(&server).unwrap().replace("listen(", "listen( /* moved */ "))
         .unwrap();
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
     assert!(text(&o).contains("api-gateway/src/server.ts"), "{}", text(&o));
 
     // 5. …and a deleted page.
     std::fs::remove_file(out.join("pages/05-critical-flows.md")).unwrap();
-    let o = autodoc(&["check", ".", "--json"], &repo);
+    let o = nunki(&["check", ".", "--json"], &repo);
     let check: Value = serde_json::from_slice(&o.stdout).unwrap();
     assert!(check["missing"].as_array().unwrap().iter().any(|m| m == "pages/05-critical-flows.md"), "{check}");
 }
@@ -167,7 +167,7 @@ fn journey_init_generate_book_edit_and_check_in_ci() {
 fn journey_agent_self_heals_a_rejected_ir() {
     let (tmp, repo) = shop_repo();
     let ir_path = tmp.path().join("arch.ir.json");
-    let o = autodoc(&["analyze", repo.to_str().unwrap(), "--emit-ir", ir_path.to_str().unwrap()], tmp.path());
+    let o = nunki(&["analyze", repo.to_str().unwrap(), "--emit-ir", ir_path.to_str().unwrap()], tmp.path());
     assert!(o.status.success(), "{}", text(&o));
     assert!(text(&o).contains("api-gateway → payments"));
 
@@ -180,7 +180,7 @@ fn journey_agent_self_heals_a_rejected_ir() {
     std::fs::write(&ir_path, serde_json::to_string_pretty(&ir).unwrap()).unwrap();
 
     let html = tmp.path().join("arch.html");
-    let o = autodoc(&["render", ir_path.to_str().unwrap(), "-o", html.to_str().unwrap(), "--json"], tmp.path());
+    let o = nunki(&["render", ir_path.to_str().unwrap(), "-o", html.to_str().unwrap(), "--json"], tmp.path());
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
     assert!(!html.exists(), "nothing is written when validation fails");
     let outcome: Value = serde_json::from_slice(&o.stdout).unwrap();
@@ -193,10 +193,10 @@ fn journey_agent_self_heals_a_rejected_ir() {
     // Apply the machine-readable patches, highest index first, and retry.
     let mut ops: Vec<Value> = diags.iter().flat_map(|d| d["patch"].as_array().cloned().unwrap_or_default()).collect();
     ops.sort_by_key(|o| std::cmp::Reverse(o["path"].as_str().unwrap().to_string()));
-    autodoc_validator::apply_patch(&mut ir, &ops).unwrap();
+    nunki_validator::apply_patch(&mut ir, &ops).unwrap();
     std::fs::write(&ir_path, serde_json::to_string_pretty(&ir).unwrap()).unwrap();
 
-    let o = autodoc(&["render", ir_path.to_str().unwrap(), "-o", html.to_str().unwrap()], tmp.path());
+    let o = nunki(&["render", ir_path.to_str().unwrap(), "-o", html.to_str().unwrap()], tmp.path());
     assert!(o.status.success(), "{}", text(&o));
     assert!(text(&o).contains("evidence 10/10 verified"), "{}", text(&o));
     assert!(html.is_file());
@@ -206,10 +206,10 @@ fn journey_agent_self_heals_a_rejected_ir() {
 fn journey_evidence_drift_is_detected_after_code_changes() {
     let (tmp, repo) = shop_repo();
     let ir_path = tmp.path().join("arch.ir.json");
-    assert!(autodoc(&["analyze", repo.to_str().unwrap(), "--emit-ir", ir_path.to_str().unwrap()], tmp.path())
+    assert!(nunki(&["analyze", repo.to_str().unwrap(), "--emit-ir", ir_path.to_str().unwrap()], tmp.path())
         .status
         .success());
-    let o = autodoc(&["validate", ir_path.to_str().unwrap()], tmp.path());
+    let o = nunki(&["validate", ir_path.to_str().unwrap()], tmp.path());
     assert!(o.status.success(), "{}", text(&o));
     assert!(text(&o).contains("evidence: 10/10 verified"), "{}", text(&o));
 
@@ -218,19 +218,19 @@ fn journey_evidence_drift_is_detected_after_code_changes() {
     let src = std::fs::read_to_string(&server).unwrap().replace("listen(", "listen( /* moved */ ");
     std::fs::write(&server, src).unwrap();
 
-    let o = autodoc(&["validate", ir_path.to_str().unwrap()], tmp.path());
+    let o = nunki(&["validate", ir_path.to_str().unwrap()], tmp.path());
     assert!(o.status.success(), "stale evidence warns but still renders: {}", text(&o));
     assert!(text(&o).contains("WARN_EVIDENCE_STALE"), "{}", text(&o));
 
     let ir: Value = serde_json::from_str(&std::fs::read_to_string(&ir_path).unwrap()).unwrap();
     let ev = &ir["nodes"].as_array().unwrap().iter().find(|n| n["id"] == "api-gateway").unwrap()["evidence"];
     let reference = format!("{}:{}-{}", ev["filePath"].as_str().unwrap(), ev["startLine"], ev["endLine"]);
-    let o = autodoc(&["verify", &reference, "api-gateway/src/db.ts:1", "--repo", repo.to_str().unwrap()], tmp.path());
+    let o = nunki(&["verify", &reference, "api-gateway/src/db.ts:1", "--repo", repo.to_str().unwrap()], tmp.path());
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
     assert!(text(&o).contains("stale"), "{}", text(&o));
     assert!(text(&o).contains("verified"), "{}", text(&o));
 
-    let o = autodoc(&["verify", "api-gateway/src/nope.ts:3", "--repo", repo.to_str().unwrap(), "--json"], tmp.path());
+    let o = nunki(&["verify", "api-gateway/src/nope.ts:3", "--repo", repo.to_str().unwrap(), "--json"], tmp.path());
     let res: Value = serde_json::from_slice(&o.stdout).unwrap();
     assert_eq!(res["results"][0]["state"], "file-missing");
 }
@@ -239,26 +239,25 @@ fn journey_evidence_drift_is_detected_after_code_changes() {
 fn journey_svg_output_and_schema() {
     let (tmp, repo) = shop_repo();
     let ir_path = tmp.path().join("arch.ir.json");
-    assert!(autodoc(
+    assert!(nunki(
         &["analyze", repo.to_str().unwrap(), "--depth", "system", "--emit-ir", ir_path.to_str().unwrap()],
         tmp.path()
     )
     .status
     .success());
     let svg = tmp.path().join("arch.svg");
-    let o =
-        autodoc(&["render", ir_path.to_str().unwrap(), "-o", svg.to_str().unwrap(), "--accent", "coral"], tmp.path());
+    let o = nunki(&["render", ir_path.to_str().unwrap(), "-o", svg.to_str().unwrap(), "--accent", "coral"], tmp.path());
     assert!(o.status.success(), "{}", text(&o));
     let content = std::fs::read_to_string(&svg).unwrap();
     assert!(content.contains("--ad-accent:#E11D48"));
     assert!(content.contains("System context".to_uppercase().as_str()));
 
-    let o = autodoc(&["schema"], tmp.path());
+    let o = nunki(&["schema"], tmp.path());
     let committed =
         std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../../schema/diagram-ir.schema.json")).unwrap();
     assert_eq!(String::from_utf8_lossy(&o.stdout), committed);
 
-    let o = autodoc(&["render", "missing.json"], tmp.path());
+    let o = nunki(&["render", "missing.json"], tmp.path());
     assert_eq!(o.status.code(), Some(2));
 }
 
@@ -327,7 +326,7 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
     let tools = mcp.request("tools/list", json!({}));
     assert_eq!(tools["result"]["tools"].as_array().unwrap().len(), 4);
 
-    let scan = mcp.tool("autodoc_scan_repository", json!({"repoPath": "polyglot-shop", "depth": "container"}));
+    let scan = mcp.tool("nunki_scan_repository", json!({"repoPath": "polyglot-shop", "depth": "container"}));
     assert_eq!(scan["isError"], false);
     let sc = &scan["structuredContent"];
     assert_eq!(sc["report"]["containers"].as_array().unwrap().len(), 5);
@@ -339,7 +338,7 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
     ir["title"] = json!("Checkout platform");
     let out = tmp.path().join("docs/checkout.html");
     let compiled = mcp.tool(
-        "autodoc_compile_diagram",
+        "nunki_compile_diagram",
         json!({"ir": ir, "outputPath": "docs/checkout.html", "format": "html", "repoPath": repo}),
     );
     assert_eq!(compiled["isError"], false, "{compiled}");
@@ -353,10 +352,8 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
         cluttered["nodes"].as_array_mut().unwrap().push(json!({"id": format!("extra-{i}"), "label": format!("Extra {i}"), "isKeyFocalPoint": false, "containerId": "platform"}));
         cluttered["edges"].as_array_mut().unwrap().push(json!({"id": format!("x-{i}"), "source": "api-gateway", "target": format!("extra-{i}"), "edgeType": "sync"}));
     }
-    let rejected = mcp.tool(
-        "autodoc_compile_diagram",
-        json!({"ir": cluttered, "outputPath": "docs/cluttered.html", "format": "html"}),
-    );
+    let rejected = mcp
+        .tool("nunki_compile_diagram", json!({"ir": cluttered, "outputPath": "docs/cluttered.html", "format": "html"}));
     assert_eq!(rejected["isError"], true);
     let diags = rejected["structuredContent"]["validation"]["diagnostics"].as_array().unwrap();
     let density = diags.iter().find(|d| d["code"] == "ERR_HIGH_DENSITY").expect("density diagnostic");
@@ -364,7 +361,7 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
     assert!(!tmp.path().join("docs/cluttered.html").exists());
 
     let verified = mcp.tool(
-        "autodoc_verify_evidence",
+        "nunki_verify_evidence",
         json!({"repoPath": repo, "evidenceList": [
             {"filePath": "payments/internal/charge/charge.go", "line": 24, "endLine": 38, "symbolName": "Charge"},
             {"filePath": "payments/internal/charge/charge.go", "line": 400}
@@ -389,7 +386,7 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
 fn journey_generate_and_check_a_jvm_multi_module_repository() {
     let (_tmp, repo) = repo_from("real-world/spring-cloud", "shop-cloud", "git@github.com:acme/shop-cloud.git");
 
-    let o = autodoc(&["generate", ".", "--json"], &repo);
+    let o = nunki(&["generate", ".", "--json"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     let report: Value = serde_json::from_slice(&o.stdout).unwrap();
     assert_eq!(report["evidence"]["verified"], report["evidence"]["total"], "{report}");
@@ -410,7 +407,7 @@ fn journey_generate_and_check_a_jvm_multi_module_repository() {
     // Committing the book leaves the check green, as it must for CI.
     git(&repo, &["add", "."]);
     git(&repo, &["commit", "-qm", "docs"]);
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert!(o.status.success(), "{}", text(&o));
 
     // Changing a documented Java source turns it red, naming the file.
@@ -421,7 +418,7 @@ fn journey_generate_and_check_a_jvm_multi_module_repository() {
         src.replace("public class AccountController", "public class AccountController /* moved */"),
     )
     .unwrap();
-    let o = autodoc(&["check", "."], &repo);
+    let o = nunki(&["check", "."], &repo);
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
     assert!(text(&o).contains("AccountController.java"), "{}", text(&o));
 }
@@ -433,7 +430,7 @@ fn journey_generate_and_check_a_jvm_multi_module_repository() {
 #[test]
 fn a_failure_is_reported_once() {
     let tmp = tempfile::tempdir().unwrap();
-    let o = autodoc(&["generate", "does-not-exist"], tmp.path());
+    let o = nunki(&["generate", "does-not-exist"], tmp.path());
     let out = text(&o);
     assert_eq!(o.status.code(), Some(2), "{out}");
     assert_eq!(out.matches("cannot scan").count(), 1, "the reason is stated once: {out}");
@@ -450,7 +447,7 @@ fn an_empty_repository_is_refused_rather_than_documented() {
     std::fs::create_dir_all(repo.join("docs")).unwrap();
     std::fs::write(repo.join("docs/notes.txt"), "no source here\n").unwrap();
     let out = tmp.path().join("book");
-    let o = autodoc(&["generate", repo.to_str().unwrap(), "--out", out.to_str().unwrap()], tmp.path());
+    let o = nunki(&["generate", repo.to_str().unwrap(), "--out", out.to_str().unwrap()], tmp.path());
     let text = text(&o);
     assert_eq!(o.status.code(), Some(2), "{text}");
     assert!(text.contains("nothing to document"), "{text}");
@@ -460,13 +457,13 @@ fn an_empty_repository_is_refused_rather_than_documented() {
 
 /// A pull request asks what a change does to the architecture, which a book
 /// cannot answer: two rendered books diff as text, so a reordered table reads as
-/// a change and a new route reads as five. `autodoc diff` compares the models.
+/// a change and a new route reads as five. `nunki diff` compares the models.
 #[test]
 fn journey_diff_reports_what_changed_between_two_revisions() {
     let (_tmp, repo) = shop_repo();
 
     // An unchanged range is the common case in CI and has to say so plainly.
-    let o = autodoc(&["diff", ".", "--base", "HEAD", "--head", "HEAD"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD", "--head", "HEAD"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     assert!(text(&o).contains("Architecture unchanged"), "{}", text(&o));
 
@@ -488,7 +485,7 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
     .unwrap();
     git(&repo, &["commit", "-aqm", "read a charge"]);
 
-    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD~1"], &repo);
     let out = text(&o);
     assert!(o.status.success(), "{out}");
     assert!(out.contains("### Architecture changes"), "{out}");
@@ -514,7 +511,7 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
     .unwrap();
     git(&repo, &["commit", "-aqm", "accept checkout asynchronously"]);
 
-    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD~1"], &repo);
     let out = text(&o);
     assert!(out.contains("changed **api-gateway POST /checkout**"), "{out}");
     for want in [
@@ -526,11 +523,11 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
     }
 
     // `--exit-code` is what turns the report into a gate.
-    let o = autodoc(&["diff", ".", "--base", "HEAD~2", "--exit-code"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD~2", "--exit-code"], &repo);
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
 
     // The JSON is the same finding, for a bot that wants to group or filter.
-    let o = autodoc(&["diff", ".", "--base", "HEAD~2", "--json"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD~2", "--json"], &repo);
     let v: Value = serde_json::from_str(&String::from_utf8_lossy(&o.stdout)).unwrap();
     assert_eq!(v["base"], "HEAD~2");
     let api = v["sections"]
@@ -544,7 +541,7 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
 
     // The comparison must not disturb the caller's tree: CI checks out the head
     // commit and then runs this, and a leftover worktree breaks the next step.
-    let o = autodoc(&["diff", ".", "--base", "HEAD~1"], &repo);
+    let o = nunki(&["diff", ".", "--base", "HEAD~1"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     let wt = Command::new("git").arg("-C").arg(&repo).args(["worktree", "list"]).output().unwrap();
     let list = String::from_utf8_lossy(&wt.stdout);
@@ -558,11 +555,11 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
 fn journey_export_carries_evidence_into_drawio() {
     let (_tmp, repo) = shop_repo();
     let out = repo.join("docs/architecture");
-    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &repo);
+    let o = nunki(&["generate", ".", "--out", "docs/architecture"], &repo);
     assert!(o.status.success(), "{}", text(&o));
 
     let ir = out.join("diagrams/containers.ir.json");
-    let o = autodoc(&["export", ir.to_str().unwrap(), "--format", "drawio-csv", "--output", "-"], &repo);
+    let o = nunki(&["export", ir.to_str().unwrap(), "--format", "drawio-csv", "--output", "-"], &repo);
     let csv = String::from_utf8_lossy(&o.stdout).to_string();
     assert!(o.status.success(), "{}", text(&o));
 
@@ -570,7 +567,7 @@ fn journey_export_carries_evidence_into_drawio() {
     for want in ["# label: %label%", "# style: %style%", "# link: url", "# connect: {"] {
         assert!(csv.contains(want), "CSV needs {want:?}:\n{csv}");
     }
-    // Positions come from autodoc's layout, so draw.io must not run its own.
+    // Positions come from nunki's layout, so draw.io must not run its own.
     // `width`/`height` need the `@` form: with a bare column name draw.io
     // silently ignores them and auto-sizes every shape to its label, which is
     // how the first version of this shipped.
@@ -623,9 +620,9 @@ fn journey_export_carries_evidence_into_drawio() {
     // Without a recognised remote there is no link worth writing, and the export
     // says so rather than inventing one.
     let (_bare, plain) = repo_from("polyglot-shop", "no-remote", "/srv/git/shop.git");
-    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &plain);
+    let o = nunki(&["generate", ".", "--out", "docs/architecture"], &plain);
     assert!(o.status.success(), "{}", text(&o));
-    let o = autodoc(
+    let o = nunki(
         &[
             "export",
             plain.join("docs/architecture/diagrams/containers.ir.json").to_str().unwrap(),
@@ -644,7 +641,7 @@ fn journey_export_carries_evidence_into_drawio() {
     assert!(!row.contains("http"), "no link is better than a broken one: {row}");
 
     // The default output path sits beside the IR, named for the tool.
-    let o = autodoc(&["export", ir.to_str().unwrap(), "--format", "drawio-csv"], &repo);
+    let o = nunki(&["export", ir.to_str().unwrap(), "--format", "drawio-csv"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     assert!(out.join("diagrams/containers.drawio.csv").is_file(), "{}", text(&o));
 }
@@ -656,11 +653,11 @@ fn journey_export_carries_evidence_into_drawio() {
 #[test]
 fn journey_the_drawio_file_carries_the_books_layout() {
     let (_tmp, repo) = shop_repo();
-    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &repo);
+    let o = nunki(&["generate", ".", "--out", "docs/architecture"], &repo);
     assert!(o.status.success(), "{}", text(&o));
     let ir = repo.join("docs/architecture/diagrams/containers.ir.json");
 
-    let o = autodoc(&["export", ir.to_str().unwrap(), "--output", "-"], &repo);
+    let o = nunki(&["export", ir.to_str().unwrap(), "--output", "-"], &repo);
     let xml = String::from_utf8_lossy(&o.stdout).to_string();
     assert!(o.status.success(), "{}", text(&o));
     assert!(xml.starts_with("<mxfile"), "a draw.io file: {}", &xml[..xml.len().min(80)]);
@@ -677,7 +674,7 @@ fn journey_the_drawio_file_carries_the_books_layout() {
     assert!(xml.contains("evidence=\"api-gateway/src/server.ts:"), "{xml}");
     assert!(xml.contains("link=\"https://github.com/acme/polyglot-shop/blob/"), "{xml}");
     // Boundaries are real parents, so dragging one moves what it contains.
-    assert!(xml.contains("parent=\"autodoc-platform\""), "{xml}");
+    assert!(xml.contains("parent=\"nunki-platform\""), "{xml}");
     // `&` in a label has to be escaped or the file will not parse.
     assert!(!xml.contains("reads & writes"), "raw ampersand in XML:\n{xml}");
 
@@ -692,7 +689,7 @@ fn journey_the_drawio_file_carries_the_books_layout() {
     }
     assert_eq!(depth, 0, "tags balance");
 
-    let o = autodoc(&["export", ir.to_str().unwrap()], &repo);
+    let o = nunki(&["export", ir.to_str().unwrap()], &repo);
     assert!(o.status.success(), "{}", text(&o));
     assert!(repo.join("docs/architecture/diagrams/containers.drawio").is_file(), "{}", text(&o));
 }

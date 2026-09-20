@@ -5,7 +5,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use autodoc_ir::{
+use nunki_ir::{
     now_rfc3339, visual_density, Attribute, Cardinality, DiagramIR, DiagramMetadata, DiagramType, Edge, EdgeType,
     IrVersion, KeyKind, Node, StateKind,
 };
@@ -119,7 +119,7 @@ pub fn draft_sequence_ir(report: &ScanReport, flow: &Flow, opts: &DraftOptions) 
         e.is_primary_path = (i == 0 || i == last).then_some(true);
         // Work done later by another handler reads as dashed; deliveries keep the event dots.
         if s.asynchronous && !matches!(s.kind, StepKind::Deliver | StepKind::Publish) {
-            e.style = Some(autodoc_ir::EdgeStyle::Dashed);
+            e.style = Some(nunki_ir::EdgeStyle::Dashed);
         }
         e.evidence = Some(s.evidence.to_ir());
         ir.edges.push(e);
@@ -218,7 +218,7 @@ pub fn draft_entity_ir(report: &ScanReport, data: &DataModel, opts: &DraftOption
             ir.edges.push(ed);
         }
     }
-    let budget = autodoc_ir::element_budget();
+    let budget = nunki_ir::element_budget();
     if ir.nodes.len() + ir.edges.len() > budget {
         let drop = ir.nodes.len() + ir.edges.len() - budget;
         notes.push(format!("{drop} relationship(s) left off the figure to stay within the density budget"));

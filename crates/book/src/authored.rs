@@ -90,7 +90,7 @@ impl Authored {
     pub fn template(operation_ids: &[String]) -> String {
         let a = Authored {
             comment: Some(
-                "Intent the code cannot tell. Fill in what you know; empty answers are shown as open questions. autodoc never writes to this file after creating it.".into(),
+                "Intent the code cannot tell. Fill in what you know; empty answers are shown as open questions. nunki never writes to this file after creating it.".into(),
             ),
             business: Business {
                 stakeholders: vec![Stakeholder::default()],

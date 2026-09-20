@@ -4,7 +4,7 @@
 //! it depends on — and every import that crosses another module's boundary.
 //! Units with many modules get a dedicated page, `containers/<unit>/modules`.
 
-use autodoc_analyzer::scan::{ComponentView, ModuleSummary, UnitSummary};
+use nunki_analyzer::scan::{ComponentView, ModuleSummary, UnitSummary};
 
 use super::Builder;
 use crate::model::*;

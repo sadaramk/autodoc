@@ -47,7 +47,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - run: cargo build --release -p autodoc-cli
+      - run: cargo build --release -p nunki-cli
       - run: npm ci
         working-directory: tests/e2e
       - run: npx playwright install --with-deps chromium
@@ -55,7 +55,7 @@ jobs:
       - name: Run journeys
         working-directory: tests/e2e
         env:
-          AUTODOC_BIN: ${{ github.workspace }}/target/release/autodoc
+          NUNKI_BIN: ${{ github.workspace }}/target/release/nunki
         run: npx playwright test
       - uses: actions/upload-artifact@v7
         if: failure()

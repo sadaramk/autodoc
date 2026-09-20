@@ -1,7 +1,7 @@
 //! draw.io export, one way, as a CSV import.
 //!
 //! A generated diagram is sometimes the starting point for a drawing a person
-//! then owns — a slide, an annotated review, a diagram with a boundary autodoc
+//! then owns — a slide, an annotated review, a diagram with a boundary nunki
 //! cannot see. draw.io's CSV import is the only interchange format it reads that
 //! survives being edited: it produces real shapes with a layout applied, not a
 //! flattened image.
@@ -15,7 +15,7 @@
 //!
 //! Import in draw.io with Extras → Insert → Advanced → CSV.
 
-use autodoc_ir::{DiagramIR, EdgeStyle, EdgeType, Evidence};
+use nunki_ir::{DiagramIR, EdgeStyle, EdgeType, Evidence};
 
 use std::collections::BTreeMap;
 
@@ -62,7 +62,7 @@ fn shape_style(focal: bool) -> String {
     )
 }
 
-fn edge_style(e: &autodoc_ir::Edge) -> String {
+fn edge_style(e: &nunki_ir::Edge) -> String {
     let dashed = matches!(e.style, Some(EdgeStyle::Dashed)) || matches!(e.edge_type, EdgeType::Async);
     let color = if e.is_primary_path == Some(true) { "#4f46e5" } else { "#64748b" };
     // A white label background, or several edges leaving one node print their
@@ -88,13 +88,13 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     // one node actually resolves to a URL.
     let links = ir.nodes.iter().filter_map(|n| n.evidence.as_ref()).any(|e| permalink(e).is_some());
     let mut out = String::new();
-    out.push_str(&format!("# {} — exported from autodoc, one way.\n", ir.title));
+    out.push_str(&format!("# {} — exported from nunki, one way.\n", ir.title));
     out.push_str("# Import with Extras → Insert → Advanced → CSV. Evidence travels as shape data:\n");
     out.push_str("# right-click a shape → Edit Data to see the file and line it came from.\n");
     out.push_str("#\n");
     out.push_str("# label: %label%\n");
     out.push_str("# style: %style%\n");
-    out.push_str("# namespace: autodoc-\n");
+    out.push_str("# namespace: nunki-\n");
     out.push_str("# identity: id\n");
     // `parent` groups nodes into the boundaries the model already has.
     if !ir.containers.is_empty() {
@@ -107,7 +107,7 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     if links {
         out.push_str("# link: url\n");
     }
-    // Positions come from autodoc's own layout, not from draw.io's. Asking
+    // Positions come from nunki's own layout, not from draw.io's. Asking
     // draw.io to lay this out produced crossed edges and labels printed over one
     // another, because its flow layouts do not respect the boundary groups the
     // model has. The book's layout already places these boxes well, so the
@@ -285,7 +285,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
 
     let mut out = String::new();
     out.push_str(&format!(
-        "<mxfile host=\"autodoc\" agent=\"autodoc {}\">\n  <diagram name=\"{}\">\n",
+        "<mxfile host=\"nunki\" agent=\"nunki {}\">\n  <diagram name=\"{}\">\n",
         env!("CARGO_PKG_VERSION"),
         xml(&ir.title)
     ));
@@ -297,7 +297,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
         l.height.round() as i64
     ));
 
-    let cell = |id: &str| format!("autodoc-{}", safe_id(id));
+    let cell = |id: &str| format!("nunki-{}", safe_id(id));
     for c in &ir.containers {
         let r = at.get(c.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 240.0, h: 160.0 });
         out.push_str(&format!(
@@ -357,7 +357,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
             .map(|b| ((b.rect.cx() - mid.0).round() as i64, (b.rect.cy() - mid.1).round() as i64))
             .unwrap_or((0, 0));
         out.push_str(&format!(
-            "        <mxCell id=\"autodoc-e{i}\" value=\"{}\" style=\"{}\" edge=\"1\" parent=\"1\" \
+            "        <mxCell id=\"nunki-e{i}\" value=\"{}\" style=\"{}\" edge=\"1\" parent=\"1\" \
              source=\"{}\" target=\"{}\">\n          <mxGeometry relative=\"1\" as=\"geometry\">\n",
             xml(&label),
             xml(&edge_style(e)),

@@ -1,4 +1,4 @@
-name: autodoc
+name: nunki
 description: Generate or check verifiable architecture documentation from source code
 branding:
   icon: book-open
@@ -7,22 +7,22 @@ branding:
 inputs:
   command:
     description: >-
-      autodoc subcommand to run: check (fail when the book is out of date or
+      nunki subcommand to run: check (fail when the book is out of date or
       cites stale code), generate, analyze, or verify.
     default: check
   path:
     description: Repository to document.
     default: "."
   out:
-    description: Book directory. Defaults to whatever autodoc.toml says.
+    description: Book directory. Defaults to whatever nunki.toml says.
     default: ""
   args:
     description: Extra arguments, appended verbatim.
     default: ""
   version:
     description: >-
-      Release to download, such as v0.2.7. Left empty, the action uses the
-      version it was pinned to (`uses: …/autodoc@v0.2.7`), falling back to the
+      Release to download, such as v0.3.0. Left empty, the action uses the
+      version it was pinned to (`uses: …/nunki@v0.3.0`), falling back to the
       newest release when the ref is a branch or a moving major tag.
     default: ""
   token:
@@ -31,7 +31,7 @@ inputs:
 
 outputs:
   binary:
-    description: Path to the autodoc binary that ran, for further steps.
+    description: Path to the nunki binary that ran, for further steps.
     value: ${{ steps.run.outputs.binary }}
 
 runs:
@@ -40,10 +40,10 @@ runs:
     - id: run
       shell: bash
       env:
-        AUTODOC_VERSION: ${{ inputs.version }}
-        AUTODOC_COMMAND: ${{ inputs.command }}
-        AUTODOC_PATH: ${{ inputs.path }}
-        AUTODOC_OUT: ${{ inputs.out }}
-        AUTODOC_ARGS: ${{ inputs.args }}
+        NUNKI_VERSION: ${{ inputs.version }}
+        NUNKI_COMMAND: ${{ inputs.command }}
+        NUNKI_PATH: ${{ inputs.path }}
+        NUNKI_OUT: ${{ inputs.out }}
+        NUNKI_ARGS: ${{ inputs.args }}
         GH_TOKEN: ${{ inputs.token }}
       run: bash "$GITHUB_ACTION_PATH/scripts/action-entrypoint.sh"

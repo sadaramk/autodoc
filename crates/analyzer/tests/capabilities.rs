@@ -4,8 +4,8 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::capability::groups_of;
-use autodoc_analyzer::{draft_capability_ir, scan, DraftOptions, ScanOptions, ScanReport};
+use nunki_analyzer::capability::groups_of;
+use nunki_analyzer::{draft_capability_ir, scan, DraftOptions, ScanOptions, ScanReport};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)
@@ -97,9 +97,9 @@ fn capability_map_shows_callers_groups_and_what_they_touch() {
     assert_eq!(n.subtitle.as_deref(), Some("1 operation"));
     assert_eq!(n.tech_stack.as_deref(), Some("POST 1"));
 
-    let v = autodoc_validator::validate(
+    let v = nunki_validator::validate(
         ir,
-        &autodoc_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
+        &nunki_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
     );
     assert!(v.valid, "{:#?}", v.diagnostics);
 
@@ -111,9 +111,9 @@ fn capability_map_shows_callers_groups_and_what_they_touch() {
         "{:?}",
         d.ir.nodes.iter().map(|n| &n.id).collect::<Vec<_>>()
     );
-    let v = autodoc_validator::validate(
+    let v = nunki_validator::validate(
         &d.ir,
-        &autodoc_validator::ValidateOptions { repo_root: Some(root), ..Default::default() },
+        &nunki_validator::ValidateOptions { repo_root: Some(root), ..Default::default() },
     );
     assert!(v.valid, "{:#?}", v.diagnostics);
 }
@@ -133,7 +133,7 @@ fn many_groups_fold_into_other_within_the_density_budget() {
     }
     let d = draft_capability_ir(&r, "orders-service", &DraftOptions::default()).unwrap();
     assert!(
-        d.ir.nodes.len() + d.ir.edges.len() <= autodoc_ir::element_budget(),
+        d.ir.nodes.len() + d.ir.edges.len() <= nunki_ir::element_budget(),
         "{} + {}",
         d.ir.nodes.len(),
         d.ir.edges.len()
@@ -146,9 +146,9 @@ fn many_groups_fold_into_other_within_the_density_budget() {
     assert!(d.notes.iter().any(|n| n.contains("drawn as one `Other` node")), "{:?}", d.notes);
     let focal: Vec<&str> = d.ir.nodes.iter().filter(|n| n.is_key_focal_point).map(|n| n.label.as_str()).collect();
     assert!(focal.len() == 1 && !focal[0].starts_with("Other ("), "{focal:?}");
-    let v = autodoc_validator::validate(
+    let v = nunki_validator::validate(
         &d.ir,
-        &autodoc_validator::ValidateOptions { repo_root: Some(root), ..Default::default() },
+        &nunki_validator::ValidateOptions { repo_root: Some(root), ..Default::default() },
     );
     assert!(v.valid, "{:#?}", v.diagnostics);
 }

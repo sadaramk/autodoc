@@ -145,7 +145,7 @@ pub(crate) fn discover<'a>(
 
     // Consumers the scan found (poll loops, `consume(...)`, `Subscribe(...)`, listener annotations).
     for r in
-        relationships.iter().filter(|r| r.edge_type == autodoc_ir::EdgeType::Event && r.label.starts_with("delivers"))
+        relationships.iter().filter(|r| r.edge_type == nunki_ir::EdgeType::Event && r.label.starts_with("delivers"))
     {
         if !infra.iter().any(|i| i.id == r.source && i.category == InfraCategory::EventBus) {
             continue;

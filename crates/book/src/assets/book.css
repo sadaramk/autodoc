@@ -183,19 +183,19 @@ html[data-theme="editorial-dark"] .btn.primary{color:#0B0F17}
 body.has-fullscreen{overflow:hidden}
 
 /* Diagram interaction (mirrors the standalone viewer) */
-.autodoc .ad-node,.autodoc .ad-edge,.autodoc .ad-edge-label,.autodoc .ad-zone{transition:opacity .18s ease}
-.autodoc .ad-node{cursor:pointer;outline:none}
-.autodoc .ad-card{transition:stroke .15s ease,fill .15s ease}
-.autodoc .ad-node:hover .ad-card{stroke:var(--ad-edge-strong)}
-.autodoc .is-focal.ad-node:hover .ad-card{stroke:var(--ad-accent)}
-.autodoc .ad-node:focus-visible .ad-card{stroke:var(--ad-accent);stroke-width:2}
-.autodoc.is-tracing .ad-node:not(.is-lit),.autodoc.is-tracing .ad-edge:not(.is-lit):not(.ad-legend-sample),.autodoc.is-tracing .ad-edge-label:not(.is-lit){opacity:.16}
-.autodoc.is-tracing .ad-zone{opacity:.55}
-.autodoc .ad-edge.is-lit:not(.is-primary) .ad-edge-line{stroke:var(--ad-edge-strong);stroke-width:1.6;marker-end:url(#ad-arrow-strong)}
-.autodoc .ad-edge.is-lit.t-read:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
-.autodoc .ad-edge-label.is-lit:not(.is-primary) text{fill:var(--ad-text)}
-.autodoc .ad-edge.is-step .ad-edge-line{stroke:var(--ad-accent);stroke-width:2.6;marker-end:url(#ad-arrow-accent)}
-.autodoc .ad-node.is-step .ad-card{stroke:var(--ad-accent);stroke-width:2}
+.nunki .ad-node,.nunki .ad-edge,.nunki .ad-edge-label,.nunki .ad-zone{transition:opacity .18s ease}
+.nunki .ad-node{cursor:pointer;outline:none}
+.nunki .ad-card{transition:stroke .15s ease,fill .15s ease}
+.nunki .ad-node:hover .ad-card{stroke:var(--ad-edge-strong)}
+.nunki .is-focal.ad-node:hover .ad-card{stroke:var(--ad-accent)}
+.nunki .ad-node:focus-visible .ad-card{stroke:var(--ad-accent);stroke-width:2}
+.nunki.is-tracing .ad-node:not(.is-lit),.nunki.is-tracing .ad-edge:not(.is-lit):not(.ad-legend-sample),.nunki.is-tracing .ad-edge-label:not(.is-lit){opacity:.16}
+.nunki.is-tracing .ad-zone{opacity:.55}
+.nunki .ad-edge.is-lit:not(.is-primary) .ad-edge-line{stroke:var(--ad-edge-strong);stroke-width:1.6;marker-end:url(#ad-arrow-strong)}
+.nunki .ad-edge.is-lit.t-read:not(.is-primary) .ad-edge-line{marker-end:url(#ad-open-strong)}
+.nunki .ad-edge-label.is-lit:not(.is-primary) text{fill:var(--ad-text)}
+.nunki .ad-edge.is-step .ad-edge-line{stroke:var(--ad-accent);stroke-width:2.6;marker-end:url(#ad-arrow-accent)}
+.nunki .ad-node.is-step .ad-card{stroke:var(--ad-accent);stroke-width:2}
 
 /* ── Steps (critical flows) ─────────────────────────────────────────────── */
 .walk{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:18px;align-items:start;margin:4px 0 26px}

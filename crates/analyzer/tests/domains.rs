@@ -3,10 +3,10 @@
 
 use std::path::{Path, PathBuf};
 
-use autodoc_analyzer::data::DataModel;
-use autodoc_analyzer::domains::{domains, draft_domain_irs, draft_domain_overview_ir};
-use autodoc_analyzer::scan::ComponentView;
-use autodoc_analyzer::{scan, Depth, DraftOptions, EvidenceRef, ScanOptions};
+use nunki_analyzer::data::DataModel;
+use nunki_analyzer::domains::{domains, draft_domain_irs, draft_domain_overview_ir};
+use nunki_analyzer::scan::ComponentView;
+use nunki_analyzer::{scan, Depth, DraftOptions, EvidenceRef, ScanOptions};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests/fixtures")).join(name)
@@ -45,7 +45,7 @@ fn every_entity_gets_a_domain_and_small_models_stay_whole() {
             assert!(e.domain.as_deref().is_some_and(|d| !d.is_empty()), "{name}: {} has no domain", e.table);
         }
         // ≤ 12 entities read as one figure: no domain split, no overview.
-        if data.entities.len() <= autodoc_analyzer::views::MAX_ENTITIES {
+        if data.entities.len() <= nunki_analyzer::views::MAX_ENTITIES {
             assert!(domains(data).is_empty(), "{name}");
             assert!(draft_domain_irs(&r, data, &opts()).is_empty(), "{name}");
             assert!(draft_domain_overview_ir(&r, data, &opts()).is_none(), "{name}");
@@ -81,7 +81,7 @@ fn large_models_draft_valid_domain_figures_with_cross_domain_stubs_and_an_overvi
             e.domain = Some(domain.into());
             e.relations.clear();
             if i > 0 {
-                e.relations.push(autodoc_analyzer::data::Relation {
+                e.relations.push(nunki_analyzer::data::Relation {
                     kind: "many-to-one".into(),
                     target: format!("entity:{domain}_0"),
                     via: format!("{domain}_0_id"),
@@ -89,7 +89,7 @@ fn large_models_draft_valid_domain_figures_with_cross_domain_stubs_and_an_overvi
                 });
             }
             if domain == "shipping" && i == 1 {
-                e.relations.push(autodoc_analyzer::data::Relation {
+                e.relations.push(nunki_analyzer::data::Relation {
                     kind: "many-to-one".into(),
                     target: "entity:billing_0".into(),
                     via: "invoice_id".into(),
@@ -101,10 +101,10 @@ fn large_models_draft_valid_domain_figures_with_cross_domain_stubs_and_an_overvi
     }
     let doms = domains(&data);
     assert_eq!(doms.iter().map(|d| d.name.as_str()).collect::<Vec<_>>(), ["billing", "catalog", "shipping"]);
-    let validate = |ir: &autodoc_ir::DiagramIR| {
-        let v = autodoc_validator::validate(
+    let validate = |ir: &nunki_ir::DiagramIR| {
+        let v = nunki_validator::validate(
             ir,
-            &autodoc_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
+            &nunki_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
         );
         assert!(v.valid, "{}: {:#?}", ir.title, v.diagnostics);
     };
@@ -216,7 +216,7 @@ fn the_overview_accounts_for_every_domain() {
             e.domain = Some(format!("domain{d:02}"));
             e.relations.clear();
             // Nothing references these: only the code that writes them connects them.
-            e.writes = vec![autodoc_analyzer::data::Access {
+            e.writes = vec![nunki_analyzer::data::Access {
                 unit: unit.clone(),
                 symbol: Some("save".into()),
                 evidence: e.evidence.clone(),
@@ -229,13 +229,13 @@ fn the_overview_accounts_for_every_domain() {
     assert_eq!(names.len(), 20);
 
     let overview = draft_domain_overview_ir(&r, &data, &opts()).expect("overview");
-    let v = autodoc_validator::validate(
+    let v = nunki_validator::validate(
         &overview.ir,
-        &autodoc_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
+        &nunki_validator::ValidateOptions { repo_root: Some(root.clone()), ..Default::default() },
     );
     assert!(v.valid, "{:#?}", v.diagnostics);
     assert!(
-        autodoc_ir::visual_density(overview.ir.nodes.len(), overview.ir.edges.len()) <= 0.40,
+        nunki_ir::visual_density(overview.ir.nodes.len(), overview.ir.edges.len()) <= 0.40,
         "{} nodes {} edges",
         overview.ir.nodes.len(),
         overview.ir.edges.len()
