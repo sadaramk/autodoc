@@ -182,8 +182,7 @@ pub fn parse(files: &[(String, String, String)]) -> PyOutput {
             .or_else(|| c.meta_table.clone())
             .unwrap_or_else(|| {
                 if django {
-                    let app = path.rsplit('/').nth(1).unwrap_or("app");
-                    format!("{}_{}", app, c.name.to_lowercase())
+                    format!("{}_{}", django_app_label(path), c.name.to_lowercase())
                 } else {
                     c.name.to_lowercase()
                 }
@@ -462,6 +461,19 @@ pub fn parse(files: &[(String, String, String)]) -> PyOutput {
 }
 
 /// `list["Item"]`, `"User" | None`, `Optional[User]` → `Item` / `User`.
+/// Django names a table `<app label>_<model>`, and the app label is the app
+/// package — not the directory the file happens to sit in. A models package
+/// (`shop/models/order.py`, which is as common as `shop/models.py`) gave
+/// `models_order` instead of `shop_order`.
+fn django_app_label(path: &str) -> &str {
+    let parts: Vec<&str> = path.split('/').collect();
+    let mut i = parts.len().saturating_sub(2);
+    while i > 0 && matches!(parts[i], "models" | "migrations") {
+        i -= 1;
+    }
+    parts.get(i).copied().filter(|p| !p.is_empty() && !p.ends_with(".py")).unwrap_or("app")
+}
+
 fn clean_type(t: &str) -> String {
     let mut s = t.trim().to_string();
     for wrap in ["Mapped[", "list[", "List[", "Optional[", "Sequence[", "set["] {

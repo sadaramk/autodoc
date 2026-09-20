@@ -261,6 +261,8 @@ fn orm_models_across_frameworks() {
             // One service, two stores: the write must reach the right one.
             ("audit_events", "AuditEvent", "spring-data-mongodb"),
             ("audit_invoices", "AuditInvoice", "jpa"),
+            // A Django app whose models live in a package, not a module.
+            ("billing_statement", "Statement", "django"),
             ("carts", "Cart", "spring-data-mongodb"),
             ("clinics", "Clinic", "sql-ddl+jpa"),
             ("customers", "customers", "drizzle"),
@@ -540,4 +542,32 @@ fn drizzle_columns_survive_a_wrapped_builder_chain() {
         "the foreign key is still a relation: {:?}",
         invoices.relations
     );
+}
+
+/// Django names a table `<app label>_<model>`, and the app label is the app
+/// package. The parent directory was used instead, so a models package —
+/// `billing/models/statement.py`, as common as `billing/models.py` — produced
+/// `models_statement` and the book named a table that does not exist.
+#[test]
+fn a_django_models_package_still_takes_the_app_label() {
+    let data = model(&fixture("orm-models/py-app"));
+    let tables = tables(&data);
+    assert!(tables.contains(&"billing_statement"), "expected billing_statement, have {tables:?}");
+    assert!(!tables.contains(&"models_statement"), "the directory is not the app label: {tables:?}");
+}
+
+/// `@EntityRepository(Invoice)` is a repository, not an entity, but a prefix
+/// match on `@Entity` invented a zero-column table for it — a table the book
+/// then documented as part of the data model.
+#[test]
+fn a_repository_decorator_is_not_an_entity() {
+    let data = model(&fixture("orm-models/node-app"));
+    let names: Vec<&str> = data.entities.iter().map(|e| e.name.as_str()).collect();
+    assert!(
+        !names.contains(&"InvoiceRepository"),
+        "a repository was documented as an entity (table `invoice`): {names:?}"
+    );
+    // The real entities in the same file are still read.
+    let tables = tables(&data);
+    assert!(tables.contains(&"invoices") && tables.contains(&"invoice_lines"), "{tables:?}");
 }

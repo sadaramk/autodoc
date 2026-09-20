@@ -115,7 +115,12 @@ fn typeorm(path: &str, unit: &str, text: &str, enum_names: &[String], out: &mut 
     let mut i = 0;
     while i < lines.len() {
         let t = lines[i].trim();
-        if !(t.starts_with("@Entity") || t.starts_with("@Table(")) {
+        // `@EntityRepository(User)` and `@EntitySubscriber` are not entities:
+        // a prefix match on `@Entity` invented a zero-column table for each.
+        let is_entity = t
+            .strip_prefix("@Entity")
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('(') || rest.starts_with(char::is_whitespace));
+        if !(is_entity || t.starts_with("@Table(")) {
             i += 1;
             continue;
         }

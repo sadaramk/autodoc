@@ -36,3 +36,11 @@ export class InvoiceLine {
   @JoinColumn({ name: "invoice_id" })
   invoice!: Invoice;
 }
+
+/** A repository, not an entity: the decorator only starts with the same word. */
+@EntityRepository(Invoice)
+export class InvoiceRepository {
+  findByReference(reference: string) {
+    return this.findOne({ where: { reference } });
+  }
+}
