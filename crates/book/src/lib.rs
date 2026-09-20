@@ -27,7 +27,9 @@ pub use model::Book;
 
 #[derive(Debug, thiserror::Error)]
 pub enum BookError {
-    #[error("{0}")]
+    // `transparent` rather than `{0}`: with `#[from]` the inner error is also the
+    // source, so anyhow's `{e:#}` printed the same sentence twice.
+    #[error(transparent)]
     Scan(#[from] autodoc_analyzer::ScanError),
     #[error("cannot write {path}: {source}")]
     Io { path: String, source: std::io::Error },

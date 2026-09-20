@@ -425,3 +425,16 @@ fn journey_generate_and_check_a_jvm_multi_module_repository() {
     assert_eq!(o.status.code(), Some(1), "{}", text(&o));
     assert!(text(&o).contains("AccountController.java"), "{}", text(&o));
 }
+
+/// `EngineError` derived its message with `{0}` while `#[from]` also made the
+/// inner error its source, so `{e:#}` printed the same sentence twice:
+/// "cannot scan /nope: … : cannot scan /nope: …". A tool whose first output on
+/// a typo is a stutter reads as broken.
+#[test]
+fn a_failure_is_reported_once() {
+    let tmp = tempfile::tempdir().unwrap();
+    let o = autodoc(&["generate", "does-not-exist"], tmp.path());
+    let out = text(&o);
+    assert_eq!(o.status.code(), Some(2), "{out}");
+    assert_eq!(out.matches("cannot scan").count(), 1, "the reason is stated once: {out}");
+}

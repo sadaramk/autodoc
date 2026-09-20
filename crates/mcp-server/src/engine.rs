@@ -14,11 +14,13 @@ use serde_json::Value;
 
 #[derive(Debug, thiserror::Error)]
 pub enum EngineError {
-    #[error("{0}")]
+    // `transparent` rather than `{0}`: with `#[from]` the inner error is also
+    // the source, so `{e:#}` printed the same sentence twice.
+    #[error(transparent)]
     Scan(#[from] autodoc_analyzer::ScanError),
     #[error("{0}")]
     Invalid(String),
-    #[error("{0}")]
+    #[error(transparent)]
     Book(#[from] autodoc_book::BookError),
     #[error("cannot write {path}: {source}")]
     Io { path: String, source: std::io::Error },
