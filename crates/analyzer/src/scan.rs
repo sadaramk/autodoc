@@ -626,6 +626,13 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
 
     let description = read_readme_summary(&root)
         .or_else(|| units.iter().find_map(|u| u.summary.description.clone().filter(|d| !d.trim().is_empty())));
+    // Nothing was recognised: an empty directory, or a tree with no manifest, no
+    // container file and no source in a language with a grammar. A book built from
+    // that is six pages of headings around an empty diagram the validator rejects
+    // — it reads as a broken tool rather than an empty input. Refuse and say why.
+    if units.is_empty() && infra.is_empty() {
+        return Err(crate::ScanError::Empty(root.display().to_string()));
+    }
     stats.duration_ms = started.elapsed().as_millis() as u64;
     Ok(ScanReport {
         repo: RepoSummary {

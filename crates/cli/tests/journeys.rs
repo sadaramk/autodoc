@@ -438,3 +438,22 @@ fn a_failure_is_reported_once() {
     assert_eq!(o.status.code(), Some(2), "{out}");
     assert_eq!(out.matches("cannot scan").count(), 1, "the reason is stated once: {out}");
 }
+
+/// Generating for a directory with nothing in it produced a six-page book around
+/// an empty containers diagram, warned `ERR_EMPTY_DIAGRAM`, and exited 0. Pointed
+/// at the wrong path — a typo, a misconfigured CI checkout — that looks like a
+/// tool that cannot read the repository, and CI stays green on a book of headings.
+#[test]
+fn an_empty_repository_is_refused_rather_than_documented() {
+    let tmp = tempfile::tempdir().unwrap();
+    let repo = tmp.path().join("nothing");
+    std::fs::create_dir_all(repo.join("docs")).unwrap();
+    std::fs::write(repo.join("docs/notes.txt"), "no source here\n").unwrap();
+    let out = tmp.path().join("book");
+    let o = autodoc(&["generate", repo.to_str().unwrap(), "--out", out.to_str().unwrap()], tmp.path());
+    let text = text(&o);
+    assert_eq!(o.status.code(), Some(2), "{text}");
+    assert!(text.contains("nothing to document"), "{text}");
+    assert!(text.contains("Rust, TypeScript, Go, Python, Java, Kotlin"), "names what it reads: {text}");
+    assert!(!out.exists(), "no half-book is left behind: {text}");
+}

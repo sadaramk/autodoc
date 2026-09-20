@@ -30,6 +30,11 @@ pub use views::{draft_entity_ir, draft_lifecycle_ir, draft_sequence_ir};
 pub enum ScanError {
     #[error("cannot scan {0}: {1}")]
     Root(String, String),
+    #[error(
+        "nothing to document in {0}: no build manifest, container file or source \
+         in a language autodoc reads (Rust, TypeScript, Go, Python, Java, Kotlin)"
+    )]
+    Empty(String),
     #[error("unknown focus unit `{0}`; available: {available}", available = .1.join(", "))]
     UnknownFocus(String, Vec<String>),
 }
