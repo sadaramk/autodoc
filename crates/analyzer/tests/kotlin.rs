@@ -263,6 +263,13 @@ fn kotlin_spring_controller_contracts() {
             "spring-boot-kotlin:GET /api/orders",
             "spring-boot-kotlin:POST /api/orders",
             "spring-boot-kotlin:GET /api/orders/{id}",
+            // ReportController: two verbs times two paths, and a method-less
+            // @RequestMapping that answers any of them.
+            "spring-boot-kotlin:POST /api/reports/daily",
+            "spring-boot-kotlin:PUT /api/reports/daily",
+            "spring-boot-kotlin:POST /api/reports/nightly",
+            "spring-boot-kotlin:PUT /api/reports/nightly",
+            "spring-boot-kotlin:ANY /api/reports/summary",
         ],
         "`server.servlet.context-path: /api` prefixes every route"
     );
@@ -610,4 +617,45 @@ fn kotlin_clients_call_other_services_and_expect_their_types() {
     // The Ktor caller reads a `CatalogItem` with a `stock` field the service never returns.
     let drift = calls.iter().find(|c| !c.drift.is_empty()).unwrap_or_else(|| panic!("drift, have {calls:#?}"));
     assert_eq!(drift.drift, vec!["stock".to_string()]);
+}
+
+/// The Kotlin extractor is a copy of the Java one and had drifted: it resolved
+/// no configuration placeholders and still called the path exact, read
+/// `@RequestMapping` without a method as GET rather than every verb, kept only
+/// the first of a list of verbs or paths, and published a view-returning
+/// `@Controller` as though it served an API. Byte-identical controllers should
+/// document identically in either language.
+#[test]
+fn kotlin_spring_mappings_match_what_spring_registers() {
+    let (_root, r) = report("kotlin/spring-boot-kotlin");
+    let api = r.api.expect("behaviour scan carries an API model");
+    let ops: Vec<(String, String, bool)> =
+        api.operations.iter().map(|o| (o.method.clone(), o.path.clone(), o.path_partial)).collect();
+    let has = |m: &str, p: &str| ops.iter().any(|(om, op, _)| om == m && op == p);
+
+    // `@RequestMapping` with no `method` answers every verb, not GET.
+    assert!(
+        ops.iter().any(|(m, p, _)| m == "ANY" && p.ends_with("summary")),
+        "a method-less @RequestMapping should answer any verb: {ops:?}"
+    );
+
+    // Two verbs times two paths is four routes, not one.
+    for verb in ["POST", "PUT"] {
+        for leaf in ["daily", "nightly"] {
+            assert!(
+                ops.iter().any(|(m, p, _)| m == verb && p.ends_with(leaf)),
+                "{verb} …/{leaf} is registered by Spring but missing: {ops:?}"
+            );
+        }
+    }
+
+    // The prefix lives in configuration that is not present, so the path is a
+    // prefix of the truth and has to say so.
+    assert!(
+        ops.iter().filter(|(_, p, _)| p.contains("reports")).all(|(_, _, partial)| *partial),
+        "an unresolved ${{api.prefix}} must mark the path partial: {ops:?}"
+    );
+
+    // A plain @Controller returns a view name; it is not an API operation.
+    assert!(!has("GET", "/api/orders/list"), "a view-returning @Controller was published as REST: {ops:?}");
 }

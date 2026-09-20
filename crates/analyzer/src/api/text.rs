@@ -723,3 +723,31 @@ mod boundary_tests {
         }
     }
 }
+
+/// Resolve `${key}` and `${key:default}` against configuration.
+///
+/// Returns the text with what could be resolved substituted, and whether
+/// anything could not be — an unresolved placeholder means the path is a
+/// prefix of the truth, not the truth, and the operation must say so.
+///
+/// Shared because the Java and Kotlin extractors each had their own idea of
+/// this, and the Kotlin one silently emitted `${api.prefix}` as a literal path
+/// segment and called the result exact.
+pub(super) fn resolve_placeholders(s: &str, lookup: impl Fn(&str) -> Option<String>) -> (String, bool) {
+    let mut out = String::new();
+    let mut rest = s;
+    let mut partial = false;
+    while let Some(o) = rest.find("${") {
+        out.push_str(&rest[..o]);
+        let Some(c) = rest[o..].find('}') else { break };
+        let inner = &rest[o + 2..o + c];
+        let (key, default) = inner.split_once(':').map(|(k, d)| (k, Some(d))).unwrap_or((inner, None));
+        match lookup(key).or(default.map(str::to_string)) {
+            Some(v) if !v.contains("${") => out.push_str(&v),
+            _ => partial = true,
+        }
+        rest = &rest[o + c + 1..];
+    }
+    out.push_str(rest);
+    (out, partial)
+}

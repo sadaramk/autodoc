@@ -256,7 +256,23 @@ fn ann_value<'a>(a: &'a Annotation, keys: &[&str]) -> Option<&'a str> {
 fn ann_string(a: &Annotation, keys: &[&str]) -> Option<String> {
     let v = ann_value(a, keys)?;
     let inner = v.trim().trim_start_matches('[').trim_end_matches(']');
-    text::string_lit(split_top(inner, &[',']).first()?.trim())
+    text::string_lit(split_top(inner, &[',']).first()?.trim()).map(|s| unescape_dollar(&s))
+}
+
+/// Every string in an annotation argument: `@RequestMapping(["/a", "/b"])`
+/// registers two routes, and taking only the first silently loses one.
+fn ann_strings(a: &Annotation, keys: &[&str]) -> Vec<String> {
+    let Some(v) = ann_value(a, keys) else { return vec![] };
+    split_top(v.trim().trim_start_matches('[').trim_end_matches(']'), &[','])
+        .into_iter()
+        .filter_map(|p| text::string_lit(p.trim()).map(|s| unescape_dollar(&s)))
+        .collect()
+}
+
+/// `"\${api.prefix}"` is how Kotlin writes a literal `${…}`, since a bare `$`
+/// starts a template. The backslash is syntax, not part of the path.
+fn unescape_dollar(s: &str) -> String {
+    s.replace("\\$", "$")
 }
 
 fn ann_bool(a: &Annotation, key: &str) -> Option<bool> {
@@ -300,6 +316,13 @@ impl<'a> Index<'a> {
     }
 
     /// A configuration value that applies to `unit` (its own `application`/`bootstrap` files).
+    /// `${key}` / `${key:default}` resolved against configuration, and whether
+    /// anything was left unresolved — an unresolved prefix makes the path
+    /// partial rather than exact.
+    fn placeholders(&self, unit: &str, s: &str) -> (String, bool) {
+        text::resolve_placeholders(s, |key| self.config_value(unit, key))
+    }
+
     fn config_value(&self, unit: &str, key: &str) -> Option<String> {
         let root = self.units.iter().find(|u| u.id == unit).map(|u| u.root.clone()).unwrap_or_default();
         let prefix = if root.is_empty() { String::new() } else { format!("{root}/") };
@@ -384,7 +407,9 @@ fn feign_clients(idx: &Index, fi: usize, models: &mut Models, h: &mut Harvest) {
                 continue;
             }
             let manns = idx.anns(fi, &["method"], &m.name, Some(&class.name));
-            let Some((verb, path)) = mapping(idx, &manns, Flavor::Spring) else { continue };
+            let Some((verb, path)) = mapping(idx, &manns, Flavor::Spring).and_then(|m| m.into_iter().next()) else {
+                continue;
+            };
             let expects = parse_signature(&f.src, (ms, me), &m.name)
                 .and_then(|sig| sig.return_type)
                 .map(|t| unwrap_kotlin(&t).0)
@@ -721,6 +746,8 @@ fn controllers(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>
         .unwrap_or_default();
         let context = context_path(idx, f.unit, flavor);
         let base = text::join_path(&context, &base);
+        let rest_by_default =
+            anns.iter().any(|a| a.name == "RestController" || a.name == "ResponseBody") || flavor != Flavor::Spring;
         let class_auth = auth_requirements(idx, fi, &anns);
         let (cs, ce) = f.span(class);
         for m in f.facts.symbols.iter().filter(|s| s.kind == SymbolKind::Method) {
@@ -729,28 +756,41 @@ fn controllers(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>
                 continue;
             }
             let manns = idx.anns(fi, &["method"], &m.name, Some(&class.name));
-            let Some((verb, path)) = mapping(idx, &manns, flavor) else { continue };
-            let full = text::join_path(&base, &path);
+            // Spring MVC's plain `@Controller` returns view names, not payloads;
+            // only `@RestController`, or `@ResponseBody` on the class or the
+            // method, makes a handler part of an HTTP API.
+            if flavor == Flavor::Spring && !rest_by_default && !manns.iter().any(|a| a.name == "ResponseBody") {
+                continue;
+            }
+            let Some(mappings) = mapping(idx, &manns, flavor) else { continue };
             let framework = match flavor {
                 Flavor::Spring => "spring",
                 Flavor::Micronaut => "micronaut",
                 Flavor::JaxRs => "jax-rs",
             };
-            let handler = SymbolRef { name: m.name.clone(), evidence: f.src.ev_range(ms, me, Some(&m.name)) };
-            let evidence = idx.ev(fi, manns.first().map(|a| a.line).unwrap_or(m.start_line));
-            let mut op = new_op(f.unit, framework, &verb, full, handler, evidence);
-            op.summary = m.doc.as_deref().and_then(text::first_sentence);
-            describe(idx, fi, m, &manns, flavor, models, &mut op);
-            for r in &class_auth {
-                add_auth(&mut op, r.clone());
+            for (verb, path) in mappings {
+                let raw = text::join_path(&base, &path);
+                let (full, partial) = idx.placeholders(f.unit, &raw);
+                // A placeholder that resolves to nothing leaves an empty segment
+                // behind: `/api/${api.prefix}/reports` must not become `/api//reports`.
+                let full = text::join_path("", &full);
+                let handler = SymbolRef { name: m.name.clone(), evidence: f.src.ev_range(ms, me, Some(&m.name)) };
+                let evidence = idx.ev(fi, manns.first().map(|a| a.line).unwrap_or(m.start_line));
+                let mut op = new_op(f.unit, framework, &verb, full, handler, evidence);
+                op.path_partial = partial || raw.contains("${");
+                op.summary = m.doc.as_deref().and_then(text::first_sentence);
+                describe(idx, fi, m, &manns, flavor, models, &mut op);
+                for r in &class_auth {
+                    add_auth(&mut op, r.clone());
+                }
+                for r in auth_requirements(idx, fi, &manns) {
+                    add_auth(&mut op, r);
+                }
+                fill_path_params(&mut op);
+                let request_declared = op.request_body.is_some();
+                let response_declared = op.response.is_some();
+                ops.push(Draft { op, request_declared, response_declared });
             }
-            for r in auth_requirements(idx, fi, &manns) {
-                add_auth(&mut op, r);
-            }
-            fill_path_params(&mut op);
-            let request_declared = op.request_body.is_some();
-            let response_declared = op.response.is_some();
-            ops.push(Draft { op, request_declared, response_declared });
         }
     }
 }
@@ -770,31 +810,41 @@ fn context_path(idx: &Index, unit: &str, flavor: Flavor) -> String {
     keys.iter().filter_map(|k| idx.config_value(unit, k)).fold(String::new(), |acc, v| text::join_path(&acc, &v))
 }
 
-/// The verb and path of a method's mapping annotation.
-fn mapping(idx: &Index, anns: &[&Annotation], flavor: Flavor) -> Option<(String, String)> {
+/// Every verb and path a method's mapping annotation registers.
+///
+/// `@RequestMapping` with no `method` answers every verb, and both `method` and
+/// the path may be lists — Spring registers the product of the two.
+fn mapping(idx: &Index, anns: &[&Annotation], flavor: Flavor) -> Option<Vec<(String, String)>> {
+    let spread = |verbs: Vec<String>, paths: Vec<String>| {
+        let paths = if paths.is_empty() { vec![String::new()] } else { paths };
+        verbs.iter().flat_map(|v| paths.iter().map(move |p| (v.to_uppercase(), p.clone()))).collect::<Vec<_>>()
+    };
     match flavor {
         Flavor::Spring => {
             for (ann, verb) in SPRING_VERBS {
                 if let Some(a) = idx.find(anns, ann) {
-                    return Some((verb.to_string(), ann_string(a, &["value", "path", ""]).unwrap_or_default()));
+                    return Some(spread(vec![verb.to_string()], ann_strings(a, &["value", "path", ""])));
                 }
             }
             let a = idx.find(anns, "RequestMapping")?;
-            let verb = ann_idents(a, &["method"]).first().cloned().unwrap_or_else(|| "GET".into());
-            Some((verb, ann_string(a, &["value", "path", ""]).unwrap_or_default()))
+            let mut verbs = ann_idents(a, &["method"]);
+            if verbs.is_empty() {
+                verbs.push("ANY".into());
+            }
+            Some(spread(verbs, ann_strings(a, &["value", "path", ""])))
         }
         Flavor::Micronaut => {
             for (ann, verb) in MICRONAUT_VERBS {
                 if let Some(a) = idx.find(anns, ann) {
-                    return Some((verb.to_string(), ann_string(a, &["value", "uri", ""]).unwrap_or_default()));
+                    return Some(spread(vec![verb.to_string()], ann_strings(a, &["value", "uri", ""])));
                 }
             }
             None
         }
         Flavor::JaxRs => {
             let verb = JAXRS_VERBS.iter().find(|v| idx.find(anns, v).is_some())?;
-            let path = idx.find(anns, "Path").and_then(|a| ann_string(a, &["value", ""])).unwrap_or_default();
-            Some((verb.to_string(), path))
+            let paths = idx.find(anns, "Path").map(|a| ann_strings(a, &["value", ""])).unwrap_or_default();
+            Some(spread(vec![verb.to_string()], paths))
         }
     }
 }

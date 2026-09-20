@@ -819,22 +819,7 @@ impl<'a> Index<'a> {
 
     /// `${key:default}` placeholders resolved from the unit's configuration; `None` = unresolved.
     fn placeholders(&self, unit: &str, s: &str) -> (String, bool) {
-        let mut out = String::new();
-        let mut rest = s;
-        let mut partial = false;
-        while let Some(o) = rest.find("${") {
-            out.push_str(&rest[..o]);
-            let Some(c) = rest[o..].find('}') else { break };
-            let inner = &rest[o + 2..o + c];
-            let (key, default) = inner.split_once(':').map(|(k, d)| (k, Some(d))).unwrap_or((inner, None));
-            match self.config_value(unit, key).or(default.map(str::to_string)) {
-                Some(v) if !v.contains("${") => out.push_str(&v),
-                _ => partial = true,
-            }
-            rest = &rest[o + c + 1..];
-        }
-        out.push_str(rest);
-        (out, partial)
+        super::text::resolve_placeholders(s, |key| self.config_value(unit, key))
     }
 
     /// A unit addressed by service id, application name, compose service or host.
