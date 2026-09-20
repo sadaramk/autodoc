@@ -2,9 +2,9 @@
 
 _Evidence_ · [Book index](../README.md)
 
-135 of 135 citations verified. What was observed, what was only declared, and what static analysis can't see.
+138 of 138 citations verified. What was observed, what was only declared, and what static analysis can't see.
 
-**135** Citations · **135** Verified · **0** Stale · **0** Broken
+**138** Citations · **138** Verified · **0** Stale · **0** Broken
 
 ## Observed versus declared
 
@@ -26,6 +26,7 @@ _Evidence_ · [Book index](../README.md)
 | `api-gateway/src/clients/payments.ts:4-7` | `ChargeResult` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/clients/payments.ts:10-20` | `chargeOrder` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/clients/payments.ts:11` |  | _verified_ | verified against the pinned commit |
+| `api-gateway/src/db.ts:1` |  | _verified_ | verified against the pinned commit |
 | `api-gateway/src/db.ts:6-10` | `Order` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/db.ts:13-20` | `insertOrder` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/db.ts:16` |  | _verified_ | verified against the pinned commit |
@@ -35,6 +36,7 @@ _Evidence_ · [Book index](../README.md)
 | `api-gateway/src/db.ts:30` |  | _verified_ | verified against the pinned commit |
 | `api-gateway/src/db.ts:34-36` | `cancelOrder` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/db.ts:35` |  | _verified_ | verified against the pinned commit |
+| `api-gateway/src/events.ts:1` |  | _verified_ | verified against the pinned commit |
 | `api-gateway/src/events.ts:11-13` | `connectProducer` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/events.ts:16-21` | `publishOrderPlaced` | _verified_ | verified against the pinned commit |
 | `api-gateway/src/routes/auth.ts:4-10` | `requireCustomer` | _verified_ | verified against the pinned commit |
@@ -61,6 +63,7 @@ _Evidence_ · [Book index](../README.md)
 | `db/migrations/001_init.sql:11` |  | _verified_ | verified against the pinned commit |
 | `db/migrations/001_init.sql:12` |  | _verified_ | verified against the pinned commit |
 | `db/migrations/001_init.sql:13` |  | _verified_ | verified against the pinned commit |
+| `db/migrations/001_init.sql:14` |  | _verified_ | verified against the pinned commit |
 | `db/migrations/001_init.sql:15` |  | _verified_ | verified against the pinned commit |
 | `db/migrations/001_init.sql:16` |  | _verified_ | verified against the pinned commit |
 | `db/migrations/001_init.sql:17` |  | _verified_ | verified against the pinned commit |

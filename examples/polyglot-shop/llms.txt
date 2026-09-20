@@ -21,7 +21,7 @@ Architecture book generated from source by autodoc. Every claim links to file:li
 - [Payments API](pages/06-api-payments.md): The contract of every net/http operation Payments serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.
 - [Functional specification](pages/07-functional-specification.md): 5 functional requirements and 19 business rules as the code implements them, each traceable to the handler, rule or state change that realises it.
 - [Business requirements](pages/08-business-requirements.md): A business requirements document scaffolded from the implementation: what is built is measured, why and for whom is authored, and every unanswered question is listed.
-- [Evidence & unknowns](pages/09-evidence-and-unknowns.md): 135 of 135 citations verified. What was observed, what was only declared, and what static analysis can't see.
+- [Evidence & unknowns](pages/09-evidence-and-unknowns.md): 138 of 138 citations verified. What was observed, what was only declared, and what static analysis can't see.
 
 ## Diagrams (typed DiagramIR JSON)
 

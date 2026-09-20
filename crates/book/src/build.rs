@@ -164,8 +164,12 @@ pub fn build(
     b.access_page();
     b.functional_page();
     b.requirements_page();
-    b.evidence_page();
+    // Figure nodes register citations of their own, so they have to be linked
+    // before the evidence page counts and indexes them — otherwise the page
+    // reports fewer citations than the book does, and a stale one among them
+    // never reaches the page's warning.
     b.link_figure_nodes();
+    b.evidence_page();
 
     let nav = b.nav(&deployables);
     let health = b.health();

@@ -426,3 +426,37 @@ fn a_crafted_manifest_cannot_delete_or_read_outside_the_book() {
     assert!(report.removed.iter().any(|r| r == "pages/99-stale.md"));
     assert!(!report.removed.iter().any(|r| r.contains("outside-the-book")), "removed: {:?}", report.removed);
 }
+
+/// The book must agree with itself about how much of it is verified. Figure
+/// nodes carry citations too, and while they were registered after the evidence
+/// page was built, that page reported a smaller total than the README and the
+/// manifest — and a stale citation among them never reached the page's warning.
+#[test]
+fn the_evidence_page_counts_every_citation_the_book_makes() {
+    for name in FIXTURES {
+        let out = tempfile::tempdir().unwrap();
+        let planned = plan(&fixtures().join(name), out.path(), &BookOptions::default()).unwrap();
+        let book = &planned.built.book;
+
+        assert_eq!(
+            book.meta.evidence.total,
+            book.cites.len(),
+            "{name}: the recorded total is not the number of citations the book holds"
+        );
+
+        let page = book.pages.iter().find(|p| p.id == "evidence").expect("every book has an evidence page");
+        let stat = page
+            .blocks
+            .iter()
+            .find_map(|b| match b {
+                Block::Stats { items } => items.iter().find(|s| s.label == "Citations"),
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("{name}: the evidence page states a citation count"));
+        assert_eq!(
+            stat.value,
+            book.meta.evidence.total.to_string(),
+            "{name}: the evidence page and the book's own metadata disagree"
+        );
+    }
+}
