@@ -433,7 +433,9 @@ fn go_frameworks() {
             "go-chi:GET /api/tasks/{taskID}",
             // Mounted under an env-var prefix, so the path is what is known of it.
             "go-chi:GET /reports/daily"
-        ]
+        ],
+        "exactly these: `fcgi.go` reassigns a parameter to \"/\" and calls an outbound \
+         `.Post(p, …)`, which must not register a `POST /` handled by `int64`"
     );
     let create = op(&api, "go-chi:POST /api/tasks");
     assert_eq!((create.success_status, create.confidence), (Some(201), Confidence::Typed));

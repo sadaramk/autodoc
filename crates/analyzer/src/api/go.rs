@@ -88,10 +88,33 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
     }
 }
 
+/// String constants a path expression may refer to: `const`/`var` declarations,
+/// including inside a `const (` / `var (` block, and `:=` short declarations.
+///
+/// A bare assignment is deliberately not one. The table is keyed by name for the
+/// whole unit, so `p = "/"` reassigning a function's parameter — caddy does this
+/// in `browsetplcontext.go` — made every `.Post(p, …)` in the unit look like a
+/// route registered at `/`: caddy's book documented one operation, `POST /`,
+/// "handled by `int64`", from an outbound FastCGI client call. An unresolved
+/// name marks the path partial, which is honest; a wrong one is not.
 fn collect_consts(u: &mut Unit, fi: usize) {
     let src = &u.files[fi].src;
+    let mut in_decl_block = false;
     for line in src.text.lines() {
-        let l = line.trim().trim_start_matches("const ").trim_start_matches("var ");
+        let t = line.trim();
+        if t.starts_with("const (") || t.starts_with("var (") {
+            in_decl_block = true;
+            continue;
+        }
+        if in_decl_block && t == ")" {
+            in_decl_block = false;
+            continue;
+        }
+        let declared = in_decl_block || t.starts_with("const ") || t.starts_with("var ") || t.contains(":=");
+        if !declared {
+            continue;
+        }
+        let l = t.trim_start_matches("const ").trim_start_matches("var ");
         let Some((lhs, rhs)) = l.split_once('=') else { continue };
         let name = lhs.trim().trim_end_matches(':').split_whitespace().next().unwrap_or("");
         if !name.is_empty() && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_') {
