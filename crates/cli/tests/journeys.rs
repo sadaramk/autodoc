@@ -25,6 +25,18 @@ fn git(repo: &Path, args: &[&str]) {
     assert!(ok, "git {args:?}");
 }
 
+/// A fixture as a committed git repo with a GitHub remote.
+fn repo_from(fixture: &str, name: &str, remote: &str) -> (tempfile::TempDir, PathBuf) {
+    let tmp = tempfile::tempdir().unwrap();
+    let repo = tmp.path().join(name);
+    copy_dir(&fixtures().join(fixture), &repo);
+    git(&repo, &["init", "-q", "-b", "main"]);
+    git(&repo, &["remote", "add", "origin", remote]);
+    git(&repo, &["add", "."]);
+    git(&repo, &["commit", "-qm", "init"]);
+    (tmp, repo)
+}
+
 /// polyglot-shop as a committed git repo with a GitHub remote.
 fn shop_repo() -> (tempfile::TempDir, PathBuf) {
     let tmp = tempfile::tempdir().unwrap();
@@ -363,4 +375,53 @@ fn journey_mcp_agent_scans_compiles_and_verifies() {
     assert_eq!(res["results"][0]["state"], "verified", "{res}");
     assert_eq!(res["results"][1]["state"], "line-out-of-range");
     assert_eq!(res["allVerified"], false);
+}
+
+/// Journey 1 again, on a repository shaped nothing like the demo.
+///
+/// Every command journey ran against polyglot-shop alone: npm, Cargo, go.mod
+/// and pyproject, four services, one compose file. A Maven multi-module JVM
+/// system exercises different code for the same promises — modules instead of
+/// packages, a gateway and a config server, configuration that names services,
+/// and a runtime page — and nothing was checking that a book of that shape
+/// generates, stays put, and fails the build when the code moves.
+#[test]
+fn journey_generate_and_check_a_jvm_multi_module_repository() {
+    let (_tmp, repo) = repo_from("real-world/spring-cloud", "shop-cloud", "git@github.com:acme/shop-cloud.git");
+
+    let o = autodoc(&["generate", ".", "--json"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    let report: Value = serde_json::from_slice(&o.stdout).unwrap();
+    assert_eq!(report["evidence"]["verified"], report["evidence"]["total"], "{report}");
+
+    // The shape a JVM system produces, which the demo repository never has.
+    let out = repo.join("docs/architecture");
+    for f in [
+        "pages/03-containers-accounts.md",
+        "pages/03-containers-gateway.md",
+        "pages/05-runtime-and-deployment.md",
+        "pages/06-api-accounts.md",
+    ] {
+        assert!(out.join(f).is_file(), "missing {f}");
+    }
+    let md = std::fs::read_to_string(out.join("pages/02-architecture.md")).unwrap();
+    assert!(md.contains("https://github.com/acme/shop-cloud/blob/"), "forge permalinks: {md}");
+
+    // Committing the book leaves the check green, as it must for CI.
+    git(&repo, &["add", "."]);
+    git(&repo, &["commit", "-qm", "docs"]);
+    let o = autodoc(&["check", "."], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+
+    // Changing a documented Java source turns it red, naming the file.
+    let controller = repo.join("accounts/src/main/java/com/acme/accounts/web/AccountController.java");
+    let src = std::fs::read_to_string(&controller).unwrap_or_else(|_| panic!("{} missing", controller.display()));
+    std::fs::write(
+        &controller,
+        src.replace("public class AccountController", "public class AccountController /* moved */"),
+    )
+    .unwrap();
+    let o = autodoc(&["check", "."], &repo);
+    assert_eq!(o.status.code(), Some(1), "{}", text(&o));
+    assert!(text(&o).contains("AccountController.java"), "{}", text(&o));
 }

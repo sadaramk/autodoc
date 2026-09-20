@@ -49,6 +49,23 @@ export default function globalSetup(): void {
   const book = join(work, "book");
   execFileSync(bin, ["generate", repo, "--out", book], { stdio: "pipe" });
 
+  // A second book of a different shape. Every reader spec ran against the demo
+  // repository alone, so nothing exercised the pages a JVM system produces:
+  // several containers, a gateway and config server, an API reference and a
+  // runtime page built from compose.
+  const jvm = join(work, "shop-cloud");
+  cpSync(resolve(here, "../fixtures/real-world/spring-cloud"), jvm, { recursive: true });
+  const jvmGit = (...args: string[]) =>
+    execFileSync("git", ["-C", jvm, "-c", "user.email=e2e@example.com", "-c", "user.name=e2e", ...args], {
+      stdio: "pipe",
+    });
+  jvmGit("init", "-q", "-b", "main");
+  jvmGit("remote", "add", "origin", "git@github.com:acme/shop-cloud.git");
+  jvmGit("add", ".");
+  jvmGit("commit", "-qm", "init");
+  const jvmBook = join(work, "book-jvm");
+  execFileSync(bin, ["generate", jvm, "--out", jvmBook], { stdio: "pipe" });
+
   const url = (p: string) => pathToFileURL(p).href;
   writeFileSync(
     PATHS_FILE,
@@ -61,6 +78,7 @@ export default function globalSetup(): void {
       entities: url(entities),
       lifecycle: url(lifecycle),
       bookIndex: url(join(book, "index.html")),
+      bookJvm: url(join(jvmBook, "index.html")),
     }),
   );
 }
