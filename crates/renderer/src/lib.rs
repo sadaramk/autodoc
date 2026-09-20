@@ -1,6 +1,7 @@
 //! Editorial renderer: `DiagramIR` → deterministic layout → SVG, and a
 //! standalone interactive HTML page. No runtime dependencies in the output.
 
+pub mod drawio;
 pub mod html;
 pub mod layout;
 pub mod sequence;

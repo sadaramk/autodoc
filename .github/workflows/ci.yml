@@ -67,17 +67,18 @@ jobs:
     name: The published action runs
     runs-on: ubuntu-latest
     steps:
-      # Full history: `diff` compares two revisions.
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      # Exercises the action in this repository as a consumer would use it —
-      # it downloads the binary from the last release, so it proves the release
-      # assets, the checksum check and the entrypoint, not this commit's build.
+      # Exercises the action as a consumer would: it downloads the binary from the
+      # last release, so it proves the release assets, the checksum check and the
+      # entrypoint — not this commit's build.
+      #
+      # `analyze` on purpose. The released binary is one version behind `main`, so
+      # asking it for a subcommand added since would fail on the version rather
+      # than on the action, which is not what this job is for.
       - uses: ./
         with:
-          command: diff
-          args: --base ${{ github.event.pull_request.base.sha || 'HEAD~1' }}
+          command: analyze
+          args: --depth container
 
   example:
     name: Example book is up to date

@@ -550,3 +550,77 @@ fn journey_diff_reports_what_changed_between_two_revisions() {
     let list = String::from_utf8_lossy(&wt.stdout);
     assert_eq!(list.lines().count(), 1, "no worktree is left behind: {list}");
 }
+
+/// A generated diagram is sometimes the start of a drawing someone then owns.
+/// The export is one way — the source stays authoritative about the architecture
+/// — so what has to survive the trip is the evidence.
+#[test]
+fn journey_export_carries_evidence_into_drawio() {
+    let (_tmp, repo) = shop_repo();
+    let out = repo.join("docs/architecture");
+    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+
+    let ir = out.join("diagrams/containers.ir.json");
+    let o = autodoc(&["export", ir.to_str().unwrap(), "--output", "-"], &repo);
+    let csv = String::from_utf8_lossy(&o.stdout).to_string();
+    assert!(o.status.success(), "{}", text(&o));
+
+    // The directives draw.io needs to make shapes rather than one text blob.
+    for want in ["# label: %label%", "# style: %style%", "# link: url", "# layout: ", "# connect: {"] {
+        assert!(csv.contains(want), "CSV needs {want:?}:\n{csv}");
+    }
+
+    let row =
+        csv.lines().find(|l| l.starts_with("api-gateway,")).unwrap_or_else(|| panic!("a row for the gateway:\n{csv}"));
+    assert!(row.contains("api-gateway/src/server.ts:"), "file:line travels as shape data: {row}");
+    // Evidence paths are relative to the scanned root. Building the link from the
+    // directory holding the IR prepended `docs/architecture/diagrams` to every
+    // one of them — a link to the right path in the wrong place.
+    assert!(row.contains("https://github.com/acme/polyglot-shop/blob/"), "a forge remote gives a permalink: {row}");
+    assert!(!row.contains("diagrams/api-gateway"), "the book's own path must not leak into the link: {row}");
+
+    // Every id used in a connect column has to name a row, or draw.io drops the edge.
+    let header: Vec<&str> = csv.lines().find(|l| l.starts_with("id,")).unwrap().split(',').collect();
+    let rows: Vec<Vec<&str>> = csv
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.starts_with("id,") && !l.is_empty())
+        .map(|l| l.split(',').collect())
+        .collect();
+    let ids: Vec<&str> = rows.iter().map(|r| r[0]).collect();
+    let edge_cols: Vec<usize> =
+        header.iter().enumerate().filter(|(_, h)| h.starts_with("edge")).map(|(i, _)| i).collect();
+    assert!(!edge_cols.is_empty(), "the containers diagram has edges:\n{csv}");
+    let mut linked = 0;
+    for r in &rows {
+        for &c in &edge_cols {
+            for target in r.get(c).unwrap_or(&"").split(',').filter(|t| !t.trim_matches('"').is_empty()) {
+                let target = target.trim_matches('"');
+                assert!(ids.contains(&target), "edge points at {target:?}, which is not a row: {ids:?}");
+                linked += 1;
+            }
+        }
+    }
+    assert!(linked >= 5, "the gateway alone has four dependencies, found {linked}");
+
+    // Without a recognised remote there is no link worth writing, and the export
+    // says so rather than inventing one.
+    let (_bare, plain) = repo_from("polyglot-shop", "no-remote", "/srv/git/shop.git");
+    let o = autodoc(&["generate", ".", "--out", "docs/architecture"], &plain);
+    assert!(o.status.success(), "{}", text(&o));
+    let o = autodoc(
+        &["export", plain.join("docs/architecture/diagrams/containers.ir.json").to_str().unwrap(), "--output", "-"],
+        &plain,
+    );
+    let out2 = text(&o);
+    assert!(out2.contains("no permalinks"), "{out2}");
+    assert!(out2.contains("Shapes still carry file:line"), "{out2}");
+    let row = out2.lines().find(|l| l.starts_with("api-gateway,")).unwrap();
+    assert!(row.contains("api-gateway/src/server.ts:"), "{row}");
+    assert!(!row.contains("http"), "no link is better than a broken one: {row}");
+
+    // The default output path sits beside the IR, named for the tool.
+    let o = autodoc(&["export", ir.to_str().unwrap()], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(out.join("diagrams/containers.drawio.csv").is_file(), "{}", text(&o));
+}

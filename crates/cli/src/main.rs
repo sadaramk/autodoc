@@ -49,6 +49,26 @@ enum FormatArg {
 }
 
 #[derive(Clone, Copy, ValueEnum)]
+enum ExportFormat {
+    /// CSV for draw.io's Extras → Insert → Advanced → CSV.
+    Drawio,
+}
+
+impl ExportFormat {
+    fn extension(self) -> &'static str {
+        match self {
+            ExportFormat::Drawio => "drawio.csv",
+        }
+    }
+
+    fn hint(self) -> &'static str {
+        match self {
+            ExportFormat::Drawio => "draw.io: Extras → Insert → Advanced → CSV",
+        }
+    }
+}
+
+#[derive(Clone, Copy, ValueEnum)]
 enum ThemeArg {
     Light,
     Dark,
@@ -140,6 +160,19 @@ enum Command {
         include_tests: bool,
         #[arg(long)]
         json: bool,
+    },
+    /// Export a diagram for another tool. One way: the source stays authoritative.
+    Export {
+        ir: PathBuf,
+        #[arg(long, value_enum, default_value = "drawio")]
+        format: ExportFormat,
+        /// Output file. Defaults to the IR's name with the format's extension; `-` writes to stdout.
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        /// Repository the evidence belongs to, for permalinks. Defaults to the
+        /// directory holding the IR, which for a generated book is inside it.
+        #[arg(long)]
+        repo: Option<PathBuf>,
     },
     /// What changed architecturally between two revisions. Markdown for a PR comment.
     Diff {
@@ -281,6 +314,7 @@ fn run(cli: Cli) -> Result<ExitCode> {
         Command::Generate { path, out, accent, theme, include_tests, json } => {
             generate(&path, out, accent, theme, include_tests, json)
         }
+        Command::Export { ir, format, output, repo } => export(&ir, format, output, repo),
         Command::Diff { path, base, head, include_tests, json, exit_code } => {
             diff(&path, &base, &head, include_tests, json, exit_code)
         }
@@ -390,6 +424,66 @@ fn generate(
         println!("{}", serde_json::to_string_pretty(&report)?);
     } else {
         print!("{}", report::book(&report));
+    }
+    Ok(ExitCode::SUCCESS)
+}
+
+/// Write a diagram in another tool's import format.
+///
+/// One way on purpose: reading a drawing back would mean deciding whether the
+/// file or the source is right about the architecture, and the source is. What
+/// travels is the evidence — every shape carries its `file:line` and, when the
+/// repository has a forge remote, a link to it — so an exported diagram pasted
+/// into a review can still be checked against the code.
+fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option<PathBuf>) -> Result<ExitCode> {
+    let text = std::fs::read_to_string(ir).with_context(|| format!("reading {}", ir.display()))?;
+    let diagram: autodoc_ir::DiagramIR =
+        serde_json::from_str(&text).with_context(|| format!("{} is not a DiagramIR", ir.display()))?;
+    // The current directory is the wrong default: it is usually the repository
+    // autodoc is being run from, not the one the diagram describes, and a link
+    // to the right path in the wrong repository is worse than no link.
+    let start = repo.unwrap_or_else(|| ir.parent().unwrap_or(Path::new(".")).to_path_buf());
+    let found = autodoc_git::repo_context(&start);
+    // From the repository root, not from wherever the IR sits: evidence paths are
+    // relative to the scanned root, and a context rooted in `docs/architecture/
+    // diagrams` would prepend that to every link.
+    let root = found.git_root.clone().unwrap_or(start);
+    let ctx = autodoc_git::repo_context(&root);
+    let commit = diagram.metadata.commit_hash.clone();
+    // A commit the repository does not have means the evidence was pinned
+    // somewhere else, so the line numbers would not be the ones being linked to.
+    let known = commit.as_deref().is_some_and(|c| autodoc_git::commit_exists(&ctx, c));
+    let forge = ctx.remote_url.as_deref().and_then(autodoc_git::web_base).is_some();
+    if !(known && forge) {
+        eprintln!(
+            "note: no permalinks — {}. Shapes still carry file:line.",
+            if !forge {
+                format!("{} has no recognised forge remote", root.display())
+            } else {
+                format!(
+                    "{} does not have commit {}",
+                    root.display(),
+                    commit.as_deref().map(autodoc_git::short).unwrap_or("(none)")
+                )
+            }
+        );
+    }
+    let link = |e: &autodoc_ir::Evidence| -> Option<String> {
+        (known && forge).then(|| ctx.permalink(&e.file_path, e.start_line, e.end_line, commit.as_deref()))
+    };
+    let body = match format {
+        ExportFormat::Drawio => autodoc_renderer::drawio::to_csv(&diagram, &link),
+    };
+    match output.as_deref().map(|p| p.to_string_lossy().into_owned()) {
+        Some(ref o) if o == "-" => print!("{body}"),
+        Some(_) | None => {
+            let path = output.unwrap_or_else(|| {
+                let stem = ir.file_stem().and_then(|s| s.to_str()).unwrap_or("diagram").trim_end_matches(".ir");
+                ir.with_file_name(format!("{stem}.{}", format.extension()))
+            });
+            std::fs::write(&path, &body).with_context(|| format!("writing {}", path.display()))?;
+            eprintln!("{} · {}", path.display(), format.hint());
+        }
     }
     Ok(ExitCode::SUCCESS)
 }

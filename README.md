@@ -35,7 +35,7 @@ Docker works too, and is how the project tests itself:
 ## Keep it true in CI
 
 ```yaml
-- uses: sadaramk/autodoc@v0.2.5
+- uses: sadaramk/autodoc@v0.2.6
   with:
     out: docs/architecture
 ```
@@ -47,7 +47,7 @@ describes: a book records the commit it documents rather than `HEAD`.
 ## Review what a change does to the architecture
 
 ```yaml
-- uses: sadaramk/autodoc@v0.2.5
+- uses: sadaramk/autodoc@v0.2.6
   with:
     command: diff
     args: --base ${{ github.event.pull_request.base.sha }}
@@ -63,6 +63,18 @@ is not a change and a new route is one line:
 
 Routes, request and response types, authentication, tables, columns, services and the connections
 between them. Markdown by default for a PR comment, `--json` for a bot, `--exit-code` to gate.
+
+## Take a diagram into draw.io
+
+```bash
+autodoc export docs/architecture/diagrams/containers.ir.json
+# → containers.drawio.csv · draw.io: Extras → Insert → Advanced → CSV
+```
+
+Real shapes with a layout applied, not a flattened image — and the evidence travels: every shape
+carries its `file:line` as shape data and links to the line it came from, so a diagram pasted into a
+slide can still be checked. One way, deliberately: the source stays authoritative about the
+architecture, and the drawing is yours.
 
 [![A request flow with every hop cited](media/flows.png)](https://sadaramk.github.io/autodoc/examples/piggymetrics/#/flows)
 
@@ -93,6 +105,7 @@ Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
 | `autodoc generate [PATH] [--out DIR] [--include-tests] [--json]` | Write the architecture book. Rewrites only changed files; keeps hand-edited diagram IR. |
 | `autodoc check [PATH] [--out DIR] [--json]` | Exit 1 when regenerating would change the book or a citation is stale. |
 | `autodoc diff [PATH] [--base REV] [--head REV] [--json] [--exit-code]` | What changed architecturally between two revisions, as a PR comment. |
+| `autodoc export IR [--format drawio] [-o FILE] [--repo PATH]` | Write a diagram in another tool's import format, evidence included. |
 | `autodoc verify FILE:LINE[-END]... [--repo PATH] [--commit SHA]` | Check evidence for drift. Exit 1 unless all verified. |
 | `autodoc schema` | Print the DiagramIR JSON Schema. |
 | `autodoc serve` | MCP server over stdio. |

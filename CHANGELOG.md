@@ -8,8 +8,16 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-09-20
+
 ### Added
 
+- `autodoc export IR --format drawio` writes draw.io's CSV import: real shapes
+  with a layout applied, not a flattened image. Every shape carries its
+  `file:line` as shape data and links to the line it came from, so a diagram
+  pasted into a slide can still be checked. One way on purpose — reading a
+  drawing back would mean deciding whether the file or the source is right about
+  the architecture, and the source is.
 - `autodoc diff [PATH] --base REV [--head REV]` reports what changed
   architecturally between two revisions: services, connections, routes, request
   and response shapes, authentication requirements, tables and columns. Markdown
@@ -291,7 +299,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/sadaramk/autodoc/compare/v0.2.6...HEAD
+[0.2.6]: https://github.com/sadaramk/autodoc/compare/v0.2.5...v0.2.6
 [0.2.5]: https://github.com/sadaramk/autodoc/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/sadaramk/autodoc/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/sadaramk/autodoc/compare/v0.2.2...v0.2.3

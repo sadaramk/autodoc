@@ -1,6 +1,6 @@
 {
-  "generator": "autodoc 0.2.5",
-  "generatedAt": "2026-09-20T16:22:15Z",
+  "generator": "autodoc 0.2.6",
+  "generatedAt": "2026-09-20T16:57:29Z",
   "repository": "polyglot-shop",
   "commit": null,
   "commitDate": null,
@@ -338,7 +338,7 @@
     "diagrams/runtime-compose.svg": "7bbe5da56c33b0a5",
     "diagrams/system-context.ir.json": "7796d456db21dc8a",
     "diagrams/system-context.svg": "4fb3603d3ccdbece",
-    "index.html": "f0ac5849feedf63f",
+    "index.html": "2dba67841eb89665",
     "llms-full.txt": "b913fa2fdc187be4",
     "llms.txt": "e7e4be4daf45e6cc",
     "pages/01-overview.md": "61458012398e6eca",
