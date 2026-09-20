@@ -349,7 +349,26 @@ fn drizzle(path: &str, unit: &str, text: &str, out: &mut TsOutput) {
                 break;
             }
             if let Some((key, def)) = t.split_once(':') {
-                let def = def.trim().trim_end_matches(',');
+                // Prettier wraps a builder chain over several lines at the
+                // default width, and reading one physical line loses
+                // `.primaryKey()` and `.notNull()` — the column is then
+                // documented as nullable and not a key.
+                let mut joined = def.trim().to_string();
+                let mut end = j;
+                while parens_open(&joined) || lines.get(end + 1).map(|n| n.trim()).is_some_and(|n| n.starts_with('.')) {
+                    let Some(next) = lines.get(end + 1) else { break };
+                    let next = next.trim();
+                    if next.starts_with("})") || next.starts_with('}') {
+                        break;
+                    }
+                    joined.push_str(next);
+                    end += 1;
+                }
+                // The column is declared on the first line of the chain; that
+                // is the line a citation has to point at, not the last.
+                let decl_line = j as u32 + 1;
+                j = end;
+                let def = joined.trim().trim_end_matches(',');
                 let ctor = def.split('(').next().unwrap_or("").trim().to_string();
                 if !ctor.is_empty() && ctor.chars().all(|c| c.is_alphanumeric()) {
                     let args = paren_args(def).map(split_args).unwrap_or_default();
@@ -363,7 +382,7 @@ fn drizzle(path: &str, unit: &str, text: &str, out: &mut TsOutput) {
                         let (t, c) = target.split_once('.').unwrap_or((target, "id"));
                         format!("@{}.{}", t.trim(), snake_case(c.trim()))
                     });
-                    let ev = line_ref(path, j as u32 + 1);
+                    let ev = line_ref(path, decl_line);
                     if let Some(r) = &references {
                         let target = r.trim_start_matches('@').split('.').next().unwrap_or("").to_string();
                         entity.relations.push(RawRelation {
@@ -392,4 +411,9 @@ fn drizzle(path: &str, unit: &str, text: &str, out: &mut TsOutput) {
         out.entities.push(entity);
         i = j + 1;
     }
+}
+
+/// Whether a builder expression is still waiting for a closing bracket.
+fn parens_open(s: &str) -> bool {
+    s.chars().filter(|c| *c == '(').count() > s.chars().filter(|c| *c == ')').count()
 }

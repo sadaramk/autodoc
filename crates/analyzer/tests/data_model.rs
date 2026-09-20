@@ -275,6 +275,8 @@ fn orm_models_across_frameworks() {
             ("shop_author", "Author", "django"),
             ("shop_book", "Book", "django"),
             ("specialties", "Specialty", "jpa"),
+            // A drizzle table whose builder chains are wrapped by Prettier.
+            ("statements", "statements", "drizzle"),
             ("subscriptions", "subscriptions", "drizzle"),
             ("tasks", "Task", "diesel+diesel-model"),
             ("users", "User", "prisma"),
@@ -515,4 +517,24 @@ fn jvm_persistence_across_frameworks() {
         ("PROVISIONED* ACTIVE RETIRED".into(), "?->RETIRED@retire, PROVISIONED->ACTIVE@activate".into())
     );
     assert_model_evidence(&root, &m);
+}
+
+/// Drizzle columns were read one physical line at a time, so a builder chain
+/// wrapped by Prettier — the default at 80 columns — lost everything after the
+/// first line. The key was documented as an ordinary nullable column and the
+/// foreign key disappeared.
+#[test]
+fn drizzle_columns_survive_a_wrapped_builder_chain() {
+    let data = model(&fixture("orm-models/node-app"));
+    let invoices = entity(&data, "statements");
+    let col = |name: &str| col(invoices, name);
+
+    assert!(col("id").primary_key, "`.primaryKey()` on the next line is still a primary key");
+    assert!(!col("customer_id").nullable, "`.notNull()` on the next line still makes the column required");
+    assert!(col("reference").unique, "`.unique()` on the next line is still a unique constraint");
+    assert!(
+        invoices.relations.iter().any(|r| r.via == "customer_id"),
+        "the foreign key is still a relation: {:?}",
+        invoices.relations
+    );
 }

@@ -10,3 +10,16 @@ export const subscriptions = pgTable("subscriptions", {
   customerId: integer("customer_id").notNull().references(() => customers.id),
   plan: text("plan"),
 });
+
+// Prettier wraps a builder chain at the default width; the same columns,
+// written the way a formatter leaves them.
+export const statements = pgTable("statements", {
+  id: serial("id")
+    .primaryKey(),
+  customerId: integer("customer_id")
+    .notNull()
+    .references(() => customers.id),
+  reference: varchar("reference", { length: 64 })
+    .notNull()
+    .unique(),
+});
