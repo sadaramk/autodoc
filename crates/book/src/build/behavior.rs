@@ -41,10 +41,6 @@ const FR_SPLIT_OVER: usize = 150;
 /// The business rules catalog gets its own page above this many rules.
 const RULES_SPLIT_OVER: usize = 200;
 
-pub(super) fn model_anchor(m: &Model) -> String {
-    format!("model-{}", slug(&m.name))
-}
-
 pub(super) fn flow_figure_id(flow: &Flow) -> String {
     super::flows::flow_figure_id(flow)
 }

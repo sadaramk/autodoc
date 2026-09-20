@@ -530,3 +530,61 @@ func handle(w http.ResponseWriter, r *http.Request) {}
     }
     assert!(api.contains("\\](https:/evil.example)"), "the bracket should be escaped, not removed");
 }
+
+/// Anchors are derived from human text, and `GET /users` and `GET /users/`
+/// slug to the same thing. Two headings sharing one id send every link to the
+/// first, so a reader following an operation's contract link lands on a
+/// different operation — and a model whose anchor collided was dropped from
+/// the page entirely while links kept pointing at it.
+#[test]
+fn operations_that_slug_alike_get_their_own_anchors() {
+    let dir = tempfile::tempdir().unwrap();
+    let repo = dir.path().join("repo");
+    std::fs::create_dir_all(repo.join("cmd")).unwrap();
+    std::fs::write(repo.join("go.mod"), "module x\n\ngo 1.22\n\nrequire github.com/go-chi/chi/v5 v5.0.12\n").unwrap();
+    std::fs::write(
+        repo.join("cmd/main.go"),
+        r#"package main
+
+import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+)
+
+func main() {
+	r := chi.NewRouter()
+	r.Get("/user-profile", list)
+	r.Get("/user_profile", listSlash)
+	http.ListenAndServe(":8080", r)
+}
+
+func list(w http.ResponseWriter, r *http.Request)      {}
+func listSlash(w http.ResponseWriter, r *http.Request) {}
+"#,
+    )
+    .unwrap();
+
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&repo, out.path(), &BookOptions::default()).unwrap();
+    let book = &planned.built.book;
+
+    let mut ids: Vec<&str> = Vec::new();
+    for page in &book.pages {
+        for b in &page.blocks {
+            if let Block::Heading { id, .. } = b {
+                ids.push(id);
+            }
+        }
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    let duplicates: Vec<&&str> = ids.iter().filter(|id| !seen.insert(**id)).collect();
+    assert!(duplicates.is_empty(), "two headings share an anchor, so links reach the wrong one: {duplicates:?}");
+
+    // Both routes are still documented — disambiguated, not dropped.
+    assert_eq!(
+        ids.iter().filter(|id| id.starts_with("op-get-user-profile")).count(),
+        2,
+        "both operations should have a heading: {ids:?}"
+    );
+}

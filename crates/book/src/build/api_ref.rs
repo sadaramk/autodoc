@@ -12,7 +12,7 @@ use autodoc_analyzer::{draft_capability_ir, DraftOptions};
 use autodoc_validator::ValidateOptions;
 
 use super::access::Row;
-use super::behavior::{confidence_badge, flow_figure_id, model_anchor, op_anchor};
+use super::behavior::{confidence_badge, flow_figure_id};
 use super::Builder;
 use crate::model::*;
 
@@ -52,11 +52,19 @@ pub(super) struct ApiIndex {
     pub op_page: HashMap<String, String>,
     pub model_page: HashMap<String, String>,
     pub op_group: HashMap<String, String>,
+    /// Anchors are derived from human text, and `GET /users` and `GET /users/`
+    /// slug alike. Two headings with one id send every link to the first, so a
+    /// reader following a contract link lands on a different operation. Held
+    /// here so the heading and every link to it agree on one unique anchor.
+    op_anchors: HashMap<String, String>,
+    model_anchors: HashMap<String, String>,
 }
 
 impl ApiIndex {
     pub(super) fn new(report: &ScanReport) -> ApiIndex {
         let mut ix = ApiIndex::default();
+        // Anchors only have to be unique within the page that carries them.
+        let mut used: BTreeSet<(String, String)> = BTreeSet::new();
         let Some(api) = report.api.as_ref() else { return ix };
         let units: Vec<&str> = report
             .containers
@@ -92,8 +100,13 @@ impl ApiIndex {
                 for op in &ops {
                     ix.op_page.insert(op.id.clone(), page.clone());
                     ix.op_group.insert(op.id.clone(), name.clone());
+                    let anchor = unique(&mut used, &page, super::behavior::op_anchor(op));
+                    ix.op_anchors.insert(op.id.clone(), anchor);
                     for m in models_used(api, op) {
-                        ix.model_page.entry(m).or_insert_with(|| page.clone());
+                        ix.model_page.entry(m.clone()).or_insert_with(|| page.clone());
+                        if let std::collections::hash_map::Entry::Vacant(e) = ix.model_anchors.entry(m.clone()) {
+                            e.insert(unique(&mut used, &page, format!("model-{}", slug(&m))));
+                        }
                     }
                 }
                 infos.push(GroupInfo { name, slug: s, ops: ops.iter().map(|o| o.id.clone()).collect() });
@@ -102,6 +115,27 @@ impl ApiIndex {
         }
         ix
     }
+
+    /// The anchor the heading for this operation carries, and that every link
+    /// to it must use.
+    pub(super) fn op_anchor(&self, op: &Operation) -> String {
+        self.op_anchors.get(&op.id).cloned().unwrap_or_else(|| super::behavior::op_anchor(op))
+    }
+
+    pub(super) fn model_anchor(&self, name: &str) -> String {
+        self.model_anchors.get(name).cloned().unwrap_or_else(|| format!("model-{}", slug(name)))
+    }
+}
+
+/// `base`, or `base-2`, `base-3`… when that page already carries it.
+fn unique(used: &mut BTreeSet<(String, String)>, page: &str, base: String) -> String {
+    let mut candidate = base.clone();
+    let mut n = 2;
+    while !used.insert((page.to_string(), candidate.clone())) {
+        candidate = format!("{base}-{n}");
+        n += 1;
+    }
+    candidate
 }
 
 /// Models an operation's request and response use, with nested field models.
@@ -156,7 +190,7 @@ impl<'a> Builder<'a> {
     pub(super) fn op_link(&self, op: &Operation) -> Inline {
         Inline::Link {
             page: self.api_index.op_page.get(&op.id).cloned().unwrap_or_else(|| api_page_id(&op.unit)),
-            anchor: Some(op_anchor(op)),
+            anchor: Some(self.api_index.op_anchor(op)),
             v: route_label(op),
         }
     }
@@ -165,7 +199,9 @@ impl<'a> Builder<'a> {
         let text = if t.collection { format!("{}[]", t.type_name) } else { t.type_name.clone() };
         match t.model.as_deref().and_then(|id| self.model(id).map(|m| (id, m))) {
             Some((id, m)) => match self.api_index.model_page.get(id) {
-                Some(page) => Inline::Link { page: page.clone(), anchor: Some(model_anchor(m)), v: text },
+                Some(page) => {
+                    Inline::Link { page: page.clone(), anchor: Some(self.api_index.model_anchor(&m.name)), v: text }
+                }
                 None => Inline::code(text),
             },
             None => Inline::code(text),
@@ -418,7 +454,7 @@ impl<'a> Builder<'a> {
                 vec![Inline::code(op.method.clone())],
                 vec![Inline::Link {
                     page: self.api_index.op_page.get(&op.id).cloned().unwrap_or_else(|| api_page_id(&op.unit)),
-                    anchor: Some(op_anchor(op)),
+                    anchor: Some(self.api_index.op_anchor(op)),
                     v: match &op.selector {
                         Some(sel) => format!("{} ?{sel}", op.path),
                         None => op.path.clone(),
@@ -460,10 +496,13 @@ impl<'a> Builder<'a> {
         blocks.push(Block::Heading { level: 2, id: "models".into(), text: "Models".into() });
         let mut anchors = BTreeSet::new();
         for m in models {
-            if !anchors.insert(model_anchor(m)) {
+            // Two distinct models can slug alike; the index gives each its own
+            // anchor, so this only skips a model documented twice.
+            let anchor = self.api_index.model_anchor(&m.name);
+            if !anchors.insert(anchor.clone()) {
                 continue;
             }
-            blocks.push(Block::Heading { level: 3, id: model_anchor(m), text: m.name.clone() });
+            blocks.push(Block::Heading { level: 3, id: anchor, text: m.name.clone() });
             let mut intro = Vec::new();
             if let Some(doc) = &m.doc {
                 intro.push(Inline::text(format!("{doc} ")));
@@ -492,7 +531,7 @@ impl<'a> Builder<'a> {
     }
 
     fn operation_blocks(&mut self, op: &Operation, blocks: &mut Vec<Block>) {
-        blocks.push(Block::Heading { level: 2, id: op_anchor(op), text: route_label(op) });
+        blocks.push(Block::Heading { level: 2, id: self.api_index.op_anchor(op), text: route_label(op) });
         let mut lead = Vec::new();
         if let Some(s) = &op.summary {
             lead.push(Inline::text(format!("{s} ")));
@@ -616,9 +655,11 @@ impl<'a> Builder<'a> {
             name.push(self.cite(&f.evidence));
             let ty = match f.model.as_deref().and_then(|id| self.model(id).map(|n| (id, n))) {
                 Some((id, nested)) => match self.api_index.model_page.get(id) {
-                    Some(page) => {
-                        Inline::Link { page: page.clone(), anchor: Some(model_anchor(nested)), v: f.type_name.clone() }
-                    }
+                    Some(page) => Inline::Link {
+                        page: page.clone(),
+                        anchor: Some(self.api_index.model_anchor(&nested.name)),
+                        v: f.type_name.clone(),
+                    },
                     None => Inline::code(f.type_name.clone()),
                 },
                 None => Inline::code(f.type_name.clone()),
