@@ -134,6 +134,12 @@ Run against etcd, MinIO, Caddy, Spring PetClinic, PiggyMetrics, wild-workouts an
 finding became a fix and a regression fixture. The results, and the heuristics behind them, are in
 [HEURISTICS.md](HEURISTICS.md).
 
+## The name
+
+Nunki is the oldest star name still in use — Babylonian in origin, carried down through four
+thousand years of astronomical tables. A name that survived its own chain of transmission seemed
+right for a tool whose argument is that a claim should be traceable back to its source.
+
 ## Documentation
 
 [Getting started](https://sadaramk.github.io/nunki/start.html) ·
