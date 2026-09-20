@@ -24,7 +24,23 @@ const FIXTURES: &[&str] = &[
     "real-world/uv-workspace",
     "real-world/spring-cloud",
     "real-world/spring-modulith",
+    "real-world/k8s-deploy",
+    "real-world/go-hexagonal",
+    "real-world/go-mux-builder",
     "flows",
+    // Data and API shapes that only the analyzer used to see. The information
+    // architecture loop below is the only thing that catches a dangling figure
+    // id, a missing citation or a broken anchor, and it never ran on these.
+    "kotlin/spring-boot-kotlin",
+    "kotlin/exposed-ledger",
+    "kotlin/webflux-corouter",
+    "orm-models/node-app",
+    "orm-models/py-app",
+    "orm-models/jpa-spring",
+    "attribution",
+    "client-drift",
+    "api-frameworks/quarkus-jaxrs",
+    "api-frameworks/micronaut",
 ];
 
 fn inlines_of(b: &Block) -> Vec<&Inline> {
