@@ -530,8 +530,17 @@ fn java_spring_mvc_contracts_feign_and_security() {
             "orders-service:DELETE /api/orders/{id}",
         ]
     );
-    // Context path + class @RequestMapping + method mapping; the probe is excluded.
-    assert_eq!(api.excluded[0].operation, "orders-service:GET /api/internal/health");
+    // Context path + class @RequestMapping + method mapping. The probe is excluded,
+    // and so are the two server-rendered pages — named with a reason, not silently dropped.
+    assert_eq!(
+        api.excluded.iter().map(|x| (x.operation.as_str(), x.reason.as_str())).collect::<Vec<_>>(),
+        [
+            ("orders-service:GET /api/internal/health", "health / liveness probe"),
+            ("orders-service:GET /api/ui/orders", "server-rendered view, not an API operation"),
+            ("orders-service:GET /api/ui/orders/{id}", "server-rendered view, not an API operation"),
+        ]
+    );
+    assert_eq!(api.excluded[1].evidence.symbol_name.as_deref(), Some("list"));
 
     let list = op(&api, "orders-service:GET /api/orders");
     assert_eq!((list.framework.as_str(), list.path_partial), ("spring", false));

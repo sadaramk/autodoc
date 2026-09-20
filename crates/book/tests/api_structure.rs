@@ -43,6 +43,28 @@ fn assert_links_resolve(book: &Book) {
     }
 }
 
+/// Flattened text of the first table on `id` whose first column is `column`.
+fn table_text(book: &Book, id: &str, column: &str) -> String {
+    book.pages
+        .iter()
+        .find(|p| p.id == id)
+        .unwrap_or_else(|| panic!("page {id}"))
+        .blocks
+        .iter()
+        .find(|b| matches!(b, Block::Table { columns, .. } if columns.first().map(String::as_str) == Some(column)))
+        .map(|b| {
+            inlines(b)
+                .iter()
+                .filter_map(|i| match i {
+                    Inline::Text { v } | Inline::Code { v } => Some(v.clone()),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+                .join(" | ")
+        })
+        .unwrap_or_else(|| panic!("table with a {column:?} column on {id}"))
+}
+
 fn headings(book: &Book, id: &str) -> Vec<String> {
     book.pages
         .iter()
@@ -72,6 +94,15 @@ fn large_services_split_into_capability_pages_with_access_matrices() {
     assert!(!overview.iter().any(|h| h.starts_with("GET ")), "contracts live on group pages: {overview:?}");
     let group = headings(book, "api/orders-service/order");
     assert!(group.contains(&"GET /api/orders/{id}".to_string()), "{group:?}");
+
+    // Routes this service answers but the reference does not document are named on
+    // the overview with a reason. A reader counting @GetMapping annotations should
+    // find the difference accounted for, not have to guess it was an oversight.
+    assert!(overview.contains(&"Routes not documented above".to_string()), "{overview:?}");
+    let excluded = table_text(book, "api/orders-service", "Route");
+    for want in ["GET /api/internal/health", "GET /api/ui/orders", "server-rendered view, not an API operation"] {
+        assert!(excluded.contains(want), "excluded table should say {want:?}: {excluded}");
+    }
 
     // Access matrix: role and authentication columns, cited.
     let access = book

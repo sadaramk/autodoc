@@ -656,6 +656,14 @@ fn kotlin_spring_mappings_match_what_spring_registers() {
         "an unresolved ${{api.prefix}} must mark the path partial: {ops:?}"
     );
 
-    // A plain @Controller returns a view name; it is not an API operation.
+    // A plain @Controller returns a view name; it is not an API operation. Leaving it
+    // out is right, leaving it unsaid is not — the route is recorded with its reason.
     assert!(!has("GET", "/api/orders/list"), "a view-returning @Controller was published as REST: {ops:?}");
+    let view = api
+        .excluded
+        .iter()
+        .find(|x| x.operation.ends_with("GET /api/orders/list"))
+        .unwrap_or_else(|| panic!("the view handler should be disclosed, have {:#?}", api.excluded));
+    assert_eq!(view.reason, "server-rendered view, not an API operation");
+    assert_eq!(view.evidence.symbol_name.as_deref(), Some("list"));
 }

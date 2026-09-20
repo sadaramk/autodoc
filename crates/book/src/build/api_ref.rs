@@ -396,11 +396,22 @@ impl<'a> Builder<'a> {
         }
         self.models_blocks(&mut blocks, &api_page_id(unit));
         self.excluded_blocks(&mut blocks, &excluded);
-        let summary = vec![Inline::text(format!(
-            "The contract of every {} operation {} serves: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.",
+        let mut summary = vec![Inline::text(format!(
+            "The contract of each {} operation documented for {}: parameters with their wire names and rules, request and response models, errors, authentication and who calls it.",
             frameworks.into_iter().collect::<Vec<_>>().join(" / "),
             name
         ))];
+        // Claiming "every operation" is a claim of completeness, and routes get
+        // left out — operational endpoints, server-rendered views. Say so here
+        // rather than let the reader discover the gap by counting annotations.
+        if !excluded.is_empty() {
+            summary.push(Inline::text(format!(
+                " {} route{} handled by this service {} left out; they are listed at the end with the reason.",
+                excluded.len(),
+                super::plural(excluded.len()),
+                if excluded.len() == 1 { "is" } else { "are" }
+            )));
+        }
         self.push_page(&api_page_id(unit), format!("{name} API"), "API reference", summary, blocks);
     }
 
@@ -426,7 +437,7 @@ impl<'a> Builder<'a> {
         ))];
         if excluded > 0 {
             coverage.push(Inline::text(format!(
-                " {} operational route{} (health, metrics, docs) listed at the end, not documented as functionality.",
+                " {} further route{} listed at the end, with why each is not documented as an operation.",
                 excluded,
                 super::plural(excluded)
             )));
@@ -518,7 +529,7 @@ impl<'a> Builder<'a> {
         if excluded.is_empty() {
             return;
         }
-        blocks.push(Block::Heading { level: 2, id: "excluded".into(), text: "Operational routes".into() });
+        blocks.push(Block::Heading { level: 2, id: "excluded".into(), text: "Routes not documented above".into() });
         let mut rows = Vec::new();
         for x in excluded {
             rows.push(vec![

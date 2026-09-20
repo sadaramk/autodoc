@@ -9,8 +9,8 @@ use std::collections::BTreeSet;
 
 use super::text::{self, matching, skip_ws, split_args, split_top, Src};
 use super::{
-    add_auth, add_error, add_param, fill_path_params, new_op, rule, Draft, Harvest, Loaded, Model, Operation, Param,
-    Requirement, SymbolRef,
+    add_auth, add_error, add_param, fill_path_params, new_op, rule, Draft, Excluded, Harvest, Loaded, Model, Operation,
+    Param, Requirement, SymbolRef,
 };
 use crate::extract::{Annotation, Symbol, SymbolKind};
 use crate::lang::Language;
@@ -343,7 +343,7 @@ pub(crate) fn extract(index: &crate::source::SourceIndex, files: &[Loaded], h: &
     let mut models = Models::default();
     let mut ops: Vec<Draft> = vec![];
     for fi in 0..idx.files.len() {
-        controllers(&idx, fi, &mut models, &mut ops);
+        controllers(&idx, fi, &mut models, &mut ops, &mut h.excluded);
         co_router_routes(&idx, fi, &mut models, &mut ops);
         ktor_routes(&idx, fi, &mut models, &mut ops);
         feign_clients(&idx, fi, &mut models, h);
@@ -718,7 +718,7 @@ fn class_symbols<'s>(f: &'s Loaded<'s>) -> Vec<&'s Symbol> {
 }
 
 /// Annotated controllers: Spring MVC / WebFlux, Micronaut, JAX-RS.
-fn controllers(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>) {
+fn controllers(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>, excluded: &mut Vec<Excluded>) {
     let f = idx.files[fi];
     for class in class_symbols(f) {
         let anns = idx.anns(fi, &["class", "interface", "object"], &class.name, None);
@@ -756,13 +756,22 @@ fn controllers(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>
                 continue;
             }
             let manns = idx.anns(fi, &["method"], &m.name, Some(&class.name));
+            let Some(mappings) = mapping(idx, &manns, flavor) else { continue };
             // Spring MVC's plain `@Controller` returns view names, not payloads;
             // only `@RestController`, or `@ResponseBody` on the class or the
-            // method, makes a handler part of an HTTP API.
+            // method, makes a handler part of an HTTP API. Correct to leave out,
+            // wrong to leave unsaid — the route is recorded as excluded.
             if flavor == Flavor::Spring && !rest_by_default && !manns.iter().any(|a| a.name == "ResponseBody") {
+                if let Some((verb, path)) = mappings.first() {
+                    let full = text::join_path("", &text::join_path(&base, path));
+                    excluded.push(Excluded {
+                        operation: format!("{}:{} {full}", f.unit, verb.to_uppercase()),
+                        reason: "server-rendered view, not an API operation".into(),
+                        evidence: f.src.ev_range(ms, me, Some(&m.name)),
+                    });
+                }
                 continue;
             }
-            let Some(mappings) = mapping(idx, &manns, flavor) else { continue };
             let framework = match flavor {
                 Flavor::Spring => "spring",
                 Flavor::Micronaut => "micronaut",

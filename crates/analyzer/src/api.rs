@@ -272,6 +272,9 @@ pub(crate) struct Harvest {
     pub ops: Vec<Draft>,
     pub models: Vec<Model>,
     pub clients: Vec<ClientDraft>,
+    /// Handlers an extractor decided are not API operations, so the book can
+    /// say what it left out instead of implying it documented everything.
+    pub excluded: Vec<Excluded>,
 }
 
 impl Harvest {
@@ -676,6 +679,7 @@ fn finish(h: Harvest) -> ApiModel {
     }
 
     let mut api = ApiModel::default();
+    api.excluded.extend(h.excluded);
     let mut seen = HashMap::new();
     for d in h.ops {
         let mut op = d.op;

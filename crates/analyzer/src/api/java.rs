@@ -1369,7 +1369,7 @@ pub(crate) fn extract(index: &SourceIndex, files: &[Loaded], h: &mut Harvest) {
             {
                 continue;
             }
-            controller_ops(&idx, &mut models, ci, &mut ops);
+            controller_ops(&idx, &mut models, ci, &mut ops, &mut h.excluded);
             client_calls(&idx, &mut models, ci, h);
         }
         functional_routes(&idx, &mut models, unit, classes, &mut ops);
@@ -1384,7 +1384,13 @@ pub(crate) fn extract(index: &SourceIndex, files: &[Loaded], h: &mut Harvest) {
     h.models.extend(models.out);
 }
 
-fn controller_ops(idx: &Index, models: &mut Models, ci: usize, ops: &mut Vec<JavaOp>) {
+fn controller_ops(
+    idx: &Index,
+    models: &mut Models,
+    ci: usize,
+    ops: &mut Vec<JavaOp>,
+    excluded: &mut Vec<super::Excluded>,
+) {
     let cl = idx.classes[ci].clone();
     if cl.kind == "enum" || cl.kind == "record" {
         return;
@@ -1572,6 +1578,25 @@ fn controller_ops(idx: &Index, models: &mut Models, ci: usize, ops: &mut Vec<Jav
             && !m.anns.iter().any(|a| a.name == "ResponseBody")
             && !m.return_type.as_deref().is_some_and(|r| r.starts_with("ResponseEntity"))
         {
+            // A `@Controller` returning a view name renders a page; it is not
+            // part of an HTTP API. Correct to leave out, wrong to leave unsaid:
+            // Spring PetClinic has seventeen mappings and two REST operations.
+            let (verb, paths, _) = &verbs[0];
+            let path = join_path(
+                &join_path(&context, class_paths.first().map(String::as_str).unwrap_or_default()),
+                paths.first().map(String::as_str).unwrap_or_default(),
+            );
+            excluded.push(super::Excluded {
+                operation: format!("{unit}:{} {path}", verb.to_uppercase()),
+                reason: "server-rendered view, not an API operation".into(),
+                evidence: EvidenceRef {
+                    file_path: body_src.path.clone(),
+                    start_line: m.start_line,
+                    end_line: m.end_line,
+                    symbol_name: Some(m.name.clone()),
+                    note: None,
+                },
+            });
             continue;
         }
         // Extra methods listed in `@RequestMapping(method = {GET, POST})`.
