@@ -104,6 +104,10 @@
       request flow through such a port stops at the port.</li>
     <li>A call into a library the service links is not followed, so work a shared package does on the
       service's behalf does not appear as a step in its flows.</li>
+    <li>ASP.NET Core routes are read from attributes. A controller routed by convention through
+      <code>MapControllerRoute</code> declares its paths in a pattern string rather than on the
+      action, so those operations are not found — the pattern says where a class of routes lives,
+      not which ones exist.</li>
   </ul>
   <p>
     The rules behind each of these — how units, compose services, calls, datastores and events are

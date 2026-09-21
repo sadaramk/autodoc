@@ -70,7 +70,9 @@ impl Language {
         Some(match ext {
             "c" | "h" => "C",
             "cc" | "cpp" | "cxx" | "hpp" | "hh" | "hxx" => "C++",
-            "csproj" => "C# project",
+            // No `.csproj`: it is a manifest nunki reads in full, so it never
+            // reaches the census, and counting it as unread would understate
+            // coverage for exactly the repositories C# support was added for.
             "kts" => "Kotlin script",
             "rb" | "rake" | "gemspec" => "Ruby",
             "php" => "PHP",
