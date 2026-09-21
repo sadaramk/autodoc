@@ -8,6 +8,23 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A Homebrew tap: `brew install sadaramk/nunki/nunki`, on macOS and Linux. The
+  formula installs the prebuilt binary, so nothing compiles.
+
+  This is the fix for a macOS problem worth naming. The binaries are ad-hoc
+  signed — Rust's default, the minimum for arm64 to execute — not notarized. A
+  release archive downloaded through a **browser** therefore carries the
+  quarantine attribute, and Gatekeeper kills it with exit 137 and no output,
+  which reads as a corrupt binary rather than a policy decision. Homebrew and
+  `curl` fetch without setting that attribute, so both paths work. Notarization
+  would be the other fix, and it costs $99/yr.
+
+  The release workflow bumps the formula on each tag when a `TAP_TOKEN` secret
+  is present, and says so in the run summary when it is not, rather than
+  failing.
+
 ## [0.3.0] - 2026-09-20
 
 ### Changed

@@ -46,7 +46,16 @@
     One static binary, for Linux and macOS on x86_64 and arm64. The installer verifies the checksum
     published with the release before it writes anything.
   </p>
+  <pre><code>brew install sadaramk/nunki/nunki</code></pre>
+  <p>Or the installer, which verifies the published checksum before it writes anything:</p>
   <pre><code>curl -fsSL https://github.com/sadaramk/nunki/releases/latest/download/install.sh | sh</code></pre>
+  <p class="meta">
+    On macOS, prefer either of those. The binaries are ad-hoc signed rather than notarized, so an
+    archive downloaded through a <strong>browser</strong> carries the quarantine attribute and
+    Gatekeeper kills it — silently, with exit 137. Homebrew and <code>curl</code> do not set that
+    attribute. To clear it from a hand-downloaded copy:
+    <code>xattr -d com.apple.quarantine ./nunki</code>.
+  </p>
   <p>
     Windows binaries are on the <a href="https://github.com/sadaramk/nunki/releases">releases page</a>.
     To build from source instead, a Rust toolchain is the only requirement:

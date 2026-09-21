@@ -177,3 +177,74 @@ jobs:
           git config user.email github-actions@github.com
           git tag -f "$major" "$TAG"
           git push -f origin "refs/tags/$major"
+
+  homebrew:
+    name: Update the Homebrew tap
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      # The tap is a separate repository, so GITHUB_TOKEN cannot write to it.
+      # Without a PAT the release still succeeds; the formula is then a manual
+      # edit, and this says so rather than failing the run.
+      - name: Is a tap token configured?
+        id: gate
+        env:
+          TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "have=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Homebrew::TAP_TOKEN is not set, so the formula was not bumped."
+          else
+            echo "have=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.gate.outputs.have == 'true'
+        with:
+          repository: sadaramk/homebrew-nunki
+          token: ${{ secrets.TAP_TOKEN }}
+          path: tap
+
+      - name: Bump the formula
+        if: steps.gate.outputs.have == 'true'
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          curl -fsSL -o sums "https://github.com/${{ github.repository }}/releases/download/$TAG/SHA256SUMS"
+          python3 - "$version" sums tap/Formula/nunki.rb <<'PY'
+          import re, sys
+          version, sums_path, formula_path = sys.argv[1], sys.argv[2], sys.argv[3]
+          sums = {}
+          for line in open(sums_path):
+              sha, name = line.split()
+              sums[name.lstrip("*")] = sha
+          out, url_asset = [], None
+          for line in open(formula_path):
+              m = re.search(r'url "https://github\.com/\S+/releases/download/v[^/]+/(\S+)"', line)
+              if m:
+                  # Rewrite the version inside the URL, then remember which asset
+                  # this block is for so the sha256 on the next line matches it.
+                  old = m.group(1)
+                  asset = re.sub(r"nunki-[0-9][^-]*-", f"nunki-{version}-", old, count=1)
+                  line = line.replace(old, asset)
+                  line = re.sub(r"/download/v[^/]+/", f"/download/v{version}/", line)
+                  url_asset = asset
+              elif url_asset and "sha256 " in line:
+                  if url_asset not in sums:
+                      raise SystemExit(f"no checksum published for {url_asset}")
+                  line = re.sub(r'sha256 "[0-9a-f]*"', f'sha256 "{sums[url_asset]}"', line)
+                  url_asset = None
+              else:
+                  line = re.sub(r'^(\s*version ")[^"]+(")', rf"\g<1>{version}\g<2>", line)
+              out.append(line)
+          open(formula_path, "w").writelines(out)
+          PY
+          cd tap
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          if git diff --quiet; then
+            echo "::notice title=Homebrew::Formula already at $version."
+            exit 0
+          fi
+          git commit -aqm "nunki $version"
+          git push
