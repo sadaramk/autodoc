@@ -120,6 +120,11 @@ One directory you commit beside the code:
 Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
 [what it reads →](https://sadaramk.github.io/nunki/support.html)
 
+A book says on its first page how much of the source it read. Where nunki has no parser — C++, Dart,
+Ruby, Svelte and the rest — those files are counted and named, because a book about the third of a
+system that happened to be parseable should not look like a book about the system. Below a tenth
+read it refuses outright; `--allow-partial` overrides that.
+
 ## Commands
 
 | Command | What it does |
@@ -128,7 +133,7 @@ Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
 | `nunki analyze [PATH] [--depth system\|container\|component] [--focus ID] [--json FILE] [--emit-ir FILE] [--include-tests]` | Scan and print the C4 summary; optionally write the full report and a draft IR. |
 | `nunki validate IR [--repo PATH] [--strict] [--json]` | Diagnostics with suggestions and patches. Exit 1 on errors. |
 | `nunki render IR [-o OUT] [--format html\|svg] [--accent indigo\|coral\|#hex] [--repo PATH]` | Validate, verify evidence, render. Nothing is written if validation fails. |
-| `nunki generate [PATH] [--out DIR] [--include-tests] [--json]` | Write the architecture book. Rewrites only changed files; keeps hand-edited diagram IR. |
+| `nunki generate [PATH] [--out DIR] [--include-tests] [--allow-partial] [--json]` | Write the architecture book. Rewrites only changed files; keeps hand-edited diagram IR. |
 | `nunki check [PATH] [--out DIR] [--json]` | Exit 1 when regenerating would change the book or a citation is stale. |
 | `nunki diff [PATH] [--base REV] [--head REV] [--json] [--exit-code]` | What changed architecturally between two revisions, as a PR comment. |
 | `nunki export IR [--format drawio\|drawio-csv] [-o FILE] [--repo PATH]` | Write a diagram for draw.io, carrying the book's layout and the evidence. |

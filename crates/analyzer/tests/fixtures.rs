@@ -294,3 +294,70 @@ fn a_repository_we_mostly_cannot_read_says_so() {
         .unwrap_or_else(|| panic!("nothing warned that the book covers a fraction; notes: {:?}", r.notes));
     assert!(note.contains("Ruby"), "the note should name the language: {note}");
 }
+
+/// The coverage census counts every source file nunki could not read, not just
+/// the handful of languages it half-supports.
+///
+/// Counting only those made the number lie in exactly the case it exists for: a
+/// repository that is 95% C++ reported full coverage, because C++ was not on
+/// the list. Measured on real repositories the corrected census puts immich at
+/// 40% (its Dart app and Svelte UI are unread) where it used to claim 100%.
+#[test]
+fn unread_source_is_counted_whatever_the_language() {
+    let r = scan_at(&fixture("real-world/mostly-unread"), Depth::Container);
+    let unread: usize = r.stats.unparsed.values().sum();
+
+    assert_eq!(r.stats.files, 5, "only the Go gateway is readable");
+    assert_eq!(unread, 16, "twelve C++ and four Dart files");
+    assert_eq!(r.stats.unparsed.get("C++"), Some(&12));
+    assert_eq!(r.stats.unparsed.get("Dart"), Some(&4));
+    assert_eq!(r.stats.unread_census(), "12 C++, 4 Dart", "most numerous first");
+    assert!((r.stats.read_share() - 5.0 / 21.0).abs() < 1e-9, "share: {}", r.stats.read_share());
+
+    // Said out loud, not left in a field nobody reads.
+    assert!(
+        r.notes.iter().any(|n| n.contains("most of this repository was not read")),
+        "the scan says so: {:?}",
+        r.notes
+    );
+
+    // Configuration, markup and shell are not architecture. Counting them would
+    // drag every repository's number down without telling the reader anything.
+    let polyglot = scan_at(&fixture("polyglot-shop"), Depth::Container);
+    assert!(
+        polyglot.stats.unparsed.is_empty(),
+        "a fully readable repository reports nothing unread: {:?}",
+        polyglot.stats.unparsed
+    );
+    assert_eq!(polyglot.stats.read_share(), 1.0);
+}
+
+/// A tree where almost nothing is readable is refused rather than documented,
+/// the way an empty one already is — unless the caller insists.
+#[test]
+fn a_mostly_unreadable_repository_is_refused() {
+    let tmp = tempfile::tempdir().unwrap();
+    let repo = tmp.path().join("engine");
+    std::fs::create_dir_all(repo.join("svc")).unwrap();
+    for i in 0..20 {
+        std::fs::write(repo.join(format!("core{i}.cpp")), "namespace e { int f(); }\n").unwrap();
+    }
+    std::fs::write(repo.join("svc/go.mod"), "module example.com/svc\n\ngo 1.22\n").unwrap();
+    std::fs::write(
+        repo.join("svc/main.go"),
+        "package main\n\nimport \"net/http\"\n\nfunc main() { http.ListenAndServe(\":8080\", nil) }\n",
+    )
+    .unwrap();
+
+    let err = scan(&repo, &ScanOptions::default()).expect_err("1 of 21 files is not a book");
+    let msg = err.to_string();
+    assert!(msg.contains("could be read"), "{msg}");
+    assert!(msg.contains("20 C++"), "names what it could not read: {msg}");
+    assert!(msg.contains("--allow-partial"), "offers the way out: {msg}");
+
+    // The escape hatch is the point: refusing with no override is hostile to
+    // anyone who wants the part that is readable.
+    let report = scan(&repo, &ScanOptions { allow_partial: true, ..Default::default() })
+        .expect("--allow-partial writes it anyway");
+    assert_eq!(report.stats.files, 1);
+}

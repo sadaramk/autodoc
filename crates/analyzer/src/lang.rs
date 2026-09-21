@@ -47,6 +47,53 @@ impl Language {
     }
 
     /// Language of a file this engine can't parse, by extension.
+    /// Display name for a source file nunki cannot read, for the coverage
+    /// census. Broader than [`Language::unparsed_for_extension`], which only
+    /// names the languages that can still be classified as a unit.
+    ///
+    /// The census exists to say how much of a repository went unread, so it has
+    /// to count every language that could define a service, a route or an
+    /// entity — not just the handful with partial support. Counting only those
+    /// made the metric lie in exactly the case it is for: a repository that is
+    /// 95% C++ reported full coverage, because C++ was not on the list.
+    ///
+    /// Configuration, markup, styles and shell are deliberately absent. They do
+    /// not describe architecture, and counting them would make every repository
+    /// look unread.
+    pub fn census_name(ext: &str) -> Option<&'static str> {
+        Some(match ext {
+            "c" | "h" => "C",
+            "cc" | "cpp" | "cxx" | "hpp" | "hh" | "hxx" => "C++",
+            "cs" | "csproj" => "C#",
+            "kts" => "Kotlin script",
+            "rb" | "rake" | "gemspec" => "Ruby",
+            "php" => "PHP",
+            "ex" | "exs" => "Elixir",
+            "erl" | "hrl" => "Erlang",
+            "scala" | "sc" => "Scala",
+            "swift" => "Swift",
+            "hs" => "Haskell",
+            "clj" | "cljs" | "cljc" => "Clojure",
+            "lua" => "Lua",
+            "dart" => "Dart",
+            "groovy" => "Groovy",
+            "zig" => "Zig",
+            "ml" | "mli" => "OCaml",
+            "fs" | "fsx" => "F#",
+            "vb" => "Visual Basic",
+            "jl" => "Julia",
+            "nim" => "Nim",
+            "cr" => "Crystal",
+            "sol" => "Solidity",
+            "vue" => "Vue",
+            "svelte" => "Svelte",
+            // `.m` is Objective-C, MATLAB and Mercury; `.pl` is Perl and
+            // Prolog; `.r` is R and Rebol. Guessing wrong inflates the census
+            // and undermines the number it exists to make trustworthy.
+            _ => return None,
+        })
+    }
+
     pub fn unparsed_for_extension(ext: &str) -> Option<Language> {
         Some(match ext {
             "cs" | "csproj" => Language::CSharp,

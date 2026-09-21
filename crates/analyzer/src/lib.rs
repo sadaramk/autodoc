@@ -36,6 +36,13 @@ pub enum ScanError {
          in a language nunki reads (Rust, TypeScript, Go, Python, Java, Kotlin)"
     )]
     Empty(String),
+    #[error(
+        "only {parsed} of {} source file(s) in {root} could be read ({census} unread). \
+         A book from that would describe a fraction of the system without saying so. \
+         Pass --allow-partial to write it anyway",
+        .parsed + .unread
+    )]
+    MostlyUnread { root: String, parsed: usize, unread: usize, census: String },
     #[error("unknown focus unit `{0}`; available: {available}", available = .1.join(", "))]
     UnknownFocus(String, Vec<String>),
 }

@@ -216,6 +216,7 @@ impl Server {
                 None => Accent::default(),
             },
             include_tests: args.get("includeTests").and_then(Value::as_bool).unwrap_or(false),
+            allow_partial: args.get("allowPartial").and_then(Value::as_bool).unwrap_or(false),
             max_density: nunki_ir::MAX_VISUAL_DENSITY,
         };
         if args.get("checkOnly").and_then(Value::as_bool).unwrap_or(false) {

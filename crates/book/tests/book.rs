@@ -588,3 +588,54 @@ func listSlash(w http.ResponseWriter, r *http.Request) {}
         "both operations should have a heading: {ids:?}"
     );
 }
+
+/// What the book could not read belongs on its first page.
+///
+/// A reader cannot otherwise tell a book about a whole system from a book about
+/// the quarter of it that happened to be in a language nunki parses. Measured
+/// on immich this is the difference between a confident survey and an honest
+/// one: 765 of 1918 source files read, its Dart app and Svelte UI unseen.
+#[test]
+fn the_overview_says_how_much_of_the_source_was_read() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("real-world/mostly-unread"), out.path(), &BookOptions::default()).unwrap();
+    let overview = planned.built.book.pages.iter().find(|p| p.id == "overview").expect("overview page");
+
+    let callout = overview
+        .blocks
+        .iter()
+        .find_map(|b| match b {
+            Block::Callout { tone, title, inl } if title.contains("source was read") => {
+                let text: String = inl
+                    .iter()
+                    .filter_map(|i| match i {
+                        Inline::Text { v } => Some(v.clone()),
+                        _ => None,
+                    })
+                    .collect();
+                Some((tone.clone(), title.clone(), text))
+            }
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("a coverage callout on the overview: {:?}", overview.blocks));
+
+    let (tone, title, text) = callout;
+    assert_eq!(title, "24% of the source was read");
+    // Under four fifths the gap is a fact about the book, not a footnote.
+    assert_eq!(tone, "warning", "a quarter read is a warning, not a note");
+    assert!(text.contains("5 of 21 source files"), "{text}");
+    assert!(text.contains("12 C++, 4 Dart"), "names them, most numerous first: {text}");
+    assert!(text.contains("absent here rather than absent from the code"), "{text}");
+
+    // A fully readable repository says nothing, rather than boasting 100%.
+    let out2 = tempfile::tempdir().unwrap();
+    let clean = plan(&fixtures().join("polyglot-shop"), out2.path(), &BookOptions::default()).unwrap();
+    let clean_overview = clean.built.book.pages.iter().find(|p| p.id == "overview").unwrap();
+    assert!(
+        !clean_overview
+            .blocks
+            .iter()
+            .any(|b| matches!(b, Block::Callout { title, .. } if title.contains("source was read"))),
+        "no coverage callout when everything was read"
+    );
+}

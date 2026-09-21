@@ -40,6 +40,8 @@ pub struct ScanOptions {
     pub ignore_dirs: Vec<PathBuf>,
     /// Extract API contracts and the data model (operations, models, entities, state machines).
     pub behavior: bool,
+    /// Write a book even when almost nothing in the repository could be read.
+    pub allow_partial: bool,
 }
 
 impl Default for ScanOptions {
@@ -53,6 +55,7 @@ impl Default for ScanOptions {
             all_components: false,
             ignore_dirs: Vec::new(),
             behavior: false,
+            allow_partial: false,
         }
     }
 }
@@ -287,6 +290,29 @@ pub struct RepoSummary {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub remote_url: Option<String>,
     pub dirty_files: Vec<String>,
+}
+
+impl ScanStats {
+    /// Share of recognised source files that were actually read, 0.0..=1.0.
+    ///
+    /// The denominator is source nunki could name, not every file in the tree:
+    /// configuration, markup and shell are not architecture and would drag the
+    /// number down without telling the reader anything.
+    pub fn read_share(&self) -> f64 {
+        let unread: usize = self.unparsed.values().sum();
+        let total = self.files + unread;
+        if total == 0 {
+            return 1.0;
+        }
+        self.files as f64 / total as f64
+    }
+
+    /// `9 Vue, 2 C#`, most numerous first, for a note or a page.
+    pub fn unread_census(&self) -> String {
+        let mut by_count: Vec<(&String, &usize)> = self.unparsed.iter().collect();
+        by_count.sort_by_key(|(name, n)| (std::cmp::Reverse(**n), (*name).clone()));
+        by_count.iter().map(|(name, n)| format!("{n} {name}")).collect::<Vec<_>>().join(", ")
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -633,6 +659,25 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
     if units.is_empty() && infra.is_empty() {
         return Err(crate::ScanError::Empty(root.display().to_string()));
     }
+    // Almost nothing could be read. A book from that is a stub wearing the
+    // costume of a survey: it names one service and is silent about the rest,
+    // and nothing on the page tells the reader which it is.
+    //
+    // The 10% floor comes from measurement, not taste. Every real repository
+    // checked sits far above it — immich 40% (its Dart app and Svelte UI are
+    // unread), example-voting-app 71%, wild-workouts 91%, and seven others at
+    // 100%. immich's TypeScript server is worth documenting, so the floor must
+    // not refuse it; a tree where one file in twenty is readable is not.
+    const READ_FLOOR: f64 = 0.10;
+    if !opts.allow_partial && stats.read_share() < READ_FLOOR {
+        let unread: usize = stats.unparsed.values().sum();
+        return Err(crate::ScanError::MostlyUnread {
+            root: root.display().to_string(),
+            parsed: stats.files,
+            unread,
+            census: stats.unread_census(),
+        });
+    }
     stats.duration_ms = started.elapsed().as_millis() as u64;
     Ok(ScanReport {
         repo: RepoSummary {
@@ -828,8 +873,8 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
         let Some((grammar, language)) = Grammar::for_path(rel) else {
             // Recognised, unreadable: counted so the book can say how much of
             // the repository it never looked at.
-            if let Some(l) = rel.extension().and_then(|e| e.to_str()).and_then(Language::unparsed_for_extension) {
-                *unparsed.entry(l.display().to_string()).or_default() += 1;
+            if let Some(name) = rel.extension().and_then(|e| e.to_str()).and_then(Language::census_name) {
+                *unparsed.entry(name.to_string()).or_default() += 1;
             }
             continue;
         };

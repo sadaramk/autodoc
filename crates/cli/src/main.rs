@@ -164,6 +164,9 @@ enum Command {
         theme: Option<ThemeArg>,
         #[arg(long)]
         include_tests: bool,
+        /// Write the book even when almost nothing in the repository could be read.
+        #[arg(long)]
+        allow_partial: bool,
         #[arg(long)]
         json: bool,
     },
@@ -317,8 +320,8 @@ fn run(cli: Cli) -> Result<ExitCode> {
                 CompileOutcome::Rejected { .. } => ExitCode::from(1),
             })
         }
-        Command::Generate { path, out, accent, theme, include_tests, json } => {
-            generate(&path, out, accent, theme, include_tests, json)
+        Command::Generate { path, out, accent, theme, include_tests, allow_partial, json } => {
+            generate(&path, out, accent, theme, include_tests, allow_partial, json)
         }
         Command::Export { ir, format, output, repo } => export(&ir, format, output, repo),
         Command::Diff { path, base, head, include_tests, json, exit_code } => {
@@ -399,12 +402,14 @@ fn book_options(
     accent: Option<&str>,
     theme: Option<ThemeArg>,
     include_tests: bool,
+    allow_partial: bool,
 ) -> Result<nunki_book::BookOptions> {
     Ok(nunki_book::BookOptions {
         theme: theme.map(Theme::from).unwrap_or(cfg.style.theme),
         accent: parse_accent(accent, cfg)?,
         include_tests: include_tests || cfg.analysis.include_tests,
         max_density: cfg.validation.max_density,
+        allow_partial,
     })
 }
 
@@ -414,6 +419,7 @@ fn generate(
     accent: Option<String>,
     theme: Option<ThemeArg>,
     include_tests: bool,
+    allow_partial: bool,
     json: bool,
 ) -> Result<ExitCode> {
     let cfg = Config::discover(path)?;
@@ -424,7 +430,7 @@ fn generate(
             path.join(&cfg.output.dir)
         }
     };
-    let opts = book_options(&cfg, accent.as_deref(), theme, include_tests)?;
+    let opts = book_options(&cfg, accent.as_deref(), theme, include_tests, allow_partial)?;
     let report = nunki_book::generate(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
@@ -539,7 +545,8 @@ fn check(path: &Path, out: Option<PathBuf>, json: bool) -> Result<ExitCode> {
             path.join(&cfg.output.dir)
         }
     };
-    let opts = book_options(&cfg, None, None, false)?;
+    // A book generated with --allow-partial must still be checkable.
+    let opts = book_options(&cfg, None, None, false, true)?;
     let report = nunki_book::check(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);

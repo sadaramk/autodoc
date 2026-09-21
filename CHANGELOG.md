@@ -10,6 +10,21 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- A book says on its first page how much of the source it read, and names what
+  it could not. Below a tenth read, nunki refuses to write one at all;
+  `--allow-partial` overrides that.
+
+### Fixed
+
+- The coverage census counts every source file nunki cannot read, not just the
+  five languages it half-supports. Counting only those made the number lie in
+  exactly the case it exists for: a repository that is 95% C++ reported full
+  coverage, because C++ was not on the list. Measured again on real
+  repositories, immich drops from a claimed 100% to an honest 40% — its Dart
+  mobile app and Svelte web UI were never read, and the book never said so.
+
+### Added
+
 - A Homebrew tap: `brew install sadaramk/nunki/nunki`, on macOS and Linux. The
   formula installs the prebuilt binary, so nothing compiles.
 

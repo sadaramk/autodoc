@@ -30,11 +30,19 @@ pub struct BookOptions {
     pub accent: Accent,
     pub include_tests: bool,
     pub max_density: f64,
+    /// Write the book even when almost nothing could be read.
+    pub allow_partial: bool,
 }
 
 impl Default for BookOptions {
     fn default() -> Self {
-        BookOptions { theme: Theme::EditorialLight, accent: Accent::Indigo, include_tests: false, max_density: 0.40 }
+        BookOptions {
+            theme: Theme::EditorialLight,
+            accent: Accent::Indigo,
+            include_tests: false,
+            max_density: 0.40,
+            allow_partial: false,
+        }
     }
 }
 
@@ -85,6 +93,7 @@ pub fn build(
             include_tests: opts.include_tests,
             all_components: true,
             behavior: true,
+            allow_partial: opts.allow_partial,
             ignore_dirs: vec![out_dir.to_path_buf()],
             ..Default::default()
         },
@@ -571,6 +580,30 @@ impl<'a> Builder<'a> {
                 Stat { label: "Source".into(), value: format!("{} files", r.stats.files), page: None },
             ],
         }];
+
+        // What the book could not read belongs on its first page, not in a log.
+        // A reader cannot tell a book about a whole system from a book about
+        // the third of it that happened to be in a language nunki parses.
+        let unread: usize = r.stats.unparsed.values().sum();
+        if unread > 0 {
+            let share = r.stats.read_share();
+            let census = r.stats.unread_census();
+            let line = format!(
+                "{} of {} source files were read. {census} could not be: nunki has no parser for {}, \
+                 so whatever they declare — services, routes, entities — is absent here rather than absent from the code.",
+                r.stats.files,
+                r.stats.files + unread,
+                if r.stats.unparsed.len() == 1 { "it" } else { "them" }
+            );
+            // Below four fifths the gap is a fact about the book, not a
+            // footnote about it.
+            let tone = if share < 0.80 { "warning" } else { "note" };
+            blocks.push(Block::Callout {
+                tone: tone.into(),
+                title: format!("{:.0}% of the source was read", share * 100.0),
+                inl: vec![Inline::text(line)],
+            });
+        }
 
         blocks.push(Block::Heading { level: 2, id: "what-it-is".into(), text: "What it is".into() });
         if let Some(desc) = &r.system.description {
