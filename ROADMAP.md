@@ -25,9 +25,13 @@ Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin.
 ## Tracked work
 
 Every item below is an issue, so progress is visible without reading this file.
+**[Board](https://github.com/users/sadaramk/projects/3)** ·
 [Open issues](https://github.com/sadaramk/nunki/issues) ·
 [0.4.0](https://github.com/sadaramk/nunki/milestone/1) ·
 [1.0](https://github.com/sadaramk/nunki/milestone/2)
+
+On the board, *Blocked* means waiting on a decision or on someone outside the
+repository — not on effort.
 
 ### 0.4.0
 

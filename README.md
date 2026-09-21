@@ -162,6 +162,7 @@ once you follow it back. That is the failure this project exists to catch, so th
 
 [Getting started](https://sadaramk.github.io/nunki/start.html) ·
 [Roadmap](ROADMAP.md) ·
+[Board](https://github.com/users/sadaramk/projects/3) ·
 [How it works](https://sadaramk.github.io/nunki/how.html) ·
 [What it reads](https://sadaramk.github.io/nunki/support.html) ·
 [Heuristics and limits](HEURISTICS.md) ·
