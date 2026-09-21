@@ -8,6 +8,8 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-21
+
 ### Added
 
 - **`comment: true` posts the diff on a pull request.** `nunki diff` always
@@ -418,7 +420,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/nunki/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sadaramk/nunki/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/sadaramk/nunki/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sadaramk/nunki/compare/v0.2.7...v0.3.0
 [0.2.7]: https://github.com/sadaramk/nunki/compare/v0.2.6...v0.2.7
 [0.2.6]: https://github.com/sadaramk/nunki/compare/v0.2.5...v0.2.6

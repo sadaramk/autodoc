@@ -45,12 +45,12 @@ Docker works too, and is how the project tests itself:
 ## Keep it true in CI
 
 ```yaml
-- uses: sadaramk/nunki@v0.3.0
+- uses: sadaramk/nunki@v0.4.0
   with:
     out: docs/architecture
 ```
 
-Pinning the action pins the binary: `@v0.3.0` runs that build, verified against the checksum
+Pinning the action pins the binary: `@v0.4.0` runs that build, verified against the checksum
 published with it. `@v0` tracks the newest 0.x instead.
 
 Exits 1 when regenerating would change the book, or when a citation no longer matches the code.
@@ -80,8 +80,8 @@ that changes nothing about the architecture is not told so twice a day. `--base`
 commit the pull request merges into; pass it explicitly to compare against something else. The
 comment is not a verdict: add `args: --exit-code` if an architecture change should also fail the job.
 
-`comment` needs 0.4.0. The action reads its inputs from the ref you pin, so an older tag rejects it
-outright rather than ignoring it.
+`comment` was added in 0.4.0. The action reads its inputs from the ref you pin, so a tag older than
+that rejects it outright rather than ignoring it.
 
 > Fork pull requests cannot be commented on with the default `GITHUB_TOKEN`, which GitHub makes
 > read-only there. That is a platform constraint, not something this action can work around.
