@@ -66,8 +66,16 @@ jobs:
   action:
     name: The published action runs
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # The diff comment below writes to the pull request.
+      pull-requests: write
     steps:
+      # `fetch-depth: 0` so the pull request's base commit is present: `diff`
+      # checks out both revisions itself and cannot invent a commit it wasn't given.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       # Exercises the action as a consumer would: it downloads the binary from the
       # last release, so it proves the release assets, the checksum check and the
       # entrypoint — not this commit's build.
@@ -79,6 +87,14 @@ jobs:
         with:
           command: analyze
           args: --depth container
+      # nunki comments on its own pull requests. The stubbed-`gh` tests in
+      # `crates/cli/tests/action_comment.rs` pin the upsert logic; this proves the
+      # part they cannot — that a real token, on a real event, reaches the real API.
+      - if: github.event_name == 'pull_request'
+        uses: ./
+        with:
+          command: diff
+          comment: true
 
   example:
     name: Example book is up to date

@@ -157,13 +157,29 @@ open docs/architecture/index.html</code></pre>
   </blockquote>
   <p>
     Services, connections, routes, request and response shapes, authentication, tables and columns.
-    Markdown by default so it can be posted as a comment, <code>--json</code> for a bot, and
-    <code>--exit-code</code> to make an architecture change require a review:
+    <code>comment: true</code> posts it on the pull request — one comment, edited in place on every
+    push rather than appended to, and removed again if a later push makes the branch match its base,
+    so an unchanged architecture says nothing at all:
   </p>
-  <pre><code>- uses: sadaramk/nunki@v0.3.0
-  with:
-    command: diff
-    args: --base ${{ github.event.pull_request.base.sha }}</code></pre>
+  <pre><code>permissions:
+  contents: read
+  pull-requests: write
+
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0
+  - uses: sadaramk/nunki@v0.4.0
+    with:
+      command: diff
+      comment: true</code></pre>
+  <p class="meta">
+    <code>comment</code> needs 0.4.0: the action reads its inputs from the ref you pin, so an older
+    tag rejects it rather than ignoring it. <code>--base</code> defaults to the commit the pull
+    request merges into. Add <code>args: --exit-code</code> to make an architecture change fail the
+    job as well as comment, and <code>--json</code> instead of a comment to feed a bot. Fork pull
+    requests cannot be commented on: GitHub makes the default token read-only there.
+  </p>
   <blockquote>
     <p>
       Citations are pinned to a commit and verified against it. A citation whose lines have changed is

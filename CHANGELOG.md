@@ -10,6 +10,17 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- **`comment: true` posts the diff on a pull request.** `nunki diff` always
+  produced the Markdown; posting it was twenty lines of workflow that every
+  consumer would write and most would get wrong in the same place. The action now
+  does it: one comment per pull request found by a hidden marker rather than by
+  author, edited in place on every push, and deleted again if a later push makes
+  the branch match its base — a branch that added a route and then reverted it
+  should not keep claiming the route. An unchanged architecture says nothing at
+  all instead of commenting "no changes" on every pull request. `--base` defaults
+  to the commit the pull request merges into. Commenting is not a verdict, so it
+  does not fail the job unless the caller also asked for `--exit-code`.
+
 - **C# is read.** A tree-sitter grammar for C#, `.csproj` as the module
   layout, and ASP.NET Core contracts: attribute-routed controllers with
   the `[controller]` token expanded, minimal-API `Map*` routes, `[FromQuery]` /
@@ -27,6 +38,13 @@ All notable changes to this project are recorded here. The format follows
   `--allow-partial` overrides that.
 
 ### Fixed
+
+- `outputs.binary` named a path that no longer existed. The entrypoint unpacked
+  the binary into a temporary directory it removes on exit, and only got away
+  with it because the script ended in `exec`, which skips the trap. The output was
+  therefore only ever valid by accident, and any path through the script that did
+  not end in `exec` would have handed later steps a path to nothing. The binary is
+  now kept outside the directory that gets cleaned.
 
 - The coverage census counts every source file nunki cannot read, not just the
   five languages it half-supports. Counting only those made the number lie in
