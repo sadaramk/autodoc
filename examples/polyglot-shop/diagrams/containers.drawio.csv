@@ -25,9 +25,9 @@
 # ignore: id,style,parent,left,top,width,height,edge1,edge2,edge3,edge4,edge5,edge6,edge7,edge8,edge9
 id,label,style,left,top,width,height,parent,tech,evidence,edge1,edge2,edge3,edge4,edge5,edge6,edge7,edge8,edge9
 clients,Clients,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,48,416,236,160,,,,,,,,,,,,
-platform,Polyglot Shop platform,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,395,216,236,560,,,,,,,,,,,,
-data,Data & messaging,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1038,152,236,408,,,,,,,,,,,,
-external,Third-party services,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1038,616,236,224,,,,,,,,,,,,
+platform,Polyglot Shop platform,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,403,216,236,560,,,,,,,,,,,,
+data,Data & messaging,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1058,152,236,408,,,,,,,,,,,,
+external,Third-party services,rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;,1058,616,236,224,,,,,,,,,,,,
 api-gateway,API Gateway,rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#4f46e5;fontColor=#0f172a;strokeWidth=2;align=center;verticalAlign=middle;,20,44,196,96,platform,TypeScript · Express,api-gateway/src/server.ts:19-24,kafka,payments,postgres,redis,,,,,
 fulfillment,Fulfillment,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,320,196,96,platform,Python,fulfillment/fulfillment/__main__.py:22-23,,,postgres,,sendgrid,,,,
 ledger-audit,Ledger Audit,rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#94a3b8;fontColor=#0f172a;strokeWidth=1;align=center;verticalAlign=middle;,20,444,196,96,platform,Rust · Axum,ledger-audit/src/main.rs:10-21,,,,,,,postgres,,

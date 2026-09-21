@@ -24,6 +24,12 @@ pub const EDGE_LABEL_SIZE: f64 = 11.0;
 pub const EDGE_LABEL_H: f64 = 18.0;
 pub const LABEL_GAP: f64 = 6.0;
 const TRACK: f64 = 12.0;
+/// Pitch between gutter lanes once sharing has thinned them out. 12px reads as
+/// one thick line from a metre away; 20px reads as separate connectors.
+const TRACK_WIDE: f64 = 20.0;
+/// Vertical air between two runs sharing a lane, so they read as two
+/// connectors that happen to line up rather than one broken line.
+const TRACK_CLEAR: f64 = 24.0;
 const BLOCK_GAP: f64 = 56.0;
 const NODE_GAP: f64 = 28.0;
 const NODE_GAP_LABELLED: f64 = 56.0;
@@ -719,8 +725,27 @@ pub fn layout(ir: &DiagramIR, title: TitleMetrics) -> Layout {
                 .then(ka.3.total_cmp(&kb.3))
                 .then(a.plan.cmp(&b.plan))
         });
-        let tracks = uses.len();
-        let band = if tracks > 0 { 12.0 + tracks as f64 * TRACK } else { 0.0 };
+        // A lane is only busy for the span it actually turns through, so two
+        // connectors whose vertical runs do not overlap can share one. Giving
+        // every edge its own lane put nine parallel lines 12px apart through
+        // one gutter of the demo book, which is a bundle, not a diagram.
+        let mut track_of: Vec<usize> = Vec::with_capacity(uses.len());
+        let mut occupied: Vec<Vec<(f64, f64)>> = Vec::new();
+        for u in uses.iter() {
+            let (lo, hi) = (u.y1.min(u.y2) - TRACK_CLEAR, u.y1.max(u.y2) + TRACK_CLEAR);
+            let free = occupied.iter().position(|spans: &Vec<(f64, f64)>| spans.iter().all(|&(a, b)| hi < a || lo > b));
+            let k = free.unwrap_or_else(|| {
+                occupied.push(Vec::new());
+                occupied.len() - 1
+            });
+            occupied[k].push((lo, hi));
+            track_of.push(k);
+        }
+        let tracks = occupied.len();
+        // Sharing leaves fewer lanes, so they can be spaced wide enough to
+        // follow without making the gutter wider than it was.
+        let pitch = if tracks <= 8 { TRACK_WIDE } else { TRACK };
+        let band = if tracks > 0 { 12.0 + tracks as f64 * pitch } else { 0.0 };
         let used = tracks > 0 || straight.iter().any(|&pi| leaf_of[plans[pi].s].min(leaf_of[plans[pi].t]) == g);
         let is_last = g + 1 == nleaves;
         gutter_w[g] = match (is_last, used) {
@@ -728,8 +753,9 @@ pub fn layout(ir: &DiagramIR, title: TitleMetrics) -> Layout {
             (true, true) => left_need[g] + band + 12.0,
             _ => (left_need[g] + band + right_need[g]).max(72.0),
         };
-        for (k, u) in uses.iter().enumerate() {
-            track_offset.insert((u.plan, u.leg), left_need[g] + 12.0 + k as f64 * TRACK - TRACK / 2.0);
+        for (i, u) in uses.iter().enumerate() {
+            let k = track_of[i];
+            track_offset.insert((u.plan, u.leg), left_need[g] + 12.0 + k as f64 * pitch - pitch / 2.0);
         }
     }
 

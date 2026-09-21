@@ -378,3 +378,49 @@ fn typed_renders_mark_their_semantics() {
     assert!(life.contains("state-initial") && life.contains("state-terminal"));
     assert!(life.contains("ship_order [status = &#39;paid&#39;]"));
 }
+
+/// Connectors crossing the same gutter share a lane when their vertical runs do
+/// not overlap, and the lanes that remain are spaced far enough apart to follow.
+///
+/// Reviewed feedback on the demo book's container diagram: "the narrow area
+/// between the application and infrastructure contains many overlapping
+/// vertical lines; tracing a service to PostgreSQL requires deliberate
+/// attention." It did — nine parallel lines, 12px apart, each edge holding a
+/// full-height lane of its own whether it needed one or not.
+#[test]
+fn gutter_lanes_are_shared_and_spaced() {
+    let root = repo_root().join("tests/fixtures/polyglot-shop");
+    let report = scan(&root, &ScanOptions { depth: Depth::Container, ..Default::default() }).unwrap();
+    let draft =
+        draft_ir(&report, &DraftOptions { generated_at: Some("2026-01-01T00:00:00Z".into()), ..Default::default() });
+    let r = render_svg(&draft.ir, &RenderOptions::default());
+    assert!(r.layout.check_geometry().is_empty());
+
+    // Vertical runs of two or more points: the lanes through a gutter.
+    let mut lanes: Vec<f64> = Vec::new();
+    for e in &r.layout.edges {
+        for w in e.points.windows(2) {
+            if (w[0].0 - w[1].0).abs() < 0.01 && (w[0].1 - w[1].1).abs() > 1.0 {
+                lanes.push(w[0].0);
+            }
+        }
+    }
+    lanes.sort_by(f64::total_cmp);
+    lanes.dedup_by(|a, b| (*a - *b).abs() < 0.5);
+    assert!(lanes.len() >= 3, "this diagram routes through a gutter: {lanes:?}");
+
+    // One lane per edge would be nine here. Sharing has to actually happen.
+    let vertical_edges = r.layout.edges.iter().filter(|e| e.points.len() > 2).count();
+    assert!(
+        lanes.len() < vertical_edges,
+        "lanes ({}) should be fewer than the edges needing them ({vertical_edges}): {lanes:?}",
+        lanes.len()
+    );
+
+    // Neighbouring lanes inside one gutter need air. 12px reads as a bundle;
+    // a jump between gutters is large and is not a pitch.
+    for (a, b) in lanes.iter().zip(lanes.iter().skip(1)) {
+        let pitch = b - a;
+        assert!(pitch >= 19.0, "lanes {a} and {b} are {pitch}px apart, too close to tell apart");
+    }
+}
