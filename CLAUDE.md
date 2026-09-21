@@ -82,6 +82,13 @@ Each must pass before merge.
   `data_model.rs`, journey 5, then `make demo`.
 - JVM support (`extract.rs` Java, `manifest.rs` Maven/Gradle, `jvm.rs`, `catalog.rs`): `real_world_shapes.rs::spring_*`,
   `api_contracts.rs`, `data_model.rs`, then spot-check piggymetrics / thingsboard / spring-modulith examples.
+  `catalog.rs`'s `NAMESPACE_*` tables are shared with C#, so a change there moves both.
+- C# support (`extract.rs` `visit_csharp`, `api/cs.rs`, `data/csharp.rs`, `manifest.rs` `.csproj`,
+  `catalog.rs` NuGet and namespaces): `api_contracts.rs::csharp_*`, `data_model.rs::csharp_*`,
+  `real_world_shapes.rs::a_service_in_an_unread_language_*`.
+- The action (`action.yml`, `scripts/action-*.sh`): `crates/cli/tests/action_comment.rs` and
+  `shellcheck -S style scripts/*.sh`. The comment path talks to the GitHub API, which a stub cannot
+  prove, so the `action` CI job runs it for real on every pull request.
 - `analyzer` heuristics: `crates/analyzer/tests/fixtures.rs`, journeys 1–4, then `make demo` to refresh examples.
 - `diff` / `export`: `crates/cli/tests/journeys.rs::journey_diff_*`, `journey_export_*`. Both compare
   against real output, so a wrong-but-plausible change shows up as a changed string, not a panic.
