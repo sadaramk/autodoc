@@ -98,10 +98,17 @@ else
   tar xzf "$work/$name.$ext" -C "$work"
 fi
 
-bin="$work/$name/nunki"
-if [ -f "$bin.exe" ]; then
-  bin="$bin.exe"
+src="$work/$name/nunki"
+if [ -f "$src.exe" ]; then
+  src="$src.exe"
 fi
+# `outputs.binary` is a path a later step may use, so the binary is moved out of
+# the directory this script cleans up. Previously it survived only because the
+# script ended in `exec`, which skips the trap — commenting means it no longer does.
+keep="${RUNNER_TEMP:-/tmp}/nunki-$plain-$target"
+mkdir -p "$keep"
+bin="$keep/$(basename "$src")"
+mv -f "$src" "$bin"
 chmod +x "$bin"
 echo "binary=$bin" >>"${GITHUB_OUTPUT:-/dev/null}"
 
@@ -116,5 +123,18 @@ if [ -n "${NUNKI_ARGS:-}" ]; then
 fi
 
 "$bin" --version
+
+# Posting the diff on a pull request is its own script: it decides what to say
+# from `diff --exit-code` and which comment to edit, none of which needs the
+# network dance above, so it is testable on its own.
+if [ "${NUNKI_COMMENT:-false}" = "true" ]; then
+  if [ "${NUNKI_COMMAND:-check}" != "diff" ]; then
+    echo "nunki: comment: true only applies to 'command: diff' (got ${NUNKI_COMMAND:-check})" >&2
+    exit 1
+  fi
+  shift # the subcommand; action-comment.sh supplies `diff` itself
+  exec bash "$GITHUB_ACTION_PATH/scripts/action-comment.sh" "$bin" "$@"
+fi
+
 echo "nunki: $*"
 exec "$bin" "$@"

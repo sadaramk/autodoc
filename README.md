@@ -60,11 +60,31 @@ describes: a book records the commit it documents rather than `HEAD`.
 ## Review what a change does to the architecture
 
 ```yaml
-- uses: sadaramk/nunki@v0.3.0
-  with:
-    command: diff
-    args: --base ${{ github.event.pull_request.base.sha }}
+permissions:
+  contents: read
+  pull-requests: write
+
+steps:
+  - uses: actions/checkout@v7
+    with:
+      fetch-depth: 0          # `diff` checks out the base commit itself
+  - uses: sadaramk/nunki@v0.4.0
+    with:
+      command: diff
+      comment: true
 ```
+
+That is the whole workflow. One comment per pull request, edited in place on every push rather than
+appended to, and taken back down if a later push makes the branch match its base — so a pull request
+that changes nothing about the architecture is not told so twice a day. `--base` defaults to the
+commit the pull request merges into; pass it explicitly to compare against something else. The
+comment is not a verdict: add `args: --exit-code` if an architecture change should also fail the job.
+
+`comment` needs 0.4.0. The action reads its inputs from the ref you pin, so an older tag rejects it
+outright rather than ignoring it.
+
+> Fork pull requests cannot be commented on with the default `GITHUB_TOKEN`, which GitHub makes
+> read-only there. That is a platform constraint, not something this action can work around.
 
 It scans both revisions and compares the models rather than the rendered pages, so a reordered table
 is not a change and a new route is one line:
@@ -75,7 +95,7 @@ is not a change and a new route is one line:
 >   `202`; no authentication requirement is recognised any more
 
 Routes, request and response types, authentication, tables, columns, services and the connections
-between them. Markdown by default for a PR comment, `--json` for a bot, `--exit-code` to gate.
+between them. `nunki diff` prints that Markdown on its own too, with `--json` for a bot.
 
 ## Take a diagram into draw.io
 
