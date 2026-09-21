@@ -46,6 +46,7 @@ tree-sitter-go = "0.25"
 tree-sitter-python = "0.25"
 tree-sitter-java = "0.23.5"
 tree-sitter-kotlin-ng = "1.1"
+tree-sitter-c-sharp = "0.23"
 roxmltree = "0.21"
 
 [profile.release]

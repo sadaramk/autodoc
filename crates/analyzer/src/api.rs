@@ -199,6 +199,7 @@ pub struct Excluded {
 }
 
 mod client;
+mod cs;
 mod go;
 mod java;
 mod kt;
@@ -595,6 +596,7 @@ pub fn extract(index: &SourceIndex) -> ApiModel {
                     | Language::Python
                     | Language::Java
                     | Language::Kotlin
+                    | Language::CSharp
             )
         })
         .filter_map(|f| {
@@ -616,6 +618,7 @@ pub fn extract(index: &SourceIndex) -> ApiModel {
     rs::extract(&files, &mut h);
     java::extract(index, &files, &mut h);
     kt::extract(index, &files, &mut h);
+    cs::extract(index, &files, &mut h);
     client::extract(&files, &mut h);
     let mut api = finish(h);
     sanitize_symbols(&mut api, &files);

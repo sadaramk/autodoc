@@ -118,16 +118,35 @@ fn shared_env_file_edges_need_code_confirmation_through_libraries() {
     assert_draft_valid(&root, &r);
 }
 
+/// The example-voting-app shape: a Python front end, a C# worker and a Ruby
+/// results page. C# is read, so the worker is documented from its own code;
+/// Ruby has no grammar, so its service exists in the diagram only because
+/// compose declares it — and it still has to be there, with the language named,
+/// rather than silently missing.
 #[test]
-fn unparsed_language_services_still_appear_and_generic_gets_are_not_reads() {
+fn a_service_in_an_unread_language_still_appears_beside_ones_that_are_read() {
     let root = fixture("unparsed-worker");
     let r = scan_container(&root);
+
     let worker = unit(&r, "worker");
     assert_eq!(worker.language, Language::CSharp);
-    assert_eq!(worker.kind, UnitKind::Worker);
-    assert_eq!(worker.entry_points[0].file_path, "worker/Dockerfile");
+    assert_eq!(worker.entry_points[0].file_path, "worker/Program.cs", "read from the code, not the Dockerfile");
+    assert_eq!(
+        worker.kind,
+        UnitKind::Worker,
+        "compose runs it as a service and publishes no ports, so `static Main` is not a CLI"
+    );
     rel(&r, "worker", "redis");
     rel(&r, "worker", "postgres");
+
+    let result = unit(&r, "result");
+    assert_eq!(result.language, Language::Ruby);
+    assert_eq!(result.entry_points[0].file_path, "result/Dockerfile", "nothing else can be cited");
+    assert!(result.tech_stack.contains("not parsed"), "the stack says so: {}", result.tech_stack);
+    rel(&r, "result", "postgres");
+    assert_eq!(r.stats.unread_census(), "1 Ruby", "and the census counts it");
+
+    // A generic `get` is not a read: only a client whose call names the store is.
     let vote = rel(&r, "vote", "redis");
     assert_eq!(vote.edge_type, EdgeType::Write);
     assert_eq!(vote.label, "writes");

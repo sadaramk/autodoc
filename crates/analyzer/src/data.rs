@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 mod access;
 mod alembic;
+mod csharp;
 mod go;
 mod inherit;
 mod java;
@@ -381,6 +382,11 @@ pub fn extract(index: &SourceIndex) -> DataModel {
     enums.extend(kt.enums);
     uses.extend(kt.enum_uses);
 
+    let cs = csharp::parse(&group(&[Language::CSharp], false));
+    raw.extend(cs.entities);
+    enums.extend(cs.enums);
+    uses.extend(cs.enum_uses);
+
     let rs = rust_orm::parse(&group(&[Language::Rust], false));
     raw.extend(rs.entities);
     rows.extend(rs.row_structs);
@@ -534,6 +540,7 @@ pub fn extract(index: &SourceIndex) -> DataModel {
                     "sqlmodel" | "sqlalchemy" | "django" => lang == Language::Python,
                     "gorm" => lang == Language::Go,
                     "diesel" | "diesel-model" | "sqlx" => lang == Language::Rust,
+                    "ef-core" => lang == Language::CSharp,
                     _ => false,
                 };
                 if !fits {

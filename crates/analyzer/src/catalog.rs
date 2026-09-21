@@ -134,6 +134,30 @@ impl InfraKind {
 
 /// (package name or Go module prefix, kind)
 const LIBRARIES: &[(&str, InfraKind)] = &[
+    // NuGet. `Microsoft.EntityFrameworkCore` alone names no store; the provider does.
+    ("Npgsql.EntityFrameworkCore.PostgreSQL", InfraKind::Postgres),
+    ("Microsoft.EntityFrameworkCore.Npgsql", InfraKind::Postgres),
+    ("Npgsql", InfraKind::Postgres),
+    ("Pomelo.EntityFrameworkCore.MySql", InfraKind::Mysql),
+    ("MySqlConnector", InfraKind::Mysql),
+    ("Microsoft.EntityFrameworkCore.Sqlite", InfraKind::Sqlite),
+    ("StackExchange.Redis", InfraKind::Redis),
+    ("Microsoft.Extensions.Caching.StackExchangeRedis", InfraKind::Redis),
+    ("MongoDB.Driver", InfraKind::Mongodb),
+    ("AWSSDK.S3", InfraKind::S3),
+    ("AWSSDK.DynamoDBv2", InfraKind::Dynamodb),
+    ("AWSSDK.SQS", InfraKind::Sqs),
+    ("Confluent.Kafka", InfraKind::Kafka),
+    ("RabbitMQ.Client", InfraKind::Rabbitmq),
+    ("NATS.Client.Core", InfraKind::Nats),
+    ("Elastic.Clients.Elasticsearch", InfraKind::Elasticsearch),
+    ("NEST", InfraKind::Elasticsearch),
+    ("Stripe.net", InfraKind::Stripe),
+    ("SendGrid", InfraKind::Sendgrid),
+    ("Twilio", InfraKind::Twilio),
+    ("OpenAI", InfraKind::Openai),
+    ("Anthropic.SDK", InfraKind::Anthropic),
+    ("MailKit", InfraKind::Smtp),
     // Postgres
     ("pg", InfraKind::Postgres),
     ("postgres", InfraKind::Postgres),
@@ -301,7 +325,7 @@ const LIBRARIES: &[(&str, InfraKind)] = &[
 ];
 
 /// Java package prefixes → infrastructure, for imports (`org.springframework.kafka.core.KafkaTemplate`).
-const JAVA_PACKAGES: &[(&str, InfraKind)] = &[
+const NAMESPACE_PACKAGES: &[(&str, InfraKind)] = &[
     ("org.springframework.kafka", InfraKind::Kafka),
     ("org.apache.kafka", InfraKind::Kafka),
     ("io.micronaut.configuration.kafka", InfraKind::Kafka),
@@ -309,6 +333,27 @@ const JAVA_PACKAGES: &[(&str, InfraKind)] = &[
     ("org.springframework.amqp", InfraKind::Rabbitmq),
     ("com.rabbitmq.client", InfraKind::Rabbitmq),
     ("io.micronaut.rabbitmq", InfraKind::Rabbitmq),
+    // C# namespaces. The EF Core provider names the store, not `EntityFrameworkCore` itself.
+    ("Npgsql", InfraKind::Postgres),
+    ("MySqlConnector", InfraKind::Mysql),
+    ("MySql.Data", InfraKind::Mysql),
+    ("Microsoft.Data.Sqlite", InfraKind::Sqlite),
+    ("StackExchange.Redis", InfraKind::Redis),
+    ("MongoDB.Driver", InfraKind::Mongodb),
+    ("Amazon.S3", InfraKind::S3),
+    ("Amazon.DynamoDBv2", InfraKind::Dynamodb),
+    ("Amazon.SQS", InfraKind::Sqs),
+    ("Confluent.Kafka", InfraKind::Kafka),
+    ("RabbitMQ.Client", InfraKind::Rabbitmq),
+    ("NATS.Client", InfraKind::Nats),
+    ("Nest", InfraKind::Elasticsearch),
+    ("Elastic.Clients.Elasticsearch", InfraKind::Elasticsearch),
+    ("Stripe", InfraKind::Stripe),
+    ("SendGrid", InfraKind::Sendgrid),
+    ("Twilio", InfraKind::Twilio),
+    ("OpenAI", InfraKind::Openai),
+    ("Anthropic", InfraKind::Anthropic),
+    ("SlackNet", InfraKind::Slack),
     ("org.springframework.data.mongodb", InfraKind::Mongodb),
     ("com.mongodb", InfraKind::Mongodb),
     ("io.quarkus.mongodb", InfraKind::Mongodb),
@@ -341,13 +386,13 @@ const JAVA_PACKAGES: &[(&str, InfraKind)] = &[
     ("com.anthropic", InfraKind::Anthropic),
 ];
 
-fn java_prefix<'a, T: Copy>(table: &'a [(&'a str, T)], spec: &str) -> Option<T> {
+fn namespace_prefix<'a, T: Copy>(table: &'a [(&'a str, T)], spec: &str) -> Option<T> {
     table.iter().find_map(|(p, v)| (spec == *p || spec.starts_with(&format!("{p}."))).then_some(*v))
 }
 
-/// Infrastructure named by a Java import.
-pub fn infra_for_java_import(spec: &str) -> Option<InfraKind> {
-    java_prefix(JAVA_PACKAGES, spec)
+/// Infrastructure named by a dotted namespace import (JVM, C#).
+pub fn infra_for_namespace(spec: &str) -> Option<InfraKind> {
+    namespace_prefix(NAMESPACE_PACKAGES, spec)
 }
 
 /// Go module paths carry major-version suffixes (`/v76`); match by prefix.
@@ -516,13 +561,21 @@ const FRAMEWORKS: &[(&str, &str, FrameworkRole)] = &[
     ("io.ktor:ktor-server-cio", "Ktor", FrameworkRole::HttpServer),
     ("io.ktor:ktor-server-tomcat", "Ktor", FrameworkRole::HttpServer),
     ("io.ktor:ktor-server-jetty", "Ktor", FrameworkRole::HttpServer),
+    // `<Project Sdk="Microsoft.NET.Sdk.Web">` is what declares a .NET web app;
+    // ASP.NET Core itself ships in the shared framework, so there is no
+    // `PackageReference` to find.
+    ("microsoft.net.sdk.web", "ASP.NET Core", FrameworkRole::HttpServer),
+    ("microsoft.aspnetcore.app", "ASP.NET Core", FrameworkRole::HttpServer),
+    ("microsoft.net.sdk.worker", "Worker Service", FrameworkRole::Cli),
     ("info.picocli:picocli", "picocli", FrameworkRole::Cli),
     ("org.springframework.shell:spring-shell-starter", "Spring Shell", FrameworkRole::Cli),
 ];
 
-/// Java package prefixes → framework, for modules whose build file inherits
-/// dependencies (a parent POM) or declares only the platform.
-const JAVA_FRAMEWORK_PACKAGES: &[(&str, (&str, FrameworkRole))] = &[
+/// Dotted namespace prefixes → framework, for languages where an import names
+/// a namespace rather than a file: JVM modules whose build file inherits its
+/// dependencies (a parent POM), and C#, where the `.csproj` lists NuGet ids
+/// that need not resemble the namespaces used.
+const NAMESPACE_FRAMEWORKS: &[(&str, (&str, FrameworkRole))] = &[
     ("org.springframework.web.bind.annotation", ("Spring MVC", FrameworkRole::HttpServer)),
     ("org.springframework.web.reactive", ("Spring WebFlux", FrameworkRole::HttpServer)),
     ("org.springframework.cloud.gateway", ("Spring Cloud Gateway", FrameworkRole::HttpServer)),
@@ -540,6 +593,10 @@ const JAVA_FRAMEWORK_PACKAGES: &[(&str, (&str, FrameworkRole))] = &[
     ("io.ktor.server.engine", ("Ktor", FrameworkRole::HttpServer)),
     ("io.ktor.server.application", ("Ktor", FrameworkRole::HttpServer)),
     ("picocli", ("picocli", FrameworkRole::Cli)),
+    ("Microsoft.AspNetCore.Mvc", ("ASP.NET Core", FrameworkRole::HttpServer)),
+    ("Microsoft.AspNetCore.Builder", ("ASP.NET Core", FrameworkRole::HttpServer)),
+    ("Microsoft.AspNetCore.Http", ("ASP.NET Core", FrameworkRole::HttpServer)),
+    ("Microsoft.AspNetCore.Routing", ("ASP.NET Core", FrameworkRole::HttpServer)),
 ];
 
 /// Services that support the platform rather than serve requests: role
@@ -560,8 +617,8 @@ pub fn gateway_framework(framework: &str) -> bool {
     matches!(framework, "Zuul" | "Spring Cloud Gateway")
 }
 
-pub fn framework_for_java_import(spec: &str) -> Option<(&'static str, FrameworkRole)> {
-    java_prefix(JAVA_FRAMEWORK_PACKAGES, spec)
+pub fn framework_for_namespace(spec: &str) -> Option<(&'static str, FrameworkRole)> {
+    namespace_prefix(NAMESPACE_FRAMEWORKS, spec)
 }
 
 /// Database access layers that don't name the database themselves.
@@ -595,6 +652,13 @@ pub fn is_orm(name: &str) -> bool {
         "org.jooq",
         "org.mybatis",
         "org.jdbi",
+        // .NET data access
+        "microsoft.entityframeworkcore",
+        "npgsql.entityframeworkcore.postgresql",
+        "pomelo.entityframeworkcore.mysql",
+        "dapper",
+        "nhibernate",
+        "linq2db",
     ]
     .iter()
     .any(|p| n == *p || n.starts_with(&format!("{p}/")) || n.starts_with(&format!("{p}.")))

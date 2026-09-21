@@ -420,6 +420,61 @@ pub fn orm_access(line: &str, name: &str, table: &str, source: &str) -> Option<b
         ".scalars(",
         ".exec(",
     ];
+    // EF Core is reached through the `DbSet` property, which by convention is
+    // the pluralised class name — `_db.Products`, not `_db.Product`. Its verbs
+    // are PascalCase and would be false positives in every other language, so
+    // they are matched here rather than added to the shared lists.
+    if source == "ef-core" {
+        const EF_WRITE: &[&str] = &[
+            ".Add(",
+            ".AddAsync(",
+            ".AddRange(",
+            ".AddRangeAsync(",
+            ".Remove(",
+            ".RemoveRange(",
+            ".Update(",
+            ".UpdateRange(",
+            ".Attach(",
+            ".ExecuteDelete(",
+            ".ExecuteUpdate(",
+        ];
+        const EF_READ: &[&str] = &[
+            ".Find(",
+            ".FindAsync(",
+            ".First(",
+            ".FirstAsync(",
+            ".FirstOrDefault(",
+            ".FirstOrDefaultAsync(",
+            ".Single(",
+            ".SingleOrDefault(",
+            ".SingleOrDefaultAsync(",
+            ".Where(",
+            ".Any(",
+            ".AnyAsync(",
+            ".Count(",
+            ".CountAsync(",
+            ".ToList(",
+            ".ToListAsync(",
+            ".ToArrayAsync(",
+            ".AsQueryable(",
+            ".AsNoTracking(",
+            ".Include(",
+            ".Select(",
+            ".OrderBy(",
+            ".SumAsync(",
+        ];
+        let sets = [format!(".{name}"), format!(".{}", super::go::plural(name))];
+        if !sets.iter().any(|s| is_word_at(l, s.trim_start_matches('.')) && l.contains(s.as_str())) {
+            return None;
+        }
+        return if EF_WRITE.iter().any(|p| l.contains(p)) {
+            Some(true)
+        } else if EF_READ.iter().any(|p| l.contains(p)) {
+            Some(false)
+        } else {
+            None
+        };
+    }
     let has = |ps: &[&str]| ps.iter().any(|p| l.contains(p));
     let mentions = match source {
         s if s.contains("prisma") => l.contains(&format!(".{}.", lower_camel(name))),

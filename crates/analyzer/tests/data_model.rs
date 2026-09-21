@@ -571,3 +571,56 @@ fn a_repository_decorator_is_not_an_entity() {
     let tables = tables(&data);
     assert!(tables.contains(&"invoices") && tables.contains(&"invoice_lines"), "{tables:?}");
 }
+
+#[test]
+fn csharp_ef_core_entities_access_and_enums() {
+    let root = fixture("api-frameworks/aspnet");
+    let m = model(&root);
+    assert_eq!(tables(&m), ["orders", "products"], "`ToTable(\"orders\")` in OnModelCreating names the table");
+
+    let products = entity(&m, "products");
+    assert_eq!(products.name, "Product", "the class name is kept alongside the table");
+    assert_eq!(products.source, "ef-core");
+    assert_eq!(
+        products.columns.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(),
+        ["id", "name", "price", "category"],
+        "properties become snake_case columns"
+    );
+    assert!(col(products, "id").primary_key, "EF's convention: a property named `Id` is the key");
+    assert_eq!(col(products, "name").constraints, ["max length 120"], "`[MaxLength(120)]`");
+    assert_eq!(col(products, "price").type_name, "decimal");
+    assert!(!col(products, "name").nullable, "`string` without `?` is not null");
+
+    let orders = entity(&m, "orders");
+    assert_eq!(
+        orders.columns.iter().map(|c| (c.name.as_str(), c.nullable)).collect::<Vec<_>>(),
+        [("id", false), ("customer_email", false), ("currency", false)],
+        "`Product? Item` is a navigation, not a column"
+    );
+    assert_eq!(col(orders, "customer_email").constraints, ["email"], "`[EmailAddress]`");
+    assert_eq!(
+        orders.relations.iter().map(|r| (r.kind.as_str(), r.target.as_str())).collect::<Vec<_>>(),
+        [("many-to-one", "entity:products")],
+        "a navigation property resolves to the other table"
+    );
+
+    // Access is reached through the `DbSet` property, which is the pluralised class name.
+    assert_eq!(
+        sites(&products.writes),
+        [
+            ("catalog", Some("Create"), "src/Catalog/Controllers/ProductsController.cs", 54),
+            ("catalog", Some("Delete"), "src/Catalog/Controllers/ProductsController.cs", 69),
+        ],
+        "`_db.Products.Add` / `.Remove` are writes"
+    );
+    assert!(
+        products.reads.len() >= 2 && products.reads.iter().all(|a| a.unit == "catalog"),
+        "`.AsQueryable()` / `.FindAsync()` are reads: {:?}",
+        sites(&products.reads)
+    );
+    assert_eq!(
+        sites(&orders.reads),
+        [("catalog", Some("ByReference"), "src/Catalog/Controllers/OrdersController.cs", 39)],
+        "`.FirstOrDefault` on the orders set"
+    );
+}

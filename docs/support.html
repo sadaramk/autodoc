@@ -52,6 +52,7 @@
     <tr><td>Python</td><td>Packages, uv and Poetry workspaces</td></tr>
     <tr><td>Java</td><td>Maven and Gradle modules</td></tr>
     <tr><td>Kotlin</td><td>Gradle modules</td></tr>
+    <tr><td>C#</td><td><code>.csproj</code> projects, named by <code>AssemblyName</code> or the file</td></tr>
   </table>
   <p class="meta">
     A file in any other language still counts towards a unit and its Dockerfile, and the book says
@@ -66,13 +67,14 @@
     <tr><th>Python</th><td>FastAPI, Flask, Django, Starlette, aiohttp</td></tr>
     <tr><th>Rust</th><td>Axum, Actix Web, Rocket, warp, Poem</td></tr>
     <tr><th>JVM</th><td>Spring MVC, Spring WebFlux, JAX-RS, Quarkus, Micronaut, Dropwizard, Jersey, Helidon, Javalin, Vert.x, Ktor</td></tr>
+    <tr><th>C#</th><td>ASP.NET Core attribute-routed controllers and minimal-API <code>Map*</code> routes</td></tr>
     <tr><th>Service-to-service</th><td>Feign, MicroProfile Rest Client, Micronaut clients, gRPC stubs, and HTTP client calls matched to the operation they hit</td></tr>
     <tr><th>Gateways</th><td>Spring Cloud Gateway and Zuul routes read from configuration, including routes declared in a config server</td></tr>
   </table>
 
   <h2>Data</h2>
   <table>
-    <tr><th>ORMs and mappers</th><td>JPA/Hibernate, Spring Data, jOOQ, MyBatis, JDBI, Micronaut Data, Panache, Exposed, GORM, sqlx, <code>database/sql</code>, Diesel, SeaORM, Prisma, TypeORM, Sequelize, Drizzle, Kysely, Knex, SQLAlchemy, SQLModel, Django ORM, Peewee, Tortoise</td></tr>
+    <tr><th>ORMs and mappers</th><td>JPA/Hibernate, Spring Data, jOOQ, MyBatis, JDBI, Micronaut Data, Panache, Exposed, EF Core, GORM, sqlx, <code>database/sql</code>, Diesel, SeaORM, Prisma, TypeORM, Sequelize, Drizzle, Kysely, Knex, SQLAlchemy, SQLModel, Django ORM, Peewee, Tortoise</td></tr>
     <tr><th>Migrations</th><td>Liquibase, Flyway, Alembic, raw SQL</td></tr>
     <tr><th>Stores</th><td>PostgreSQL, MySQL, SQLite, MongoDB, Redis, Elasticsearch, S3, Firestore, DynamoDB</td></tr>
     <tr><th>Read from them</th><td>Entities, columns, keys, cardinality, which service reads and which writes, and lifecycles inferred from status fields plus the code that changes them</td></tr>

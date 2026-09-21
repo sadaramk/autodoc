@@ -12,6 +12,13 @@ services:
       - redis
       - db
 
+  result:
+    build: ./result
+    ports:
+      - "5001:4567"
+    depends_on:
+      - db
+
   redis:
     image: redis:alpine
 

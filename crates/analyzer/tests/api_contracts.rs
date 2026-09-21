@@ -806,3 +806,100 @@ fn go_routes_under_an_unresolved_prefix_are_partial() {
     let known = api.operations.iter().find(|o| o.path.contains("/tasks")).expect("the tasks routes are documented");
     assert!(!known.path_partial, "`{}` is fully resolved and should not be marked partial", known.path);
 }
+
+#[test]
+fn csharp_aspnet_core_controllers_and_minimal_api() {
+    let root = fixture("api-frameworks/aspnet");
+    let api = api_of(&root);
+    assert_eq!(
+        ids(&api),
+        [
+            "catalog:GET /api/Products",
+            "catalog:POST /api/Products",
+            "catalog:GET /api/Products/{id}",
+            "catalog:DELETE /api/Products/{id}",
+            "catalog:GET /v1/orders/by-reference",
+            "catalog:PUT /v1/orders/{reference}"
+        ],
+        "`[Route(\"api/[controller]\")]` expands the token from the class name"
+    );
+    assert_eq!(
+        api.excluded.iter().map(|e| (e.operation.as_str(), e.reason.as_str())).collect::<Vec<_>>(),
+        [("catalog:GET /healthz", "health / liveness probe")],
+        "the minimal-API probe is read, then left out on purpose"
+    );
+
+    let list = op(&api, "catalog:GET /api/Products");
+    assert_eq!(params(list), ["query limit: int?", "query category: Category?"], "defaults and `?` make them optional");
+    assert_eq!(list.response.as_ref().map(|t| t.type_name.as_str()), Some("List<Product>"));
+    assert!(list.response.as_ref().is_some_and(|t| t.collection), "`List<T>` is a collection");
+    assert_eq!(list.summary.as_deref(), Some("List products, newest first."), "prose out of `<summary>`");
+    assert!(auth(list).is_empty(), "`[AllowAnonymous]` overrides the controller's `[Authorize]`");
+
+    let create = op(&api, "catalog:POST /api/Products");
+    assert_eq!(create.request_body.as_ref().map(|t| t.type_name.as_str()), Some("NewProduct"));
+    assert_eq!(create.success_status, Some(201), "from `[ProducesResponseType(StatusCodes.Status201Created)]`");
+    assert_eq!(auth(create), ["session: authenticated"]);
+
+    let get = op(&api, "catalog:GET /api/Products/{id}");
+    assert_eq!(params(get), ["path id: int"], "`{{id:int}}` keeps the name, drops the constraint");
+    assert_eq!(errors(get), [(Some(404), None)], "`return NotFound();`");
+
+    let remove = op(&api, "catalog:DELETE /api/Products/{id}");
+    assert_eq!(remove.success_status, Some(204), "`return NoContent();`");
+    assert_eq!(auth(remove), ["session: authenticated", "role: admin"], "class `[Authorize]` plus the action's roles");
+
+    let lookup = op(&api, "catalog:GET /v1/orders/by-reference");
+    assert_eq!(params(lookup), ["query ref: string"], "`[FromQuery(Name = \"ref\")]` renames it");
+    assert_eq!(lookup.params[0].code_name.as_deref(), Some("reference"), "the C# identifier is kept alongside");
+    assert_eq!(errors(lookup), [(Some(404), None)], "`throw new KeyNotFoundException`");
+    assert_eq!(auth(lookup), ["role: policy orders:write"]);
+
+    let replace = op(&api, "catalog:PUT /v1/orders/{reference}");
+    assert_eq!(
+        params(replace),
+        ["path reference: string", "header X-Idempotency-Key: string"],
+        "a renamed header parameter"
+    );
+    assert_eq!(
+        replace.params[1].rules.iter().map(|r| r.statement.as_str()).collect::<Vec<_>>(),
+        ["required"],
+        "`[Required]` on a parameter is a rule, not just a flag"
+    );
+    assert_eq!(replace.request_body.as_ref().map(|t| t.type_name.as_str()), Some("Order"));
+    assert_eq!(errors(replace), [(Some(400), None)], "`throw new ArgumentException`");
+
+    assert_eq!(
+        fields(model(&api, "catalog:Product")),
+        [
+            "Id: int {primary key}",
+            "Name: string {required; max length 120}",
+            "Price: decimal {range 0–100000}",
+            "Category: Category"
+        ],
+        "data annotations become rules"
+    );
+    assert_eq!(
+        fields(model(&api, "catalog:NewProduct")),
+        [
+            "Name: string {required; length 2–120}",
+            "Price: decimal {range 0–100000}",
+            "SupplierEmail: string? {format: email}"
+        ],
+        "`[StringLength(120, MinimumLength = 2)]` is one rule, and `string?` is optional"
+    );
+    let order = model(&api, "catalog:Order");
+    assert_eq!(
+        fields(order),
+        [
+            "Id: int {primary key}",
+            "customer_email: string {required; format: email}",
+            "Currency: string {pattern \"^[A-Z]{3}$\"}",
+            "Item: Product?"
+        ],
+        "`[JsonPropertyName]` renames the wire field"
+    );
+    assert_eq!(order.fields[1].code_name.as_deref(), Some("CustomerEmail"));
+    assert_eq!(order.fields[3].model.as_deref(), Some("catalog:Product"), "a nested model resolves");
+    assert_eq!(order.doc.as_deref(), Some("A placed order."));
+}
