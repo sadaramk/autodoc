@@ -118,14 +118,14 @@ open docs/architecture/index.html</code></pre>
   </p>
   <pre><code>nunki check /path/to/your/repo --out docs/architecture</code></pre>
   <p>Commit the book alongside the code it documents, and run the check on every push:</p>
-  <pre><code>- uses: sadaramk/nunki@v0.4.0
+  <pre><code>- uses: sadaramk/nunki@v0.4.1
   with:
     out: docs/architecture</code></pre>
   <p class="meta">
     The action downloads a prebuilt binary for the runner and verifies it against the checksum
     published with the release, so nothing is compiled. <code>command</code> takes any subcommand
     (<code>check</code> by default) and <code>args</code> is appended verbatim. Pinning the action
-    pins the binary — <code>@v0.4.0</code> runs that build; <code>@v0</code> tracks the newest 0.x.
+    pins the binary — <code>@v0.4.1</code> runs that build; <code>@v0</code> tracks the newest 0.x.
   </p>
   <p>
     Committing the book does not invalidate it, and neither does a commit that changes nothing it
@@ -169,7 +169,7 @@ steps:
   - uses: actions/checkout@v7
     with:
       fetch-depth: 0
-  - uses: sadaramk/nunki@v0.4.0
+  - uses: sadaramk/nunki@v0.4.1
     with:
       command: diff
       comment: true</code></pre>

@@ -1,4 +1,8 @@
-name: nunki
+# The Marketplace requires a globally unique name, shared with every GitHub
+# user and organisation — and `nunki` is taken by a user account. This is the
+# listing title only: workflows call the action by repository path
+# (`uses: sadaramk/nunki@vX.Y.Z`), which this does not change.
+name: Nunki Architecture Docs
 description: Generate or check verifiable architecture documentation from source code
 branding:
   icon: book-open
@@ -21,8 +25,8 @@ inputs:
     default: ""
   version:
     description: >-
-      Release to download, such as v0.4.0. Left empty, the action uses the
-      version it was pinned to (`uses: …/nunki@v0.4.0`), falling back to the
+      Release to download, such as v0.4.1. Left empty, the action uses the
+      version it was pinned to (`uses: …/nunki@v0.4.1`), falling back to the
       newest release when the ref is a branch or a moving major tag.
     default: ""
   comment:

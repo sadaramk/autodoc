@@ -8,6 +8,17 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-21
+
+### Changed
+
+- The action's Marketplace listing is named "Nunki Architecture Docs". A
+  Marketplace name has to be unique across every action, user and organisation
+  on GitHub, and `nunki` is a user account, so the listing could not be
+  published under it. This is the listing title only: the action is used by
+  repository path (`uses: sadaramk/nunki@v0.4.1`), which has not changed, and
+  no workflow needs editing.
+
 ## [0.4.0] - 2026-09-21
 
 ### Added
@@ -420,7 +431,8 @@ First public release.
   *needs input* rather than guessed, and an `authored.json` overlay that is
   created once and never overwritten.
 
-[Unreleased]: https://github.com/sadaramk/nunki/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/sadaramk/nunki/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/sadaramk/nunki/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/sadaramk/nunki/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sadaramk/nunki/compare/v0.2.7...v0.3.0
 [0.2.7]: https://github.com/sadaramk/nunki/compare/v0.2.6...v0.2.7
