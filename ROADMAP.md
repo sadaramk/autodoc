@@ -22,43 +22,35 @@ however useful it sounds.
 
 Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin.
 
-## Next
+## Tracked work
 
-**Say what was not read, everywhere.** The scan counts files it recognised but
-has no grammar for, and refuses a repository where it recognised nothing. It
-does not yet refuse — or loudly qualify — a book built from a small fraction of
-a repository. A book covering 5% of a codebase should say so on its first page,
-not in a note.
+Every item below is an issue, so progress is visible without reading this file.
+[Open issues](https://github.com/sadaramk/nunki/issues) ·
+[0.4.0](https://github.com/sadaramk/nunki/milestone/1) ·
+[1.0](https://github.com/sadaramk/nunki/milestone/2)
 
-**C# is the biggest hole.** `.cs` is recognised and never parsed, which is why
-the example-voting-app book cannot see its worker. Ruby, PHP and Elixir are in
-the same position. C# first, because it most often appears in polyglot systems
-that nunki otherwise documents well.
+### 0.4.0
 
-**`diff` as a PR comment out of the box.** The command produces the Markdown;
-posting it is still the caller's job. A documented workflow — or an action input
-— should close that gap, including updating one comment instead of appending a
-new one on every push.
+| | |
+|---|---|
+| [#1](https://github.com/sadaramk/nunki/issues/1) | Qualify or refuse a book built from a small fraction of a repository |
+| [#2](https://github.com/sadaramk/nunki/issues/2) | Read C# — `.cs` is recognised and never parsed |
+| [#3](https://github.com/sadaramk/nunki/issues/3) | Post `diff` as a PR comment out of the box |
+| [#10](https://github.com/sadaramk/nunki/issues/10) | Publish the action to the GitHub Marketplace |
 
-**Publish the action to the GitHub Marketplace**, once the name question is
-settled.
+### Needs a decision first
 
-## Later
+| | |
+|---|---|
+| [#4](https://github.com/sadaramk/nunki/issues/4) | Whether the containers diagram keeps datastore edges |
 
-**Large repositories.** etcd and MinIO scan, but the whole tree is read every
-time. Caching parsed facts against content hashes would make `check` cheap
-enough to run on every push of a large repository.
+### Later, unscheduled
 
-**Tracing through runtime indirection.** Request flows stop where a dependency
-is chosen at runtime — a DI container binding one of two implementations of the
-same interface, a CQRS handler resolved from a registry. A cross-unit expansion
-was built and reverted because it changed nothing on five real repositories; the
-blocker is dispatch, not reach. This needs a different approach, not a bigger
-search.
-
-**Authored content that survives better.** `authored.json` is created once and
-never overwritten, which is right, but there is no way to say "this section is
-now wrong" when the code it describes moves.
+| | |
+|---|---|
+| [#5](https://github.com/sadaramk/nunki/issues/5) | Cache parsed facts so `check` is cheap on large repositories |
+| [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection (DI containers, CQRS registries) |
+| [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored content has gone stale |
 
 ## Not doing
 
@@ -85,9 +77,11 @@ than the list.
 
 Not a feature count. Three things have to be true:
 
-1. **`DiagramIR` is stable.** The schema is versioned and the TypeScript mirror
-   is a contract test, but fields still move between minor versions.
-2. **The CLI surface is stable.** Subcommands and flags stop changing shape.
+1. **[`DiagramIR` is stable](https://github.com/sadaramk/nunki/issues/8).** The
+   schema is versioned and the TypeScript mirror is a contract test, but fields
+   still move between minor versions.
+2. **[The CLI surface is stable](https://github.com/sadaramk/nunki/issues/9).**
+   Subcommands and flags stop changing shape.
 3. **No known case where the book states something the code does not support.**
    Every such case found so far became a fix and a regression fixture; the bar
    for 1.0 is that the list is empty, not short. The findings are in
