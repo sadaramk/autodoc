@@ -19,7 +19,7 @@ use nunki_ir::{DiagramIR, EdgeStyle, EdgeType, Evidence};
 
 use std::collections::BTreeMap;
 
-use crate::layout::{self, Rect};
+use crate::layout::{self, Rect, MARGIN};
 
 /// A CSV field: quoted when it has to be, escaped the way RFC 4180 says.
 fn field(v: &str) -> String {
@@ -62,15 +62,39 @@ fn shape_style(focal: bool) -> String {
     )
 }
 
+/// Stroke pattern and weight per edge kind, matching the book's legend: an
+/// event is dotted, a write is heavier, an async call is dashed. Flattening
+/// these to one grey line — as the first version did — throws away the only
+/// thing that distinguishes "reads payments" from "publishes order.placed".
+fn dash_for(kind: EdgeType) -> (&'static str, f64) {
+    match kind {
+        EdgeType::Async => ("6 4", 1.25),
+        EdgeType::Event => ("1 4", 1.25),
+        EdgeType::Write => ("none", 1.7),
+        EdgeType::Read => ("none", 1.1),
+        _ => ("none", 1.25),
+    }
+}
+
+fn edge_dash(e: &nunki_ir::Edge) -> (&'static str, f64) {
+    if matches!(e.style, Some(EdgeStyle::Dashed)) {
+        return ("6 4", 1.25);
+    }
+    dash_for(e.edge_type)
+}
+
 fn edge_style(e: &nunki_ir::Edge) -> String {
-    let dashed = matches!(e.style, Some(EdgeStyle::Dashed)) || matches!(e.edge_type, EdgeType::Async);
-    let color = if e.is_primary_path == Some(true) { "#4f46e5" } else { "#64748b" };
+    let (dash, width) = edge_dash(e);
+    let primary = e.is_primary_path == Some(true);
+    let color = if primary { "#4f46e5" } else { "#64748b" };
+    let dashed = u8::from(dash != "none");
+    let pattern = if dash == "none" { String::new() } else { format!("dashPattern={dash};") };
     // A white label background, or several edges leaving one node print their
     // labels over each other and over the node's own name.
     format!(
-        "edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor={color};dashed={};endArrow=blockThin;\
-         endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;",
-        u8::from(dashed)
+        "edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor={color};dashed={dashed};{pattern}\
+         strokeWidth={};endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;",
+        if primary { width.max(1.7) } else { width }
     )
 }
 
@@ -267,6 +291,33 @@ fn midpoint(points: &[(f64, f64)]) -> (f64, f64) {
     *points.last().unwrap()
 }
 
+/// A non-connectable text cell: the title, the legend labels, the caption.
+struct Text<'a> {
+    id: &'a str,
+    at: Rect,
+    size: f64,
+    /// draw.io's `fontStyle` bitfield: 1 bold, 2 italic.
+    weight: &'a str,
+    color: &'a str,
+    value: &'a str,
+}
+
+fn text_cell(t: Text<'_>) -> String {
+    let Text { id, at, size, weight, color, value: v } = t;
+    let (x, y, w, h) = (at.x, at.y, at.w, at.h);
+    format!(
+        "        <mxCell id=\"{id}\" value=\"{}\" style=\"text;html=1;strokeColor=none;fillColor=none;\
+         align=left;verticalAlign=middle;whiteSpace=wrap;fontSize={size};fontColor={color};fontStyle={weight};\
+         movable=1;resizable=1;connectable=0;\" vertex=\"1\" parent=\"1\">\n          \
+         <mxGeometry x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" as=\"geometry\" />\n        </mxCell>\n",
+        xml(v),
+        x.round() as i64,
+        y.round() as i64,
+        w.round() as i64,
+        h.round() as i64
+    )
+}
+
 /// The diagram as a draw.io file: `.drawio` XML, opened by double-clicking.
 ///
 /// The CSV import cannot carry a route or a label position, so draw.io re-routes
@@ -382,6 +433,108 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
             offset.0, offset.1
         ));
     }
+
+    // The book puts a title above the figure and a legend below it, and the
+    // layout already reserves the space for both. Dropping them — as the first
+    // version did — left a reader with an accent colour and five line styles
+    // and nothing to decode them with.
+    out.push_str(&text_cell(Text {
+        id: "autodoc-eyebrow",
+        at: Rect { x: MARGIN, y: 4.0, w: 400.0, h: 20.0 },
+        size: 11.0,
+        weight: "1",
+        color: "#64748b",
+        value: "CONTAINERS",
+    }));
+    out.push_str(&text_cell(Text {
+        id: "autodoc-title",
+        at: Rect { x: MARGIN, y: 30.0, w: l.width - 2.0 * MARGIN, h: 34.0 },
+        size: 26.0,
+        weight: "1",
+        color: "#0f172a",
+        value: &ir.title,
+    }));
+    if let Some(sub) = &ir.subtitle {
+        out.push_str(&text_cell(Text {
+            id: "autodoc-subtitle",
+            at: Rect { x: MARGIN, y: 62.0, w: l.width - 2.0 * MARGIN, h: 24.0 },
+            size: 13.0,
+            weight: "0",
+            color: "#475569",
+            value: sub,
+        }));
+    }
+
+    let mut kinds: Vec<(EdgeType, &str)> = Vec::new();
+    for (t, label) in [
+        (EdgeType::Sync, "Sync call"),
+        (EdgeType::Async, "Async"),
+        (EdgeType::Event, "Event"),
+        (EdgeType::Read, "Read"),
+        (EdgeType::Write, "Write"),
+    ] {
+        if ir.edges.iter().any(|e| e.edge_type == t) {
+            kinds.push((t, label));
+        }
+    }
+    let ly = l.legend_top;
+    let mut lx = MARGIN;
+    for (t, label) in kinds {
+        let (dash, width) = dash_for(t);
+        let pattern = if dash == "none" { String::new() } else { format!("dashPattern={dash};") };
+        out.push_str(&format!(
+            "        <mxCell id=\"autodoc-lg{}\" style=\"endArrow=none;html=1;strokeColor=#64748b;dashed={};\
+             {pattern}strokeWidth={width};connectable=0;\" edge=\"1\" parent=\"1\">\n          \
+             <mxGeometry relative=\"1\" as=\"geometry\"><mxPoint x=\"{}\" y=\"{}\" as=\"sourcePoint\" />\
+             <mxPoint x=\"{}\" y=\"{}\" as=\"targetPoint\" /></mxGeometry>\n        </mxCell>\n",
+            label.replace(' ', ""),
+            u8::from(dash != "none"),
+            lx.round() as i64,
+            (ly + 24.0).round() as i64,
+            (lx + 30.0).round() as i64,
+            (ly + 24.0).round() as i64
+        ));
+        out.push_str(&text_cell(Text {
+            id: &format!("autodoc-lgt{}", label.replace(' ', "")),
+            at: Rect { x: lx + 38.0, y: ly + 14.0, w: 90.0, h: 20.0 },
+            size: 11.0,
+            weight: "0",
+            color: "#475569",
+            value: label,
+        }));
+        lx += 150.0;
+    }
+    if ir.edges.iter().any(|e| e.is_primary_path == Some(true)) {
+        out.push_str(&format!(
+            "        <mxCell id=\"autodoc-lgprim\" style=\"endArrow=none;html=1;strokeColor=#4f46e5;\
+             strokeWidth=1.7;connectable=0;\" edge=\"1\" parent=\"1\">\n          <mxGeometry relative=\"1\" \
+             as=\"geometry\"><mxPoint x=\"{}\" y=\"{}\" as=\"sourcePoint\" /><mxPoint x=\"{}\" y=\"{}\" \
+             as=\"targetPoint\" /></mxGeometry>\n        </mxCell>\n",
+            lx.round() as i64,
+            (ly + 24.0).round() as i64,
+            (lx + 30.0).round() as i64,
+            (ly + 24.0).round() as i64
+        ));
+        out.push_str(&text_cell(Text {
+            id: "autodoc-lgtprim",
+            at: Rect { x: lx + 38.0, y: ly + 14.0, w: 110.0, h: 20.0 },
+            size: 11.0,
+            weight: "0",
+            color: "#4f46e5",
+            value: "Primary path",
+        }));
+    }
+    // An arrow is a call, not a pipe. Without this a reader cannot tell whether
+    // "Ledger Audit → PostgreSQL: reads payments" means the audit service calls
+    // the database or the rows travel that way.
+    out.push_str(&text_cell(Text {
+        id: "autodoc-convention",
+        at: Rect { x: MARGIN, y: ly + 44.0, w: l.width - 2.0 * MARGIN, h: 20.0 },
+        size: 11.0,
+        weight: "2",
+        color: "#94a3b8",
+        value: "Arrows point from caller to callee. Exported from nunki — the source stays authoritative.",
+    }));
 
     out.push_str("      </root>\n    </mxGraphModel>\n  </diagram>\n</mxfile>\n");
     out

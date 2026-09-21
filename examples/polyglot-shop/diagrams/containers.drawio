@@ -1,4 +1,4 @@
-<mxfile host="nunki" agent="nunki 0.2.7">
+<mxfile host="nunki" agent="nunki 0.3.0">
   <diagram name="Polyglot Shop — containers">
     <mxGraphModel dx="1322" dy="992" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" math="0" shadow="0">
       <root>
@@ -66,7 +66,7 @@
             <mxGeometry x="20" y="138" width="196" height="66" as="geometry" />
           </mxCell>
         </object>
-        <mxCell id="nunki-e0" value="publishes order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-kafka">
+        <mxCell id="nunki-e0" value="publishes order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;dashPattern=1 4;strokeWidth=1.25;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-kafka">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="808" y="332" />
@@ -75,12 +75,12 @@
             <mxPoint as="offset" x="-99" y="-83" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-payments">
+        <mxCell id="nunki-e1" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-payments">
           <mxGeometry relative="1" as="geometry">
             <mxPoint as="offset" x="30" y="-6" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e2" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-postgres">
+        <mxCell id="nunki-e2" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="832" y="284" />
@@ -89,7 +89,7 @@
             <mxPoint as="offset" x="-111" y="21" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e3" value="reads &amp; writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-redis">
+        <mxCell id="nunki-e3" value="reads &amp; writes" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-api-gateway" target="nunki-redis">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="820" y="308" />
@@ -98,7 +98,7 @@
             <mxPoint as="offset" x="113" y="1" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e4" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-postgres">
+        <mxCell id="nunki-e4" value="writes orders" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="856" y="560" />
@@ -107,7 +107,7 @@
             <mxPoint as="offset" x="-123" y="116" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e5" value="sends email" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-sendgrid">
+        <mxCell id="nunki-e5" value="sends email" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.25;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-fulfillment" target="nunki-sendgrid">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="784" y="608" />
@@ -116,7 +116,7 @@
             <mxPoint as="offset" x="-87" y="-125" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e6" value="delivers order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-kafka" target="nunki-fulfillment">
+        <mxCell id="nunki-e6" value="delivers order.placed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=1;dashPattern=1 4;strokeWidth=1.25;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-kafka" target="nunki-fulfillment">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="880" y="508" />
@@ -125,7 +125,7 @@
             <mxPoint as="offset" x="97" y="-91" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e7" value="reads payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-ledger-audit" target="nunki-postgres">
+        <mxCell id="nunki-e7" value="reads payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.1;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-ledger-audit" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="868" y="708" />
@@ -134,7 +134,7 @@
             <mxPoint as="offset" x="-206" y="169" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e8" value="writes payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-postgres">
+        <mxCell id="nunki-e8" value="writes payments" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-postgres">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="844" y="444" />
@@ -143,7 +143,7 @@
             <mxPoint as="offset" x="-117" y="80" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e9" value="charges cards" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-stripe">
+        <mxCell id="nunki-e9" value="charges cards" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-payments" target="nunki-stripe">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="796" y="476" />
@@ -152,7 +152,7 @@
             <mxPoint as="offset" x="-93" y="-162" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="nunki-e10" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-web" target="nunki-api-gateway">
+        <mxCell id="nunki-e10" value="HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#4f46e5;dashed=0;strokeWidth=1.7;endArrow=blockThin;endFill=1;labelBackgroundColor=#ffffff;fontSize=11;fontColor=#475569;" edge="1" parent="1" source="nunki-web" target="nunki-api-gateway">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="353" y="508" />
@@ -160,6 +160,48 @@
             </Array>
             <mxPoint as="offset" x="-45" y="71" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-eyebrow" value="CONTAINERS" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#64748b;fontStyle=1;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="4" width="400" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-title" value="Polyglot Shop — containers" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=26;fontColor=#0f172a;fontStyle=1;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="30" width="1226" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-subtitle" value="A small checkout platform used as the nunki demo repository" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=13;fontColor=#475569;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="62" width="1226" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-lgSynccall" style="endArrow=none;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.25;connectable=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="48" y="904" as="sourcePoint" /><mxPoint x="78" y="904" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-lgtSynccall" value="Sync call" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#475569;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="86" y="894" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-lgEvent" style="endArrow=none;html=1;strokeColor=#64748b;dashed=1;dashPattern=1 4;strokeWidth=1.25;connectable=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="198" y="904" as="sourcePoint" /><mxPoint x="228" y="904" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-lgtEvent" value="Event" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#475569;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="236" y="894" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-lgRead" style="endArrow=none;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.1;connectable=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="348" y="904" as="sourcePoint" /><mxPoint x="378" y="904" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-lgtRead" value="Read" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#475569;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="386" y="894" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-lgWrite" style="endArrow=none;html=1;strokeColor=#64748b;dashed=0;strokeWidth=1.7;connectable=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="498" y="904" as="sourcePoint" /><mxPoint x="528" y="904" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-lgtWrite" value="Write" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#475569;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="536" y="894" width="90" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-lgprim" style="endArrow=none;html=1;strokeColor=#4f46e5;strokeWidth=1.7;connectable=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry"><mxPoint x="648" y="904" as="sourcePoint" /><mxPoint x="678" y="904" as="targetPoint" /></mxGeometry>
+        </mxCell>
+        <mxCell id="autodoc-lgtprim" value="Primary path" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#4f46e5;fontStyle=0;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="686" y="894" width="110" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="autodoc-convention" value="Arrows point from caller to callee. Exported from nunki — the source stays authoritative." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=11;fontColor=#94a3b8;fontStyle=2;movable=1;resizable=1;connectable=0;" vertex="1" parent="1">
+          <mxGeometry x="48" y="924" width="1226" height="20" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
