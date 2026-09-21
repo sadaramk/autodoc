@@ -10,6 +10,18 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- **C# is read.** A tree-sitter grammar for C#, `.csproj` as the module
+  layout, and ASP.NET Core contracts: attribute-routed controllers with
+  the `[controller]` token expanded, minimal-API `Map*` routes, `[FromQuery]` /
+  `[FromRoute]` / `[FromHeader]` / `[FromBody]` binding with `Name =` renames,
+  data annotations as validation rules, `[Authorize]` roles and policies with
+  `[AllowAnonymous]` overriding them, and the statuses a handler returns or
+  throws. Entity Framework Core entities come from the `DbSet<T>` properties,
+  `OnModelCreating`'s `ToTable` / `HasColumnName` / `HasKey`, and the annotations
+  on the properties — all three, because any one alone gives the wrong table
+  name. `_db.Products.Add` and `.FindAsync` are recorded as writes and reads.
+  A `.cs` file no longer appears in the unread census.
+
 - A book says on its first page how much of the source it read, and names what
   it could not. Below a tenth read, nunki refuses to write one at all;
   `--allow-partial` overrides that.

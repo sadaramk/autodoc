@@ -117,7 +117,7 @@ One directory you commit beside the code:
 - **`llms.txt`** — the book as context for agents. `nunki serve` also runs an
   [MCP server](https://sadaramk.github.io/nunki/start.html) on stdio.
 
-Languages: Rust, TypeScript, Go, Python, Java, Kotlin —
+Languages: Rust, TypeScript, Go, Python, Java, Kotlin, C# —
 [what it reads →](https://sadaramk.github.io/nunki/support.html)
 
 A book says on its first page how much of the source it read. Where nunki has no parser — C++, Dart,

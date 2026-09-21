@@ -46,6 +46,12 @@ impl Language {
         matches!(self, Language::Java | Language::Kotlin)
     }
 
+    /// An import names a namespace rather than a file: matching is by dotted
+    /// prefix, and the prefix need not resemble the dependency's package id.
+    pub fn is_namespaced(self) -> bool {
+        self.is_jvm() || matches!(self, Language::CSharp)
+    }
+
     /// Language of a file this engine can't parse, by extension.
     /// Display name for a source file nunki cannot read, for the coverage
     /// census. Broader than [`Language::unparsed_for_extension`], which only
@@ -64,7 +70,7 @@ impl Language {
         Some(match ext {
             "c" | "h" => "C",
             "cc" | "cpp" | "cxx" | "hpp" | "hh" | "hxx" => "C++",
-            "cs" | "csproj" => "C#",
+            "csproj" => "C# project",
             "kts" => "Kotlin script",
             "rb" | "rake" | "gemspec" => "Ruby",
             "php" => "PHP",
@@ -96,7 +102,7 @@ impl Language {
 
     pub fn unparsed_for_extension(ext: &str) -> Option<Language> {
         Some(match ext {
-            "cs" | "csproj" => Language::CSharp,
+            "csproj" => Language::CSharp,
             // `.kt` has a grammar; `.kts` is a build script, not architecture.
             "kts" => Language::Kotlin,
             "rb" => Language::Ruby,
@@ -117,6 +123,7 @@ pub enum Grammar {
     Python,
     Java,
     Kotlin,
+    CSharp,
 }
 
 impl Grammar {
@@ -132,6 +139,7 @@ impl Grammar {
             "py" => (Grammar::Python, Language::Python),
             "java" => (Grammar::Java, Language::Java),
             "kt" => (Grammar::Kotlin, Language::Kotlin),
+            "cs" => (Grammar::CSharp, Language::CSharp),
             _ => return None,
         })
     }
@@ -145,6 +153,7 @@ impl Grammar {
             Grammar::Python => tree_sitter_python::LANGUAGE.into(),
             Grammar::Java => tree_sitter_java::LANGUAGE.into(),
             Grammar::Kotlin => tree_sitter_kotlin_ng::LANGUAGE.into(),
+            Grammar::CSharp => tree_sitter_c_sharp::LANGUAGE.into(),
         }
     }
 }

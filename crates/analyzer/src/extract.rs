@@ -259,6 +259,7 @@ impl<'a> Extractor<'a> {
             Language::Python => self.visit_python(node),
             Language::Java => self.visit_java(node),
             Language::Kotlin => self.visit_kotlin(node),
+            Language::CSharp => self.visit_csharp(node),
             _ => {}
         }
         let mut cursor = node.walk();
@@ -309,7 +310,7 @@ impl<'a> Extractor<'a> {
         let mut expected_row = node.start_position().row;
         while let Some(c) = cur {
             // Attributes and decorators sit between a doc comment and its item.
-            if matches!(c.kind(), "attribute_item" | "decorator" | "annotated_expression") {
+            if matches!(c.kind(), "attribute_item" | "attribute_list" | "decorator" | "annotated_expression") {
                 expected_row = c.start_position().row;
                 cur = c.prev_sibling();
                 continue;
@@ -891,6 +892,217 @@ impl<'a> Extractor<'a> {
                 owner: owner.clone(),
                 target_start: line(decl),
                 target_end: end_line(decl),
+            });
+        }
+    }
+
+    // ──────────────────────────── C# ────────────────────────────
+
+    /// Attributes on a declaration. Unlike Java, C# has no single `modifiers`
+    /// node: `attribute_list` siblings sit directly under the declaration.
+    fn cs_attributes(&mut self, decl: Node, target_kind: &str, target: &str, owner: Option<String>) {
+        let mut c = decl.walk();
+        let lists: Vec<Node> = decl.children(&mut c).filter(|n| n.kind() == "attribute_list").collect();
+        for list in lists {
+            let mut lc = list.walk();
+            let attrs: Vec<Node> = list.named_children(&mut lc).filter(|a| a.kind() == "attribute").collect();
+            for a in attrs {
+                let name = self
+                    .field_text(a, "name")
+                    .or_else(|| a.named_child(0).map(|n| self.text(n).to_string()))
+                    .unwrap_or_default();
+                // `[HttpGet]` and `[Microsoft.AspNetCore.Mvc.HttpGet]` are the
+                // same attribute; routes are matched on the simple name.
+                let name = name.rsplit('.').next().unwrap_or(&name).trim_end_matches("Attribute").to_string();
+                let mut ac = a.walk();
+                let arg_list = a
+                    .child_by_field_name("arguments")
+                    .or_else(|| a.named_children(&mut ac).find(|x| x.kind() == "attribute_argument_list"));
+                let arguments = arg_list
+                    .map(|x| {
+                        let t = self.text(x);
+                        let inner = t.strip_prefix('(').and_then(|t| t.strip_suffix(')')).unwrap_or(t);
+                        inner
+                            .split_whitespace()
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                            .chars()
+                            .take(MAX_ANNOTATION_ARGS)
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                self.facts.annotations.push(Annotation {
+                    name,
+                    arguments,
+                    line: line(a),
+                    target_kind: target_kind.to_string(),
+                    target: target.to_string(),
+                    owner: owner.clone(),
+                    target_start: line(decl),
+                    target_end: end_line(decl),
+                });
+            }
+        }
+    }
+
+    /// Enclosing type name for a member.
+    fn cs_owner(&self, n: Node) -> Option<String> {
+        let mut cur = n.parent();
+        while let Some(p) = cur {
+            if matches!(
+                p.kind(),
+                "class_declaration" | "interface_declaration" | "struct_declaration" | "record_declaration"
+            ) {
+                return p.child_by_field_name("name").map(|x| self.text(x).to_string());
+            }
+            cur = p.parent();
+        }
+        None
+    }
+
+    /// True when `n` sits in a file of top-level statements rather than inside
+    /// a method body — the two are syntactically identical otherwise.
+    fn cs_in_global_statement(&self, n: Node) -> bool {
+        let mut cur = n.parent();
+        while let Some(p) = cur {
+            match p.kind() {
+                "global_statement" => return true,
+                "method_declaration" | "constructor_declaration" | "local_function_statement" => return false,
+                _ => cur = p.parent(),
+            }
+        }
+        false
+    }
+
+    fn cs_owner_node(&self, n: Node<'a>) -> Option<Node<'a>> {
+        let mut cur = n.parent();
+        while let Some(p) = cur {
+            if matches!(
+                p.kind(),
+                "class_declaration" | "interface_declaration" | "struct_declaration" | "record_declaration"
+            ) {
+                return Some(p);
+            }
+            cur = p.parent();
+        }
+        None
+    }
+
+    fn cs_modifiers(&self, n: Node) -> Vec<String> {
+        let mut c = n.walk();
+        n.children(&mut c).filter(|x| x.kind() == "modifier").map(|x| self.text(x).to_string()).collect()
+    }
+
+    fn visit_csharp(&mut self, n: Node) {
+        match n.kind() {
+            "invocation_expression" => {
+                if let Some(f) = n.child_by_field_name("function") {
+                    self.push_call(n, f);
+                    // `var app = WebApplication.CreateBuilder(args)` in a file of
+                    // top-level statements: the modern template has no `Main`, so
+                    // nothing else marks the assembly as a deployable.
+                    let callee = self.text(f);
+                    if matches!(
+                        callee,
+                        "WebApplication.CreateBuilder" | "Host.CreateDefaultBuilder" | "WebHost.CreateDefaultBuilder"
+                    ) && self.cs_in_global_statement(n)
+                    {
+                        // A file of top-level statements declares no symbol, so
+                        // the host type is cited — it is what appears on the line.
+                        let host = callee.split('.').next().unwrap_or(callee).to_string();
+                        self.facts.entry_points.push(EntryPoint {
+                            symbol: host,
+                            start_line: line(n),
+                            end_line: end_line(n),
+                            reason: format!("application object `{callee}` in {}", self.file_name),
+                        });
+                    }
+                }
+                return;
+            }
+            "string_literal" | "verbatim_string_literal" | "raw_string_literal" => {
+                let raw = self.text(n);
+                self.push_string(n, raw);
+                return;
+            }
+            // `using Acme.Orders.Data;` — the namespace, not a file path.
+            "using_directive" => {
+                let mut uc = n.walk();
+                let specifier = n
+                    .named_children(&mut uc)
+                    .find(|c| matches!(c.kind(), "qualified_name" | "identifier"))
+                    .map(|c| self.text(c).to_string())
+                    .unwrap_or_default();
+                if !specifier.is_empty() {
+                    self.facts.imports.push(Import { specifier, line: line(n) });
+                }
+                return;
+            }
+            "namespace_declaration" | "file_scoped_namespace_declaration" => {
+                if self.facts.package.is_none() {
+                    self.facts.package = n.child_by_field_name("name").map(|x| self.text(x).to_string());
+                }
+                return;
+            }
+            _ => {}
+        }
+
+        let kind = match n.kind() {
+            "class_declaration" => Some((SymbolKind::Class, "class")),
+            "interface_declaration" => Some((SymbolKind::Interface, "interface")),
+            "struct_declaration" => Some((SymbolKind::Struct, "struct")),
+            "record_declaration" => Some((SymbolKind::Class, "record")),
+            "enum_declaration" => Some((SymbolKind::Enum, "enum")),
+            "method_declaration" => Some((SymbolKind::Method, "method")),
+            "constructor_declaration" => Some((SymbolKind::Method, "constructor")),
+            _ => None,
+        };
+        if n.kind() == "property_declaration" {
+            let name = self.field_text(n, "name").unwrap_or_default();
+            let owner = self.cs_owner(n);
+            self.cs_attributes(n, "field", &name, owner);
+            return;
+        }
+        let Some((sym_kind, target_kind)) = kind else { return };
+        let name = self.field_text(n, "name").unwrap_or_default();
+        let modifiers = self.cs_modifiers(n);
+        // C# members are private by default; an interface's are public.
+        let exported = modifiers.iter().any(|m| m == "public")
+            || n.parent().and_then(|p| p.parent()).is_some_and(|p| p.kind() == "interface_declaration");
+        // `/// <summary>…</summary>` rather than `/** … */`.
+        let doc = self.leading_comments(n, &["///"]);
+        self.push_symbol(n, name.clone(), sym_kind, exported, doc);
+
+        let owner = if matches!(target_kind, "method" | "constructor") { self.cs_owner(n) } else { None };
+        self.cs_attributes(n, target_kind, &name, owner);
+        if target_kind != "method" {
+            return;
+        }
+        if let Some(params) = n.child_by_field_name("parameters") {
+            let mut c = params.walk();
+            let each: Vec<Node> = params.named_children(&mut c).filter(|p| p.kind() == "parameter").collect();
+            for p in each {
+                let pname = self.field_text(p, "name").unwrap_or_default();
+                self.cs_attributes(p, "parameter", &pname, Some(name.clone()));
+            }
+        }
+        // `static void Main` is the entry point, and so is a top-level file
+        // that builds a WebApplication — the modern template has no Main.
+        if name == "Main" && modifiers.iter().any(|m| m == "static") {
+            let body = self.text(n);
+            // The citation names the enclosing class, so it has to span the class
+            // declaration — `static void Main` alone does not mention `Program`.
+            let target = self.cs_owner_node(n).unwrap_or(n);
+            let note = if body.contains("WebApplication.CreateBuilder") || body.contains("CreateHostBuilder") {
+                "ASP.NET Core host started in `Main`"
+            } else {
+                "`static Main` in a C# assembly"
+            };
+            self.facts.entry_points.push(EntryPoint {
+                symbol: self.cs_owner(n).unwrap_or_else(|| name.clone()),
+                start_line: line(target),
+                end_line: end_line(target),
+                reason: note.to_string(),
             });
         }
     }

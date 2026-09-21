@@ -17,6 +17,7 @@ pub enum ManifestKind {
     Requirements,
     Maven,
     Gradle,
+    MsBuild,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -64,6 +65,13 @@ pub const MANIFEST_FILES: &[&str] = &[
     "build.gradle.kts",
 ];
 
+/// MSBuild names a project after its file, so `.csproj` is matched by suffix
+/// rather than by name. `.sln` is an aggregator only — it carries no
+/// dependencies, and every project it lists has its own `.csproj`.
+pub fn is_manifest(name: &str) -> bool {
+    MANIFEST_FILES.contains(&name) || name.ends_with(".csproj")
+}
+
 pub fn parse(root: &Path, file: &Path) -> Option<Manifest> {
     let text = std::fs::read_to_string(root.join(file)).ok()?;
     let rel = file.to_string_lossy().replace('\\', "/");
@@ -77,6 +85,7 @@ pub fn parse(root: &Path, file: &Path) -> Option<Manifest> {
         "requirements.txt" => parse_requirements(&text),
         "pom.xml" => parse_pom(&text)?,
         "build.gradle" | "build.gradle.kts" => parse_gradle(root, &dir, &text),
+        _ if fname.ends_with(".csproj") => parse_csproj(fname, &text)?,
         _ => return None,
     };
     m.file = rel;
@@ -561,4 +570,65 @@ mod jvm_tests {
         assert_eq!(m.name.as_deref(), Some("orders"));
         assert!(!m.is_workspace_root);
     }
+}
+
+/// MSBuild `*.csproj`. The project is named after the file unless
+/// `<AssemblyName>` overrides it; dependencies are `<PackageReference>` NuGet
+/// ids plus `<ProjectReference>` sibling paths. `Microsoft.NET.Sdk.Web` in the
+/// `Sdk` attribute is what marks the project as an ASP.NET Core service, so it
+/// is recorded as a dependency too — nothing else in the file says so.
+fn parse_csproj(fname: &str, text: &str) -> Option<Manifest> {
+    let doc = roxmltree::Document::parse(text).ok()?;
+    let project = doc.root_element();
+    let line_at = |n: roxmltree::Node| doc.text_pos_at(n.range().start).row;
+    let mut m = blank(ManifestKind::MsBuild, Language::CSharp);
+    m.name = Some(fname.trim_end_matches(".csproj").to_string());
+    for g in project.children().filter(|c| c.has_tag_name("PropertyGroup")) {
+        for c in g.children().filter(|c| c.is_element()) {
+            let v = c.text().map(str::trim).filter(|t| !t.is_empty());
+            match c.tag_name().name() {
+                "AssemblyName" => m.name = v.map(str::to_string).or(m.name.take()),
+                "Description" => m.description = v.map(str::to_string),
+                _ => {}
+            }
+        }
+    }
+    if let Some(sdk) = project.attribute("Sdk") {
+        m.dependencies.push(Dependency {
+            name: sdk.to_string(),
+            line: line_at(project),
+            path: None,
+            dev: false,
+            indirect: false,
+        });
+    }
+    for g in project.children().filter(|c| c.has_tag_name("ItemGroup")) {
+        for r in g.children().filter(|c| c.is_element()) {
+            let Some(include) = r.attribute("Include") else { continue };
+            match r.tag_name().name() {
+                "PackageReference" => m.dependencies.push(Dependency {
+                    name: include.to_string(),
+                    line: line_at(r),
+                    path: None,
+                    dev: false,
+                    indirect: false,
+                }),
+                // `..\\Other\\Other.csproj` — a sibling project, so the path is
+                // normalized the way a Cargo/Gradle path dependency is.
+                "ProjectReference" => {
+                    let path = include.replace('\\', "/");
+                    let name = path.rsplit('/').next().unwrap_or(&path).trim_end_matches(".csproj").to_string();
+                    m.dependencies.push(Dependency {
+                        name,
+                        line: line_at(r),
+                        path: Some(path),
+                        dev: false,
+                        indirect: false,
+                    });
+                }
+                _ => {}
+            }
+        }
+    }
+    Some(m)
 }

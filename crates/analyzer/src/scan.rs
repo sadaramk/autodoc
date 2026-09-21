@@ -851,7 +851,7 @@ fn walk(root: &Path, opts: &ScanOptions) -> Walked {
         }
         let Ok(rel) = entry.path().strip_prefix(root) else { continue };
         let name = entry.file_name().to_string_lossy();
-        if manifest::MANIFEST_FILES.contains(&name.as_ref()) {
+        if manifest::is_manifest(&name) {
             manifests.push(rel.to_path_buf());
             continue;
         }
@@ -1317,8 +1317,8 @@ fn detect_infra(ui: usize, unit: &Unit, files: &[FileRec], out: &mut BTreeMap<(u
         let mut kinds_here = BTreeSet::new();
         for imp in &f.facts.imports {
             let pkg = catalog::import_package(&imp.specifier);
-            let kind = if f.language.is_jvm() {
-                catalog::infra_for_java_import(&imp.specifier)
+            let kind = if f.language.is_namespaced() {
+                catalog::infra_for_namespace(&imp.specifier)
             } else {
                 catalog::infra_for_package(pkg).or_else(|| catalog::infra_for_package(&imp.specifier))
             };
@@ -1459,8 +1459,8 @@ fn classify_unit(ui: usize, unit: &mut Unit, files: &[FileRec], infra: &BTreeMap
     for &fi in &unit.files {
         let f = &files[fi];
         for imp in &f.facts.imports {
-            let found = if f.language.is_jvm() {
-                catalog::framework_for_java_import(&imp.specifier)
+            let found = if f.language.is_namespaced() {
+                catalog::framework_for_namespace(&imp.specifier)
             } else {
                 catalog::framework_for_package(catalog::import_package(&imp.specifier))
                     .or_else(|| catalog::framework_for_package(&imp.specifier))
@@ -2101,6 +2101,13 @@ fn apply_compose(
             }
             if let Some(ui) = unit_for_service(s, repo_slug, units) {
                 units[ui].summary.compose_service.get_or_insert_with(|| s.name.clone());
+                // A `main` with no server behind it reads as a command-line tool
+                // until compose says otherwise: something it runs as a service,
+                // publishing no ports, is a background worker, not a tool anyone
+                // invokes. Compose-only units already classify this way.
+                if units[ui].summary.kind == UnitKind::Cli && !s.publishes_ports {
+                    units[ui].summary.kind = UnitKind::Worker;
+                }
                 service_ids.insert(s.name.clone(), units[ui].id.clone());
             }
         }
@@ -2473,6 +2480,7 @@ fn same_ecosystem(a: manifest::ManifestKind, b: manifest::ManifestKind) -> bool 
         GoMod => 2,
         Pyproject | Requirements => 3,
         Maven | Gradle => 4,
+        MsBuild => 5,
     };
     family(a) == family(b)
 }
