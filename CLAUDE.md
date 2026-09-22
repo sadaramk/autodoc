@@ -78,6 +78,10 @@ Each must pass before merge.
 
 - `ir-spec` field changes: regenerate `schema/diagram-ir.schema.json` (`nunki schema`), update
   `packages/ir-spec-ts/src/index.ts`, run `test` and `test-ts` (contract fixtures in `tests/contract`).
+  `crates/ir-spec/tests/stability.rs` then refuses a **breaking** change against the frozen baseline
+  in `schema/stable/` — additive is free, the rest is a decision. See CONTRIBUTING.md.
+- CLI subcommands or flags: `crates/cli/tests/surface.rs` snapshots every `--help`. A diff there is
+  the promise in #9 changing, not a chore; regenerate with `UPDATE_CLI_SURFACE=1` once it is a decision.
 - `renderer` layout: `crates/renderer/tests/geometry.rs` (fixtures, 300 random graphs, random sequence / ER /
   lifecycle diagrams) and `make e2e`.
 - `renderer/src/assets/*.js|css`: `make e2e`.

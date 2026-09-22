@@ -19,8 +19,12 @@ however useful it sounds.
 | | Prebuilt binaries for five targets, an installer, and a GitHub Action |
 | | `diff` — what two revisions disagree about, as a PR comment |
 | | `export --format drawio` — the diagram, with its evidence, in a tool you can edit |
+| **0.4** | A book states how much of the source it read, and refuses below a tenth |
+| | C# and ASP.NET Core: attribute routes, EF Core entities, `.csproj` modules |
+| | `comment: true` — the action keeps one diff comment per pull request |
+| | On the Marketplace as [Nunki Architecture Docs](https://github.com/marketplace/actions/nunki-architecture-docs) |
 
-Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin.
+Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin, C#.
 
 ## Tracked work
 
@@ -33,28 +37,31 @@ Every item below is an issue, so progress is visible without reading this file.
 On the board, *Blocked* means waiting on a decision or on someone outside the
 repository — not on effort.
 
-### 0.4.0
+### 0.4.0 — shipped
 
 | | |
 |---|---|
 | [#1](https://github.com/sadaramk/nunki/issues/1) | Qualify or refuse a book built from a small fraction of a repository |
-| [#2](https://github.com/sadaramk/nunki/issues/2) | Read C# — `.cs` is recognised and never parsed |
+| [#2](https://github.com/sadaramk/nunki/issues/2) | Read C# |
 | [#3](https://github.com/sadaramk/nunki/issues/3) | Post `diff` as a PR comment out of the box |
+| [#4](https://github.com/sadaramk/nunki/issues/4) | Containers keeps its datastore edges; two boxes are joined by one connector |
 | [#10](https://github.com/sadaramk/nunki/issues/10) | Publish the action to the GitHub Marketplace |
 
-### Needs a decision first
+### What is next, in order
 
-| | |
-|---|---|
-| [#4](https://github.com/sadaramk/nunki/issues/4) | Whether the containers diagram keeps datastore edges |
+The ordering is the commitment, and it is not by size. **[#8](https://github.com/sadaramk/nunki/issues/8)
+and [#9](https://github.com/sadaramk/nunki/issues/9) are clocks rather than
+tasks**: both promise a surface *unchanged for a full minor cycle*, which no
+amount of work completes — only elapsed time without a violation does. Nothing
+can elapse until a violation would be noticed, so the machinery that notices
+comes first and the clock then runs underneath everything else.
 
-### Later, unscheduled
-
-| | |
-|---|---|
-| [#5](https://github.com/sadaramk/nunki/issues/5) | Cache parsed facts so `check` is cheap on large repositories |
-| [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection (DI containers, CQRS registries) |
-| [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored content has gone stale |
+| | | |
+|---|---|---|
+| 1 | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Publish the schema with each release; tell a breaking schema change from an additive one; snapshot the CLI surface; write the deprecation path. Starts the clock. |
+| 2 | [#5](https://github.com/sadaramk/nunki/issues/5) | Cache parsed facts. What stops nunki being used on a large repository: ~9 ms per file today, so an etcd-sized tree is tens of seconds on every push. |
+| 3 | [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored prose has gone stale — the one place the project still publishes a claim it has not checked. |
+| 4 | [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection. A spike with an exit, not a feature: one attempt already changed nothing on five real repositories. |
 
 ## Not doing
 

@@ -154,6 +154,14 @@ jobs:
       - name: Stage the installer
         run: cp scripts/install.sh dist/install.sh
 
+      # `DiagramIR` is a published contract, so its schema is a release asset
+      # rather than something you have to clone the repository to read. The
+      # checksum step above has already run, so this is verified by the tag
+      # rather than by SHA256SUMS — it is text a consumer reads, not a binary
+      # they execute.
+      - name: Stage the DiagramIR schema
+        run: cp schema/diagram-ir.schema.json dist/diagram-ir.schema.json
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
