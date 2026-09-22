@@ -39,8 +39,12 @@ A tag builds and publishes; nothing is uploaded by hand.
 2. Bump `version` in the root `Cargo.toml`, then `cargo build` so `Cargo.lock` follows
    (the release builds with `--locked`).
 3. `make demo` — the generator version is embedded in the examples, so they change.
-4. Bump the `sadaramk/nunki@vx.y.z` references in `README.md` and `docs/start.html`
-   when the release adds a subcommand the snippets use.
+4. Bump the `sadaramk/nunki@vx.y.z` references in `README.md`, `docs/start.html` **and
+   `action.yml`** — the `version` input documents itself with an example tag. Do this every
+   release, not only when a snippet uses a new subcommand: an action reads its inputs from the
+   ref you pin, so a snippet pointing at an older tag than the input it demonstrates fails
+   outright rather than degrading. Leave statements of *when* something landed
+   ("`comment` was added in 0.4.0") alone — those are history, not pins.
 5. Commit, `git tag -a vx.y.z`, push both. `release.yml` builds five targets, each of
    which generates and checks a book before it is uploaded, and attaches
    `SHA256SUMS` and `install.sh`.

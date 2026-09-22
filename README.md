@@ -3,6 +3,7 @@
 [![CI](https://github.com/sadaramk/nunki/actions/workflows/ci.yml/badge.svg)](https://github.com/sadaramk/nunki/actions/workflows/ci.yml)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Example books](https://img.shields.io/badge/examples-live-4F46E5)](https://sadaramk.github.io/nunki/)
+[![GitHub Marketplace](https://img.shields.io/badge/marketplace-Nunki%20Architecture%20Docs-2DA44E)](https://github.com/marketplace/actions/nunki-architecture-docs)
 
 **Architecture documentation generated from source code.** Every claim links to the file and line
 it came from, and every citation is verified against the commit — so documentation that has gone
@@ -51,7 +52,10 @@ Docker works too, and is how the project tests itself:
 ```
 
 Pinning the action pins the binary: `@v0.4.1` runs that build, verified against the checksum
-published with it. `@v0` tracks the newest 0.x instead.
+published with it. `@v0` tracks the newest 0.x instead. It is on the Marketplace as
+[Nunki Architecture Docs](https://github.com/marketplace/actions/nunki-architecture-docs); the
+listing title differs from the repository name because a Marketplace name has to be unique across
+every action, user and organisation on GitHub.
 
 Exits 1 when regenerating would change the book, or when a citation no longer matches the code.
 Committing the book does not invalidate it, and neither does a commit that changes nothing it
