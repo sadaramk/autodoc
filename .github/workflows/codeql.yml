@@ -38,7 +38,7 @@ jobs:
         language: [actions, rust, javascript-typescript]
     steps:
       - uses: actions/checkout@v7
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
           # Excludes fixture repositories and generated books; see the config.
@@ -47,6 +47,6 @@ jobs:
           # workspace again would double the cost of a pull request for
           # findings that do not depend on it.
           build-mode: none
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4
         with:
           category: /language:${{ matrix.language }}
