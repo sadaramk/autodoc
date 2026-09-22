@@ -2379,6 +2379,7 @@ fn client_calls(idx: &Index, models: &mut Models, ci: usize, h: &mut Harvest) {
                     unit: cl.unit.clone(),
                     method: verb.to_uppercase(),
                     path: join_path("", &path),
+                    target_host: None,
                     target_unit: target_unit.clone(),
                     operation: None,
                     caller: Some(format!("{}.{}", cl.name, m.name)),
@@ -2487,6 +2488,8 @@ fn template_calls(idx: &Index, models: &mut Models, fi: usize, f: &Loaded, h: &m
                 unit: f.unit.to_string(),
                 method,
                 path,
+                // A declarative client names its service, not a host.
+                target_host: None,
                 target_unit,
                 operation: None,
                 caller,

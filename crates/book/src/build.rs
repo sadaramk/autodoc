@@ -1276,9 +1276,62 @@ impl<'a> Builder<'a> {
         );
     }
 
+    /// Outbound calls the book could not attribute to anything it documents.
+    ///
+    /// These were extracted, stored in the model, and then rendered nowhere:
+    /// every use of `client_calls` in the book asks for the ones that resolved
+    /// to an operation. So a service calling out to something in another
+    /// repository produced a book that said nothing about the dependency —
+    /// documentation that is confidently incomplete, which is the failure this
+    /// project exists to prevent.
+    fn unresolved_calls_block(&mut self) -> Vec<Block> {
+        let Some(api) = self.api() else { return vec![] };
+        let calls: Vec<&nunki_analyzer::api::ClientCall> =
+            api.client_calls.iter().filter(|c| c.operation.is_none()).collect();
+        if calls.is_empty() {
+            return vec![];
+        }
+        let mut rows = Vec::new();
+        for c in &calls {
+            let target = match (&c.target_host, &c.target_unit) {
+                (Some(h), _) => vec![Inline::code(h.clone())],
+                (None, Some(u)) => vec![Inline::code(u.clone())],
+                _ => vec![Inline::badge("gap", "host not named literally")],
+            };
+            rows.push(vec![
+                vec![Inline::code(format!("{} {}", c.method, c.path))],
+                target,
+                vec![self.element(&c.unit)],
+                c.caller.as_deref().map(|x| vec![Inline::code(x.to_string())]).unwrap_or_default(),
+                self.cites(std::slice::from_ref(&c.evidence), 1),
+            ]);
+        }
+        vec![
+            Block::Heading {
+                level: 2,
+                id: "calls-that-leave".into(),
+                text: "Calls that leave what is documented".into(),
+            },
+            Block::Para {
+                inl: vec![Inline::text(format!(
+                    "{} outbound call{} could not be matched to an operation in this repository. The call is \
+                     real and cited; what answers it is not described here — it may live in another repository, \
+                     behind a gateway, or in a third-party service.",
+                    calls.len(),
+                    if calls.len() == 1 { "" } else { "s" }
+                ))],
+            },
+            Block::Table {
+                columns: vec!["Call".into(), "To".into(), "From".into(), "Caller".into(), "Code".into()],
+                rows,
+            },
+        ]
+    }
+
     fn evidence_page(&mut self) {
         let r = self.report;
         let mut blocks = Vec::new();
+        blocks.extend(self.unresolved_calls_block());
         let observed = r.relationships.iter().filter(|x| Self::observed(x)).count();
         let declared = r.relationships.len() - observed;
 

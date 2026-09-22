@@ -8,6 +8,26 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **An outbound call the book could not attribute was documented nowhere.**
+  Every use of `client_calls` in the book asked for the ones that resolved to
+  an operation, so a service calling something in another repository produced
+  a book that said nothing about the dependency. The call was extracted,
+  stored in the model, and dropped on the way to the page — documentation that
+  is confidently incomplete, which is the failure this project exists to
+  prevent, happening in the middle of its own output.
+
+  The evidence page now has *Calls that leave what is documented*: the method
+  and path, the host it is aimed at, the function responsible, and the line
+  that makes the call. A repository whose calls all resolve prints nothing,
+  rather than an empty section.
+
+  The host is kept on the model rather than discarded after unit matching, and
+  one level of indirection is followed to find it — `const URL = … ?? "http://
+  notifications:9000"` used through a `${URL}/path` template is the ordinary
+  shape, and the host is in neither line alone.
+
 ### Added
 
 - **An architecture history.** `nunki diff … --record v1.1` appends what a
