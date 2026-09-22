@@ -244,7 +244,14 @@ mod tests {
         Requirement {
             kind: kind.into(),
             detail: detail.into(),
-            evidence: EvidenceRef { file_path: "x".into(), start_line: 1, end_line: 1, symbol_name: None, note: None },
+            evidence: EvidenceRef {
+                file_path: "x".into(),
+                start_line: 1,
+                end_line: 1,
+                symbol_name: None,
+                note: None,
+                repo: None,
+            },
         }
     }
 

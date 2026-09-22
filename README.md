@@ -149,6 +149,32 @@ Ruby, Svelte and the rest — those files are counted and named, because a book 
 system that happened to be parseable should not look like a book about the system. Below a tenth
 read it refuses outright; `--allow-partial` overrides that.
 
+## A system in several repositories
+
+Most systems are not one repository. Name the others in `nunki.toml` and the book
+describes the system rather than the checkout:
+
+```toml
+[workspace]
+members = ["../billing-service", "../identity-service"]
+```
+
+A call that leaves this repository is resolved against the service that answers
+it, and the flow crosses the boundary and comes back. Every citation says which
+repository it was read from and links into *that* repository at the commit it was
+read at — the same path in two repositories is two different lines. The evidence
+page lists what was read and at which commit.
+
+Two things follow, and both are deliberate. A book that describes several
+checkouts is out of date when **any** of them moves, so `nunki check` fails and
+names the repository that moved; a system's documentation has a system's
+lifecycle. And a member that is not checked out is reported, not guessed at: the
+call stays unresolved and the book says so.
+
+A member's operations are never claimed as this repository's own — no
+requirement, no flow of its own, not in its API surface. It is a dependency, and
+the book says whose.
+
 ## Commands
 
 | Command | What it does |

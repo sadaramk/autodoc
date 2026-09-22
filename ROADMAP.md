@@ -24,6 +24,9 @@ however useful it sounds.
 | | `comment: true` — the action keeps one diff comment per pull request |
 | | On the Marketplace as [Nunki Architecture Docs](https://github.com/marketplace/actions/nunki-architecture-docs) |
 | | Authored prose can be pinned to evidence; `check` reports it when it rots |
+| | Specs in OpenSpec's shape, and `conform` — what a spec someone else wrote does and does not match |
+| | `history.json` — what each release changed, recorded when it was cut |
+| | `[workspace] members` — one book for a system spread over several repositories, each citation naming and verified in the repository it came from |
 
 Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin, C#.
 
@@ -48,20 +51,21 @@ repository — not on effort.
 | [#4](https://github.com/sadaramk/nunki/issues/4) | Containers keeps its datastore edges; two boxes are joined by one connector |
 | [#10](https://github.com/sadaramk/nunki/issues/10) | Publish the action to the GitHub Marketplace |
 
-### What is next, in order
+### What is next
 
-The ordering is the commitment, and it is not by size. **[#8](https://github.com/sadaramk/nunki/issues/8)
-and [#9](https://github.com/sadaramk/nunki/issues/9) are clocks rather than
+Nothing is queued. [#20](https://github.com/sadaramk/nunki/issues/20)
+(architecture history) and [#21](https://github.com/sadaramk/nunki/issues/21) (a
+system spread over several repositories) were the last two, and both are done.
+#21 kept its constraint: a citation into a sibling repository is verified in that
+repository at that repository's commit, and one naming a repository nothing read
+is reported rather than checked against whatever sits at those lines here.
+
+What remains are **[#8](https://github.com/sadaramk/nunki/issues/8) and
+[#9](https://github.com/sadaramk/nunki/issues/9), which are clocks rather than
 tasks**: both promise a surface *unchanged for a full minor cycle*, which no
 amount of work completes — only elapsed time without a violation does. The
-machinery that would notice a violation is in place, so the clock is running
-underneath everything below.
-
-| | | |
-|---|---|---|
-| 1 | [#20](https://github.com/sadaramk/nunki/issues/20) | Keep a history of how the architecture changed, release by release. `diff` already answers it between any two tags; every answer is currently thrown away. |
-| 2 | [#21](https://github.com/sadaramk/nunki/issues/21) | Document a system that spans several repositories. Larger, and constrained by the same promise: a citation into a sibling repository has to be verified, not trusted. |
-| — | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Running. Nothing to do but not break them. |
+machinery that would notice a violation is in place, so the clock is running.
+Nothing to do but not break them.
 
 ## Not doing
 

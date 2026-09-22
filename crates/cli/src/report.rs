@@ -185,6 +185,9 @@ pub fn check(r: &nunki_book::CheckReport) -> String {
     for f in &r.changed {
         let _ = writeln!(s, "outdated  {f}");
     }
+    for m in &r.moved_members {
+        let _ = writeln!(s, "member    {m} moved since this book was built");
+    }
     for c in &r.stale_citations {
         let _ = writeln!(s, "citation  {c}");
     }
@@ -208,6 +211,8 @@ pub fn check(r: &nunki_book::CheckReport) -> String {
             "authored prose describes operations that are gone"
         } else if r.up_to_date {
             "book is current but cites code that changed"
+        } else if !r.moved_members.is_empty() {
+            "book is out of date: a repository it describes moved — run `nunki generate`"
         } else {
             "book is out of date: run `nunki generate`"
         },

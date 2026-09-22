@@ -150,6 +150,15 @@ pub struct ValidateOptions {
     /// Git snapshots shared across validations in one operation (many figures
     /// of one book); `None` reads git fresh for this validation.
     pub evidence_cache: Option<std::sync::Arc<nunki_git::EvidenceCache>>,
+    /// Where each member repository of the system is checked out, by the name
+    /// evidence carries in `repo`.
+    ///
+    /// Without this, evidence read from another repository is checked against
+    /// this one: the same path usually exists here too, so the check would
+    /// either strip a true citation or pass while describing different code.
+    /// Evidence naming a repository that is not here is reported, never checked
+    /// against a fallback.
+    pub member_roots: std::collections::BTreeMap<String, PathBuf>,
 }
 
 impl Default for ValidateOptions {
@@ -160,6 +169,7 @@ impl Default for ValidateOptions {
             max_density: MAX_VISUAL_DENSITY,
             strict: false,
             evidence_cache: None,
+            member_roots: std::collections::BTreeMap::new(),
         }
     }
 }
@@ -1207,6 +1217,20 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
     };
     let mut verifier =
         nunki_git::Verifier::cached(&ctx, ir.metadata.commit_hash.as_deref(), opts.evidence_cache.as_deref());
+    // A member is checked at its own HEAD: this diagram's `commitHash` pins this
+    // repository, and applying it next door would look for a commit that
+    // repository has never heard of.
+    let member_ctx: std::collections::BTreeMap<&str, RepoContext> = opts
+        .member_roots
+        .iter()
+        .map(|(name, root)| {
+            let c = match &opts.evidence_cache {
+                Some(cache) => cache.context(root),
+                None => nunki_git::repo_context(root),
+            };
+            (name.as_str(), c)
+        })
+        .collect();
     let pinned = ir.metadata.commit_hash.as_deref();
     if let (Some(pin), Some(head)) = (pinned, ctx.head_commit.as_deref()) {
         if !head.starts_with(pin) && !pin.starts_with(head) {
@@ -1248,8 +1272,29 @@ fn check_evidence(ir: &DiagramIR, opts: &ValidateOptions, diags: &mut Vec<Diagno
             end_line: Some(ev.end_line),
             symbol_name: ev.symbol_name.clone(),
         };
-        let r = verifier.verify(&q);
         let path = format!("$.{kind}[{i}].evidence");
+        let r = match ev.repo.as_deref() {
+            None => verifier.verify(&q),
+            // A line read from another repository is checked there. Checking it
+            // here would check whatever sits at those lines in this repository —
+            // usually a real file, sometimes a passing check for the wrong code.
+            Some(name) => match member_ctx.get(name) {
+                Some(c) => {
+                    nunki_git::Verifier::cached(c, c.head_commit.as_deref(), opts.evidence_cache.as_deref()).verify(&q)
+                }
+                // Reported and left alone: removing it would delete a citation
+                // that is probably true, and no fallback root can check it.
+                None => {
+                    let msg = format!("`{id}`: evidence was read from repository `{name}`, not part of this check");
+                    diags.push(
+                        Diagnostic::new(codes::EVIDENCE_UNVERIFIED, Severity::Warning, format!("{path}.repo"), msg)
+                            .ids([id])
+                            .suggest("Add it to `[workspace] members`, or check it out beside this repository."),
+                    );
+                    continue;
+                }
+            },
+        };
         match r.state {
             EvidenceState::Verified => {}
             EvidenceState::FileMissing => diags.push(

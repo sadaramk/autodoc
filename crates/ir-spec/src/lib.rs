@@ -229,6 +229,13 @@ pub struct Evidence {
     pub end_line: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub symbol_name: Option<String>,
+    /// Member repository the path belongs to, when a system is documented from
+    /// several. Absent means the repository being documented — which is every
+    /// diagram written before this existed, and every single-repository one
+    /// after it. A path is ambiguous only once there is more than one root it
+    /// could be relative to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repo: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]

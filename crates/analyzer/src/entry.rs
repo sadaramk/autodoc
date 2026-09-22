@@ -230,6 +230,7 @@ fn line_ev(f: &SourceFile, start: u32, end: u32, note: String) -> EvidenceRef {
         end_line: end.max(start),
         symbol_name: None,
         note: Some(note),
+        repo: None,
     }
 }
 

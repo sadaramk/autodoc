@@ -114,6 +114,14 @@ pub struct CheckReport {
     /// file belongs to the human, and a book written before pinning existed
     /// must not start failing CI on upgrade.
     pub unpinned_authored: Vec<String>,
+    /// Member repositories now at a different commit than the book was built
+    /// against, as `name: recorded → current`.
+    ///
+    /// The book is already out of date by the ordinary rule — its files differ —
+    /// but "index.html is outdated" does not tell anyone that the cause is a
+    /// commit in a repository they were not looking at.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub moved_members: Vec<String>,
     pub ok: bool,
 }
 
@@ -257,6 +265,23 @@ pub fn check(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<CheckRep
         .filter(|c| c.state != "verified")
         .map(|c| format!("{}:{}-{} ({}: {})", c.file, c.start, c.end, c.state, c.detail.clone().unwrap_or_default()))
         .collect();
+    let recorded = previous_manifest(out_dir)
+        .and_then(|m| m.get("members").cloned())
+        .and_then(|m| serde_json::from_value::<Vec<serde_json::Map<String, Value>>>(m).ok())
+        .unwrap_or_default();
+    let mut moved_members = Vec::new();
+    for was in &recorded {
+        let name = was.get("name").and_then(Value::as_str).unwrap_or_default();
+        let then = was.get("commit").and_then(Value::as_str);
+        let now = book.meta.members.iter().find(|m| m.name == name).and_then(|m| m.commit.as_deref());
+        if then != now {
+            moved_members.push(format!(
+                "{name}: {} → {}",
+                then.map(nunki_git::short).unwrap_or("unversioned"),
+                now.map(nunki_git::short).unwrap_or("not read")
+            ));
+        }
+    }
     let up_to_date = changed.is_empty() && missing.is_empty();
     let orphaned_authored = planned.built.authored_orphans.clone();
     let unpinned_authored = planned.built.authored_unpinned.clone();
@@ -269,12 +294,13 @@ pub fn check(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<CheckRep
         stale_citations,
         orphaned_authored,
         unpinned_authored,
+        moved_members,
     })
 }
 
 fn manifest(planned: &Planned) -> Value {
     let b = &planned.built;
-    json!({
+    let mut m = json!({
         "generator": b.book.meta.generator,
         "generatedAt": nunki_ir::now_rfc3339(),
         "repository": b.book.meta.repo,
@@ -297,7 +323,16 @@ fn manifest(planned: &Planned) -> Value {
         })).collect::<Vec<_>>(),
         "warnings": b.warnings,
         "files": planned.files.iter().map(|(k, v)| (k.clone(), Value::String(content_hash(v)))).collect::<serde_json::Map<_, _>>(),
-    })
+    });
+    // What the book was read against beside this repository, so `check` can say
+    // *which* repository moved rather than only that some file is out of date.
+    // Omitted when there are none: a single-repository book's manifest should not
+    // change because the feature exists.
+    if !b.book.meta.members.is_empty() {
+        m["members"] =
+            b.book.meta.members.iter().map(|x| json!({"name": x.name, "commit": x.commit})).collect::<Vec<_>>().into();
+    }
+    m
 }
 
 /// `../../` from the book directory back to the repository root, when the

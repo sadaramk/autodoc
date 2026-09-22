@@ -60,7 +60,14 @@ impl Src {
 
     pub fn ev(&self, offset: usize) -> EvidenceRef {
         let l = self.line(offset);
-        EvidenceRef { file_path: self.path.clone(), start_line: l, end_line: l, symbol_name: None, note: None }
+        EvidenceRef {
+            file_path: self.path.clone(),
+            start_line: l,
+            end_line: l,
+            symbol_name: None,
+            note: None,
+            repo: None,
+        }
     }
 
     pub fn ev_range(&self, start: usize, end: usize, symbol: Option<&str>) -> EvidenceRef {
@@ -70,6 +77,7 @@ impl Src {
             end_line: self.line(end.max(start)),
             symbol_name: symbol.map(str::to_string),
             note: None,
+            repo: None,
         }
     }
 

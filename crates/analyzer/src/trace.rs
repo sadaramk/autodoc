@@ -309,6 +309,10 @@ pub fn trace(
     let mut flows: Vec<Flow> = api
         .operations
         .iter()
+        // A member's operation gets no flow of its own: this scan read its
+        // contract, not its internals, so the flow would consist of the call
+        // that is already drawn inside the caller's flow.
+        .filter(|op| !op.external())
         .filter(|op| op.protocol == "http" || op.protocol == "grpc")
         .map(|op| {
             let mut flow = tracer.flow(op);
@@ -864,6 +868,7 @@ impl<'a> Tracer<'a> {
                                 end_line: line,
                                 symbol_name: None,
                                 note: c.caller.as_ref().map(|k| format!("calls `{k}`")),
+                                repo: None,
                             },
                             None => c.evidence.clone(),
                         },
@@ -919,6 +924,7 @@ impl<'a> Tracer<'a> {
                             end_line: line,
                             symbol_name: None,
                             note: Some(format!("publishes `{event_type}`")),
+                            repo: None,
                         },
                     });
                 }
@@ -1100,6 +1106,7 @@ impl<'a> Tracer<'a> {
                 // not. The step already records what it is `within`.
                 symbol_name: None,
                 note: None,
+                repo: None,
             },
         })
     }

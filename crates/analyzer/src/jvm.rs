@@ -36,6 +36,7 @@ impl ConfigDoc {
             end_line: line,
             symbol_name: None,
             note: Some(note.to_string()),
+            repo: None,
         }
     }
 }
@@ -398,6 +399,7 @@ pub(crate) fn wires(
                         end_line: a.target_end,
                         symbol_name: Some(a.target.clone()),
                         note: Some(format!("`@{}` {}", a.name, a.target)),
+                        repo: None,
                     },
                 });
             }

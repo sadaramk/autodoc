@@ -1,10 +1,11 @@
 {
   "generator": "nunki 0.4.1",
-  "generatedAt": "2026-09-22T12:17:26Z",
+  "generatedAt": "2026-09-22T22:34:55Z",
   "repository": "polyglot-shop",
   "commit": null,
   "commitDate": null,
   "branch": null,
+  "release": null,
   "evidence": {
     "total": 138,
     "verified": 138,
@@ -339,7 +340,7 @@
     "diagrams/runtime-compose.svg": "44db35aea28e2a88",
     "diagrams/system-context.ir.json": "fc7ab47e8c980f86",
     "diagrams/system-context.svg": "e9a7f7e624df968d",
-    "index.html": "b161b1b7d0e3482b",
+    "index.html": "a4727cbc710abcb0",
     "llms-full.txt": "be54351dc254e0d9",
     "llms.txt": "e294e2976209edee",
     "pages/01-overview.md": "c796d2fb25d66f7e",

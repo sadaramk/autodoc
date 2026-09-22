@@ -71,6 +71,7 @@ pub(crate) fn component_view(unit: &Unit, files: &[FileRec], infra: &[(InfraKind
                         end_line: ev.line,
                         symbol_name: None,
                         note: Some(format!("`{}` publishes {}", ev.method, ev.event_type)),
+                        repo: None,
                     },
                     events: vec![],
                 });
@@ -128,6 +129,7 @@ pub(crate) fn component_view(unit: &Unit, files: &[FileRec], infra: &[(InfraKind
                     end_line: imp.line,
                     symbol_name: None,
                     note: Some(format!("imports `{}`", imp.specifier)),
+                    repo: None,
                 },
                 events: vec![],
             });
@@ -162,6 +164,7 @@ pub(crate) fn component_view(unit: &Unit, files: &[FileRec], infra: &[(InfraKind
                         end_line: line,
                         symbol_name: None,
                         note: Some(format!("imports {}", kind.label())),
+                        repo: None,
                     },
                 ));
             }
@@ -333,6 +336,7 @@ fn module_evidence(fis: &[usize], files: &[FileRec]) -> Option<EvidenceRef> {
                 end_line: ep.end_line,
                 symbol_name: (!ep.symbol.starts_with('<')).then(|| ep.symbol.clone()),
                 note: Some(ep.reason.clone()),
+                repo: None,
             });
         }
     }
@@ -348,6 +352,7 @@ fn module_evidence(fis: &[usize], files: &[FileRec]) -> Option<EvidenceRef> {
             end_line: s.end_line,
             symbol_name: Some(s.name.clone()),
             note: s.doc.as_ref().map(|d| d.lines().next().unwrap_or("").to_string()),
+            repo: None,
         }),
         // Empty files (e.g. bare `__init__.py`) have no line to point at.
         None => fis.iter().map(|fi| &files[*fi]).find(|f| f.facts.line_count > 0).map(|f| EvidenceRef {
@@ -356,6 +361,7 @@ fn module_evidence(fis: &[usize], files: &[FileRec]) -> Option<EvidenceRef> {
             end_line: f.facts.line_count.min(20),
             symbol_name: None,
             note: None,
+            repo: None,
         }),
     }
 }

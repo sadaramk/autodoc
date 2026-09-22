@@ -560,8 +560,8 @@ mod tests {
 
     #[test]
     fn a_line_range_reads_as_a_range() {
-        let one = Evidence { file_path: "a.rs".into(), start_line: 3, end_line: 3, symbol_name: None };
-        let many = Evidence { file_path: "a.rs".into(), start_line: 3, end_line: 9, symbol_name: None };
+        let one = Evidence { file_path: "a.rs".into(), start_line: 3, end_line: 3, symbol_name: None, repo: None };
+        let many = Evidence { file_path: "a.rs".into(), start_line: 3, end_line: 9, symbol_name: None, repo: None };
         assert_eq!(evidence_ref(&one), "a.rs:3");
         assert_eq!(evidence_ref(&many), "a.rs:3-9");
     }

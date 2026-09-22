@@ -93,6 +93,7 @@ pub fn parse_pin(s: &str) -> Option<nunki_analyzer::EvidenceRef> {
         end_line: end,
         symbol_name: None,
         note: Some("authored".into()),
+        repo: None,
     })
 }
 

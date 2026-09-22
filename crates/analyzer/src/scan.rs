@@ -42,6 +42,16 @@ pub struct ScanOptions {
     pub behavior: bool,
     /// Write a book even when almost nothing in the repository could be read.
     pub allow_partial: bool,
+    /// Sibling repositories this system is also made of, by path. Their
+    /// operations are read so a call leaving this repository can be resolved
+    /// to the thing that answers it, and the evidence for that says which
+    /// repository it was read from.
+    ///
+    /// They are read, not trusted: a member has to be checked out. Consuming a
+    /// model a sibling published would scale better and would mean citing
+    /// lines nobody here can verify, which is a delegated guarantee wearing a
+    /// verified one's clothes.
+    pub members: Vec<PathBuf>,
 }
 
 impl Default for ScanOptions {
@@ -56,6 +66,7 @@ impl Default for ScanOptions {
             ignore_dirs: Vec::new(),
             behavior: false,
             allow_partial: false,
+            members: Vec::new(),
         }
     }
 }
@@ -70,6 +81,11 @@ pub struct EvidenceRef {
     pub symbol_name: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,
+    /// Member repository this path is relative to, when a system is documented
+    /// from several. `None` is the repository being documented, so every
+    /// existing citation means what it always meant.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repo: Option<String>,
 }
 
 impl EvidenceRef {
@@ -79,6 +95,7 @@ impl EvidenceRef {
             start_line: self.start_line,
             end_line: self.end_line,
             symbol_name: self.symbol_name.clone(),
+            repo: self.repo.clone(),
         }
     }
 }
@@ -629,6 +646,8 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
                 Default::default()
             }
         };
+        let mut api = api;
+        resolve_against_members(&mut api, &opts.members, &mut notes);
         let flows = crate::trace::trace(&index, &api, Some(&data), &infra, &relationships);
         (Some(api), Some(data), flows)
     } else {
@@ -1173,8 +1192,16 @@ pub(crate) fn enclosing_evidence(f: &FileRec, line: u32, note: Option<String>) -
             end_line: s.end_line,
             symbol_name: Some(s.name.clone()),
             note,
+            repo: None,
         },
-        _ => EvidenceRef { file_path: f.path.clone(), start_line: line, end_line: line, symbol_name: None, note },
+        _ => EvidenceRef {
+            file_path: f.path.clone(),
+            start_line: line,
+            end_line: line,
+            symbol_name: None,
+            note,
+            repo: None,
+        },
     }
 }
 
@@ -1185,6 +1212,7 @@ fn line_evidence(file: &str, line: u32, note: &str) -> EvidenceRef {
         end_line: line,
         symbol_name: None,
         note: Some(note.into()),
+        repo: None,
     }
 }
 
@@ -1381,6 +1409,7 @@ fn detect_infra(ui: usize, unit: &Unit, files: &[FileRec], out: &mut BTreeMap<(u
                     end_line: a.target_end,
                     symbol_name: Some(a.target.clone()),
                     note: Some(note),
+                    repo: None,
                 };
                 if crate::jvm::LISTENER_ANNOTATIONS.contains(&a.name.as_str()) {
                     u.consumes.push(ev);
@@ -1482,6 +1511,7 @@ fn classify_unit(ui: usize, unit: &mut Unit, files: &[FileRec], infra: &BTreeMap
                 end_line: ep.end_line,
                 symbol_name: Some(ep.symbol.clone()),
                 note: Some(ep.reason.clone()),
+                repo: None,
             });
         }
     }
@@ -1527,6 +1557,7 @@ fn classify_unit(ui: usize, unit: &mut Unit, files: &[FileRec], infra: &BTreeMap
                 end_line: a.target_end,
                 symbol_name: Some(a.target.clone()),
                 note: Some(format!("application object: container-managed `@{}` resource", a.name)),
+                repo: None,
             });
         }
     }
@@ -1595,6 +1626,7 @@ fn classify_unit(ui: usize, unit: &mut Unit, files: &[FileRec], infra: &BTreeMap
                     end_line: s.end_line,
                     symbol_name: Some(s.name.clone()),
                     note: None,
+                    repo: None,
                 },
             })
         })
@@ -1667,6 +1699,7 @@ fn unit_evidence(u: &Unit, files: &[FileRec]) -> Option<EvidenceRef> {
                 end_line: end.min(f.facts.line_count.max(1)),
                 symbol_name: None,
                 note: Some("module root".into()),
+                repo: None,
             })
         }
         None => u.summary.key_symbols.first().map(|s| s.evidence.clone()),
@@ -2003,6 +2036,7 @@ fn add_compose_only_units(root: &Path, repo_slug: &str, compose: &[ComposeFile],
                         end_line: lines.min(20),
                         symbol_name: None,
                         note: Some("Dockerfile".into()),
+                        repo: None,
                     }
                 }
                 None => line_evidence(&c.file, s.line, &format!("compose service `{}`", s.name)),
@@ -2472,6 +2506,184 @@ fn demote_linked_libraries(units: &mut [Unit], files: &[FileRec], rels: &RelBuil
     }
 }
 
+/// Resolves calls that leave this repository against the sibling repositories
+/// the caller named.
+///
+/// Each member is scanned for its contracts and a call is matched with the same
+/// rule used inside one repository — `client::match_operation` — so a
+/// cross-repository edge is drawn on the same evidence as a local one rather
+/// than on a looser guess. The host has to name the member, because a path that
+/// exists in two services would otherwise resolve to whichever was scanned
+/// first.
+///
+/// The evidence recorded for the match names the repository it was read from: a
+/// file path stops being an address once there is more than one root.
+///
+/// A member that cannot be read is reported rather than skipped. Treating an
+/// absent repository as "nothing to match" would turn a checkout mistake into a
+/// book that quietly claims the call answers nothing.
+///
+/// A member's own `[workspace] members` is not followed. One hop keeps the scan
+/// bounded and the book's scope equal to what its configuration names, rather
+/// than to whatever the neighbours happen to point at.
+fn resolve_against_members(api: &mut crate::api::ApiModel, members: &[PathBuf], notes: &mut Vec<String>) {
+    if members.is_empty() || api.client_calls.iter().all(|c| c.operation.is_some()) {
+        return;
+    }
+    let opts = ScanOptions { depth: Depth::Container, behavior: true, ..Default::default() };
+    for member in members {
+        let name = member_name(member);
+        let report = match scan(member, &opts) {
+            Ok(r) => r,
+            Err(e) => {
+                notes.push(format!("member repository `{name}` could not be read ({e}); calls to it stay unresolved"));
+                continue;
+            }
+        };
+        let Some(their) = report.api else { continue };
+        // Everything the member offers, renamed into this model's namespace and
+        // stamped with the repository it was read from. Renaming is not
+        // cosmetic: an operation id is `<unit>:<METHOD> <path>`, and two
+        // services in one system routinely have a unit called `api` — without
+        // the prefix a member's operation would silently occupy the id of one of
+        // ours.
+        let theirs = adopted(&name, &their);
+        let mut matched: Vec<String> = Vec::new();
+        for call in api.client_calls.iter_mut().filter(|c| c.operation.is_none()) {
+            let host = call.target_host.clone().unwrap_or_default();
+            if host.is_empty() || !host_names(&host, &name, &their) {
+                continue;
+            }
+            if let Some(op) = crate::api::client::match_operation(call, &theirs.operations) {
+                call.target_unit = Some(op.unit.clone());
+                call.operation = Some(op.id.clone());
+                matched.push(op.id.clone());
+            }
+        }
+        // Only what something here actually calls is adopted. A member's whole
+        // API would double the size of the book and describe a service this
+        // repository may not use at all.
+        adopt_into(api, &theirs, &matched);
+    }
+}
+
+/// A member's contracts, renamed under the member and stamped with it.
+fn adopted(member: &str, their: &crate::api::ApiModel) -> crate::api::ApiModel {
+    let q = |id: &str| format!("{member}{MEMBER_SEP}{id}");
+    let mut out = crate::api::ApiModel::default();
+    for o in &their.operations {
+        let mut o = o.clone();
+        o.id = q(&o.id);
+        o.unit = q(&o.unit);
+        for t in [&mut o.request_body, &mut o.response].into_iter().flatten() {
+            t.model = t.model.as_deref().map(q);
+        }
+        stamp_repo(&mut o, member);
+        out.operations.push(o);
+    }
+    for m in &their.models {
+        let mut m = m.clone();
+        m.id = q(&m.id);
+        m.unit = q(&m.unit);
+        for f in &mut m.fields {
+            f.model = f.model.as_deref().map(q);
+        }
+        stamp_repo(&mut m, member);
+        out.models.push(m);
+    }
+    out
+}
+
+/// Copies the named operations, and the models they reach, into `api`.
+fn adopt_into(api: &mut crate::api::ApiModel, theirs: &crate::api::ApiModel, ids: &[String]) {
+    let mut wanted: Vec<String> = Vec::new();
+    for id in ids {
+        let Some(op) = theirs.operations.iter().find(|o| &o.id == id) else { continue };
+        if !api.operations.iter().any(|o| o.id == op.id) {
+            api.operations.push(op.clone());
+        }
+        wanted.extend([&op.request_body, &op.response].into_iter().flatten().filter_map(|t| t.model.clone()));
+    }
+    while let Some(id) = wanted.pop() {
+        if api.models.iter().any(|m| m.id == id) {
+            continue;
+        }
+        let Some(m) = theirs.models.iter().find(|m| m.id == id) else { continue };
+        api.models.push(m.clone());
+        wanted.extend(m.fields.iter().filter_map(|f| f.model.clone()));
+    }
+}
+
+/// Records the repository every piece of evidence in `value` was read from.
+///
+/// Done over the serialized form rather than field by field because evidence is
+/// nested at a dozen depths — a handler, each error response, each field rule —
+/// and a hand-written walk would miss one silently, which is the failure this
+/// whole feature exists to prevent: a citation that looks local and is not.
+/// Evidence is recognised by its shape, and `stamp_repo_recognises_evidence`
+/// fails if that shape ever changes.
+fn stamp_repo<T: serde::Serialize + serde::de::DeserializeOwned>(value: &mut T, repo: &str) {
+    let Ok(mut json) = serde_json::to_value(&*value) else { return };
+    stamp_repo_json(&mut json, repo);
+    if let Ok(back) = serde_json::from_value(json) {
+        *value = back;
+    }
+}
+
+fn stamp_repo_json(v: &mut serde_json::Value, repo: &str) {
+    match v {
+        serde_json::Value::Object(map) => {
+            if is_evidence(map) {
+                map.insert("repo".into(), serde_json::Value::String(repo.to_string()));
+            }
+            for (_, child) in map.iter_mut() {
+                stamp_repo_json(child, repo);
+            }
+        }
+        serde_json::Value::Array(items) => items.iter_mut().for_each(|i| stamp_repo_json(i, repo)),
+        _ => {}
+    }
+}
+
+fn is_evidence(map: &serde_json::Map<String, serde_json::Value>) -> bool {
+    map.contains_key("filePath") && map.contains_key("startLine") && map.contains_key("endLine")
+}
+
+/// What a member repository is called everywhere: its directory name, slugged.
+///
+/// One name for one repository — in evidence, in ids, in the book's metadata and
+/// in the reader — so the name a citation carries is the name that is looked up
+/// to verify it. Slugged because a unit id is a slug and these are joined into
+/// one: that keeps [`MEMBER_SEP`] the only punctuation in the result, so the two
+/// halves can always be told apart again.
+///
+/// Two members whose directory names slug the same would collide; that is
+/// reported where they are configured rather than papered over with a suffix no
+/// reader could predict.
+pub fn member_name(path: &std::path::Path) -> String {
+    let raw = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let s = slug(&raw);
+    if s.is_empty() {
+        "member".to_string()
+    } else {
+        s
+    }
+}
+
+/// Separates a member's name from a unit id inside it: `billing.api`.
+///
+/// A dot because unit ids are slugs — letters, digits and `-` — so a dot cannot
+/// occur inside either half. `/` is not accepted in an IR id at all, and `:`
+/// already separates a unit from an operation or a model.
+pub const MEMBER_SEP: char = '.';
+
+/// Whether a host names this member: its directory, or one of the units it
+/// contains, since a repository is usually named for the service inside it.
+fn host_names(host: &str, member: &str, api: &crate::api::ApiModel) -> bool {
+    let h = host.split('.').next().unwrap_or(host).to_lowercase();
+    h == member.to_lowercase() || api.operations.iter().any(|o| o.unit.to_lowercase() == h)
+}
+
 fn same_ecosystem(a: manifest::ManifestKind, b: manifest::ManifestKind) -> bool {
     use manifest::ManifestKind::*;
     let family = |k| match k {
@@ -2710,6 +2922,38 @@ fn strip_inline(chars: &[char]) -> String {
 mod tests {
     use super::*;
 
+    /// `stamp_repo` finds evidence by the shape it serializes to. If that shape
+    /// changes, a member's citations silently stop being stamped and the book
+    /// verifies them against the wrong repository — so the shape is asserted
+    /// here rather than assumed.
+    #[test]
+    fn stamp_repo_recognises_evidence() {
+        let ev = EvidenceRef {
+            file_path: "src/main.rs".into(),
+            start_line: 1,
+            end_line: 2,
+            symbol_name: None,
+            note: None,
+            repo: None,
+        };
+        let json = serde_json::to_value(&ev).unwrap();
+        assert!(
+            is_evidence(json.as_object().unwrap()),
+            "evidence no longer has the shape stamp_repo looks for: {json}"
+        );
+
+        // Nested, inside a structure that also holds plain strings and arrays.
+        let mut nested = serde_json::json!({
+            "name": "x",
+            "evidence": json,
+            "errors": [{"status": 404, "evidence": serde_json::to_value(&ev).unwrap()}],
+        });
+        stamp_repo_json(&mut nested, "billing");
+        assert_eq!(nested["evidence"]["repo"], "billing");
+        assert_eq!(nested["errors"][0]["evidence"]["repo"], "billing");
+        assert_eq!(nested["name"], "x", "stamping must not touch anything else");
+    }
+
     #[test]
     fn readme_summary_skips_markup() {
         let md = "<p align=\"center\"><img src=\"logo.png\"></p>\n\n# Title\n\n[![CI](https://x/badge.svg)](https://x)\n\nWild Workouts is an **example Go DDD** project [that shows](https://x) how to build `apps`.\n\nMore.";
@@ -2773,6 +3017,7 @@ mod tests {
             end_line: 1,
             symbol_name: None,
             note: Some(n.into()),
+            repo: None,
         };
         assert_eq!(sql_label(&[ev("INSERT INTO orders (id, total) VALUES…")], "writes"), "writes orders");
         assert_eq!(sql_label(&[ev("UPDATE orders SET status = %s")], "writes"), "writes orders");

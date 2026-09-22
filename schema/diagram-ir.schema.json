@@ -271,6 +271,13 @@
             "string",
             "null"
           ]
+        },
+        "repo": {
+          "description": "Member repository the path belongs to, when a system is documented from\nseveral. Absent means the repository being documented — which is every\ndiagram written before this existed, and every single-repository one\nafter it. A path is ambiguous only once there is more than one root it\ncould be relative to.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "additionalProperties": false,

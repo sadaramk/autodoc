@@ -195,6 +195,23 @@ pub struct ClientCall {
     pub evidence: EvidenceRef,
 }
 
+impl Operation {
+    /// True when this operation lives in another repository of the same system.
+    ///
+    /// Such an operation is here so a call that leaves this repository can be
+    /// resolved and its contract described. It is *not* part of what this
+    /// repository publishes: it must not appear in this book's API surface, its
+    /// requirements or its flows-as-entry-points, because claiming another
+    /// team's operation as one of ours is exactly the borrowed authority this
+    /// project exists to avoid.
+    ///
+    /// Read from the evidence rather than a separate flag: an operation whose
+    /// lines were read somewhere else is, by definition, somewhere else.
+    pub fn external(&self) -> bool {
+        self.evidence.repo.is_some()
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Excluded {
@@ -203,7 +220,7 @@ pub struct Excluded {
     pub evidence: EvidenceRef,
 }
 
-mod client;
+pub(crate) mod client;
 mod cs;
 mod go;
 mod java;
