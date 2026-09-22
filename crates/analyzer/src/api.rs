@@ -176,6 +176,11 @@ pub struct ClientCall {
     pub method: String,
     /// Path as written, with dynamic parts normalised to `{param}`.
     pub path: String,
+    /// Host the call names, when it names one literally. Kept even when it
+    /// resolves to no unit in this scan, so the book can say what it could not
+    /// attribute rather than drop the call.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_host: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_unit: Option<String>,
     /// Matched operation id in the target unit.

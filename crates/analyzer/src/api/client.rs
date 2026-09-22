@@ -98,6 +98,49 @@ fn concat_parts(expr: &str) -> Vec<Part> {
         .collect()
 }
 
+/// The host a URL expression names, when it names one literally.
+///
+/// `url_path` throws this away — it wants the path. Keeping it is what lets
+/// the book say *this service calls `notifications`, which is not in this
+/// repository* instead of dropping the call on the floor, which is what it
+/// used to do with every outbound call it could not attribute.
+///
+/// Only a literal host is taken. `${SERVICE_URL}` with no default names
+/// nothing knowable, and guessing from a variable name would be inference.
+/// The host a call names, following one level of indirection.
+///
+/// `const NOTIFY_URL = process.env.NOTIFY_URL ?? "http://notifications:9000"`
+/// and then `` fetch(`${NOTIFY_URL}/v1/notifications`) `` is the ordinary
+/// shape, and the host is in neither place alone. `resolve_ts_var` only
+/// follows a bare identifier, so a template needs its leading `${…}` resolved
+/// before the URL can be read.
+pub(crate) fn url_host_near(src: &Src, expr: &str) -> Option<String> {
+    if let Some(h) = url_host_of(expr) {
+        return Some(h);
+    }
+    let start = expr.find("${")? + 2;
+    let end = expr[start..].find('}')? + start;
+    let ident = expr[start..end].trim();
+    if ident.is_empty() || !ident.bytes().all(is_ident) {
+        return None;
+    }
+    url_host_of(&resolve_ts_var(src, ident))
+}
+
+pub(crate) fn url_host_of(expr: &str) -> Option<String> {
+    for scheme in ["http://", "https://"] {
+        if let Some(at) = expr.find(scheme) {
+            let rest = &expr[at + scheme.len()..];
+            let host: String =
+                rest.chars().take_while(|c| c.is_alphanumeric() || matches!(c, '-' | '.' | '_')).collect();
+            if !host.is_empty() && !host.starts_with("localhost") {
+                return Some(host);
+            }
+        }
+    }
+    None
+}
+
 fn url_path(lang: Language, expr: &str) -> Option<String> {
     let e = expr.trim().trim_start_matches('&');
     match lang {
@@ -173,7 +216,9 @@ fn clientish(recv: &str) -> bool {
 
 /// One outbound call found in a file: offset, method, path, the type the caller
 /// parses the response into, and field names it reads off the body directly.
-type Found = (usize, String, String, Option<String>, Vec<String>);
+/// A call site: offset, method, path, the host it names when it names one,
+/// the type the caller reads the body into, and the fields it reads directly.
+type Found = (usize, String, String, Option<String>, Option<String>, Vec<String>);
 
 pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
     for f in files {
@@ -193,14 +238,16 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                     let Some(close) = matching(code, open) else { continue };
                     let args = split_args(code, open + 1, close);
                     let Some(&(us, ue)) = args.first() else { continue };
-                    let Some(path) = url_path(f.lang, &resolve_ts_var(src, src.slice(us, ue))) else { continue };
+                    let __expr = resolve_ts_var(src, src.slice(us, ue));
+                    let Some(path) = url_path(f.lang, &__expr) else { continue };
+                    let host = url_host_near(src, &__expr);
                     let method = args
                         .get(1)
                         .filter(|&&(s, _)| code.as_bytes()[s] == b'{')
                         .and_then(|&(s, _)| object_entries(src, s).into_iter().find(|(k, ..)| k == "method"))
                         .and_then(|(_, _, vs, ve)| string_lit(src.slice(vs, ve)))
                         .unwrap_or_else(|| "GET".into());
-                    found.push((at, method.to_uppercase(), path, ts_expects(f, close, None), Vec::new()));
+                    found.push((at, method.to_uppercase(), path, host, ts_expects(f, close, None), Vec::new()));
                 }
                 for (rs, ms, open) in method_calls(code, &["get", "post", "put", "patch", "delete"]) {
                     let recv = src.code_slice(rs, ms - 1);
@@ -209,7 +256,9 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                     }
                     let Some(close) = matching(code, open) else { continue };
                     let Some(&(us, ue)) = split_args(code, open + 1, close).first() else { continue };
-                    let Some(path) = url_path(f.lang, &resolve_ts_var(src, src.slice(us, ue))) else { continue };
+                    let __expr = resolve_ts_var(src, src.slice(us, ue));
+                    let Some(path) = url_path(f.lang, &__expr) else { continue };
+                    let host = url_host_near(src, &__expr);
                     let name_end = ms + code[ms..].bytes().take_while(|&b| is_ident(b)).count();
                     let generic = (code.as_bytes().get(name_end) == Some(&b'<'))
                         .then(|| matching(code, name_end).map(|c| src.slice(name_end + 1, c).to_string()))
@@ -218,6 +267,7 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                         rs,
                         code[ms..name_end].to_uppercase(),
                         path,
+                        host,
                         ts_expects(f, close, generic),
                         Vec::new(),
                     ));
@@ -231,10 +281,12 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                     }
                     let Some(close) = matching(code, open) else { continue };
                     let Some(&(us, ue)) = split_args(code, open + 1, close).first() else { continue };
-                    let Some(path) = url_path(f.lang, src.slice(us, ue)) else { continue };
+                    let __expr = src.slice(us, ue);
+                    let Some(path) = url_path(f.lang, __expr) else { continue };
+                    let host = url_host_near(src, __expr);
                     let name_end = ms + code[ms..].bytes().take_while(|&b| is_ident(b)).count();
                     let (expects, keys) = py_expects(f, rs, close + 1);
-                    found.push((rs, code[ms..name_end].to_uppercase(), path, expects, keys));
+                    found.push((rs, code[ms..name_end].to_uppercase(), path, host, expects, keys));
                 }
             }
             Language::Go => {
@@ -253,8 +305,10 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                         m => (Some(m.to_uppercase()), args.first()),
                     };
                     let (Some(method), Some(&(us, ue))) = (method, url) else { continue };
-                    let Some(path) = url_path(f.lang, src.slice(us, ue)) else { continue };
-                    found.push((rs, method, path, go_expects(f, rs), Vec::new()));
+                    let __expr = src.slice(us, ue);
+                    let Some(path) = url_path(f.lang, __expr) else { continue };
+                    let host = url_host_near(src, __expr);
+                    found.push((rs, method, path, host, go_expects(f, rs), Vec::new()));
                 }
             }
             Language::Rust => {
@@ -265,14 +319,16 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                     }
                     let Some(close) = matching(code, open) else { continue };
                     let Some(&(us, ue)) = split_args(code, open + 1, close).first() else { continue };
-                    let Some(path) = url_path(f.lang, src.slice(us, ue)) else { continue };
+                    let __expr = src.slice(us, ue);
+                    let Some(path) = url_path(f.lang, __expr) else { continue };
+                    let host = url_host_near(src, __expr);
                     let name_end = ms + code[ms..].bytes().take_while(|&b| is_ident(b)).count();
-                    found.push((rs, code[ms..name_end].to_uppercase(), path, None, Vec::new()));
+                    found.push((rs, code[ms..name_end].to_uppercase(), path, host, None, Vec::new()));
                 }
             }
             _ => {}
         }
-        for (at, method, path, expects, expects_fields) in found {
+        for (at, method, path, host, expects, expects_fields) in found {
             let line = src.line(at);
             let caller = f.enclosing(line).map(|s| s.name.clone());
             let mut evidence = src.ev(at);
@@ -282,6 +338,7 @@ pub(crate) fn extract(files: &[Loaded], h: &mut Harvest) {
                     unit: f.unit.to_string(),
                     method,
                     path,
+                    target_host: host,
                     target_unit: None,
                     operation: None,
                     caller,
@@ -573,6 +630,7 @@ mod tests {
             unit: "web".into(),
             method: m.into(),
             path: p.into(),
+            target_host: None,
             target_unit: None,
             operation: None,
             caller: None,

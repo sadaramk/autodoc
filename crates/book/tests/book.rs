@@ -794,3 +794,61 @@ fn openspec_output_follows_the_rules_their_validator_enforces() {
         }
     }
 }
+
+/// A service calling out to something this repository does not contain.
+///
+/// These calls were extracted, stored in the model, and rendered nowhere:
+/// every use of `client_calls` in the book asks for the ones that resolved to
+/// an operation, so an outbound dependency on another repository produced a
+/// book that said nothing about it. Documentation that is confidently
+/// incomplete is the failure this project exists to prevent, and it was
+/// happening in the middle of its own output.
+#[test]
+fn outbound_calls_the_book_cannot_attribute_are_still_documented() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("cross-repo"), out.path(), &BookOptions::default()).unwrap();
+    let page = planned.built.book.pages.iter().find(|p| p.id == "evidence").expect("evidence page");
+    let text = serde_json::to_string(&page.blocks).unwrap();
+
+    assert!(text.contains("Calls that leave what is documented"), "{text}");
+    assert!(text.contains("POST /v1/notifications"), "the call itself: {text}");
+
+    // The host, which is in neither line on its own: it is declared as a const
+    // with a literal default and used through a template.
+    assert!(text.contains("notifications"), "the host it is aimed at: {text}");
+
+    assert!(text.contains("notifyShipped"), "and the function responsible: {text}");
+
+    // Cited at the line that makes the call. The page references a citation by
+    // id, so the claim is only real if that id resolves to the right file.
+    let cited: Vec<&str> = planned
+        .built
+        .book
+        .cites
+        .values()
+        .filter(|c| c.file.ends_with("clients/notify.ts"))
+        .map(|c| c.file.as_str())
+        .collect();
+    assert!(!cited.is_empty(), "no citation lands in the file that makes the call");
+
+    // The operation that does resolve is not dragged in here.
+    let model = &planned.built.report.api.as_ref().unwrap();
+    let unresolved = model.client_calls.iter().filter(|c| c.operation.is_none()).count();
+    assert_eq!(unresolved, 1, "{:?}", model.client_calls);
+    assert_eq!(
+        model.client_calls.iter().filter(|c| c.target_host.is_some()).count(),
+        1,
+        "the host is kept on the model, not only rendered"
+    );
+}
+
+/// A repository whose calls all resolve says nothing about calls that leave,
+/// rather than printing an empty section.
+#[test]
+fn a_repository_with_no_outbound_calls_says_nothing_about_them() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("polyglot-shop"), out.path(), &BookOptions::default()).unwrap();
+    let page = planned.built.book.pages.iter().find(|p| p.id == "evidence").unwrap();
+    let text = serde_json::to_string(&page.blocks).unwrap();
+    assert!(!text.contains("Calls that leave"), "an empty section is noise: {text}");
+}
