@@ -63,6 +63,37 @@ pub struct OperationIntent {
     pub purpose: String,
     /// Acceptance criteria beyond what the code enforces.
     pub acceptance: Vec<String>,
+    /// Lines this intent describes, as `path:LINE` or `path:START-END`. Prose
+    /// about code can go out of date silently, which is the one thing this
+    /// project refuses to do anywhere else — a pin makes it a citation like
+    /// any other, verified against the commit and reported when it drifts.
+    /// Optional: an entry without one is published, and listed as unpinned.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<String>,
+}
+
+/// `path:LINE` or `path:START-END` — the same spelling `nunki verify` takes,
+/// so a pin can be checked by hand before it is written down. An unparseable
+/// pin is dropped rather than guessed at; `check` reports it as unpinned.
+pub fn parse_pin(s: &str) -> Option<nunki_analyzer::EvidenceRef> {
+    let (path, range) = s.trim().rsplit_once(':')?;
+    let (start, end) = match range.split_once('-') {
+        Some((a, b)) => (a.trim().parse().ok()?, b.trim().parse().ok()?),
+        None => {
+            let n = range.trim().parse().ok()?;
+            (n, n)
+        }
+    };
+    if path.is_empty() || start == 0 || end < start {
+        return None;
+    }
+    Some(nunki_analyzer::EvidenceRef {
+        file_path: path.to_string(),
+        start_line: start,
+        end_line: end,
+        symbol_name: None,
+        note: Some("authored".into()),
+    })
 }
 
 /// Non-empty trimmed text.
@@ -105,5 +136,32 @@ impl Authored {
 
     pub fn operation(&self, id: &str) -> Option<&OperationIntent> {
         self.operations.get(id)
+    }
+
+    /// Authored entries whose operation no longer exists. A renamed route
+    /// silently orphans its intent: the lookup misses, the prose vanishes from
+    /// the book, and nothing says so. Answered against the operations this
+    /// build found, so an entry that says something is compared with what is.
+    pub fn orphans(&self, current: &[String]) -> Vec<String> {
+        self.operations
+            .iter()
+            .filter(|(_, intent)| intent.says_something())
+            .map(|(id, _)| id)
+            .filter(|id| !current.iter().any(|c| c == *id))
+            .cloned()
+            .collect()
+    }
+}
+
+impl OperationIntent {
+    /// Whether anyone actually filled this in. The starter file lists every
+    /// operation with empty answers, so an untouched template must not report
+    /// hundreds of orphans the moment a route is renamed.
+    pub fn says_something(&self) -> bool {
+        given(&self.name).is_some()
+            || given(&self.actor).is_some()
+            || given(&self.purpose).is_some()
+            || !given_list(&self.acceptance).is_empty()
+            || !self.evidence.is_empty()
     }
 }

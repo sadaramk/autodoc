@@ -693,3 +693,105 @@ fn journey_the_drawio_file_carries_the_books_layout() {
     assert!(o.status.success(), "{}", text(&o));
     assert!(repo.join("docs/architecture/diagrams/containers.drawio").is_file(), "{}", text(&o));
 }
+
+/// Authored prose is the one thing in a book nunki does not derive, and until
+/// now the one thing it never checked. Two ways it rots, both silent before
+/// this: the operation it describes is renamed, so the lookup misses and the
+/// prose simply stops appearing; or the code it describes moves, so the prose
+/// stays on the page and quietly stops being true.
+#[test]
+fn journey_authored_prose_is_reported_when_it_goes_stale() {
+    let (_tmp, repo) = shop_repo();
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let out = repo.join("docs/architecture");
+    let authored_path = out.join("authored.json");
+
+    // The generator writes the starter file listing every operation, untouched.
+    let mut authored: Value = serde_json::from_str(&std::fs::read_to_string(&authored_path).unwrap()).unwrap();
+    let ops = authored["operations"].as_object().unwrap();
+    let real_id = ops.keys().next().expect("the demo has operations").clone();
+
+    // An untouched template must not be reported: every operation is listed
+    // there with empty answers, and none of it is a claim about anything.
+    let o = nunki(&["check", "."], &repo);
+    assert!(o.status.success(), "an untouched authored.json is not stale: {}", text(&o));
+
+    // 1. Prose about an operation that no longer exists.
+    authored["operations"]["payments:POST /charges/vanished"] = serde_json::json!({
+        "name": "Refund a charge",
+        "actor": "Back-office clerk",
+        "purpose": "Return money for a disputed order.",
+        "acceptance": []
+    });
+    std::fs::write(&authored_path, serde_json::to_string_pretty(&authored).unwrap()).unwrap();
+    // Regenerate first, so the book is current and the only thing left to fail
+    // on is the orphan itself. Without this the check fails because an authored
+    // actor changed the rendered page — which would pass this test for the
+    // wrong reason, and did until reverting the orphan rule did not break it.
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let o = nunki(&["check", "."], &repo);
+    let s = text(&o);
+    assert!(
+        !s.contains("outdated ") && !s.contains("missing "),
+        "the book itself must be current, so the orphan is the only thing failing: {s}"
+    );
+    assert_eq!(o.status.code(), Some(1), "orphaned authored prose fails check: {s}");
+    assert!(s.contains("payments:POST /charges/vanished"), "and names the entry: {s}");
+    assert!(s.contains("names no operation"), "and says why: {s}");
+
+    // 2. Prose pinned to code, where the code still matches.
+    authored["operations"].as_object_mut().unwrap().remove("payments:POST /charges/vanished");
+    authored["operations"][&real_id] = serde_json::json!({
+        "name": "Place an order",
+        "actor": "Shopper",
+        "purpose": "Take payment and start fulfilment.",
+        "acceptance": [],
+        "evidence": ["api-gateway/src/routes/checkout.ts:1-3"]
+    });
+    std::fs::write(&authored_path, serde_json::to_string_pretty(&authored).unwrap()).unwrap();
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let o = nunki(&["check", "."], &repo);
+    assert!(o.status.success(), "a pin that matches the code is fine: {}", text(&o));
+
+    // 3. The pinned lines change. The prose is still on the page, so the book
+    //    is still "up to date" — but it now cites code that moved, which is
+    //    exactly the state this issue exists to surface.
+    let routes = repo.join("api-gateway/src/routes/checkout.ts");
+    let body = std::fs::read_to_string(&routes).unwrap();
+    // Not committed: evidence is pinned to a commit, so the drift a reader
+    // cares about is the working tree no longer matching what was cited.
+    std::fs::write(&routes, format!("// a new line at the top, shifting everything\n{body}")).unwrap();
+    let o = nunki(&["check", "."], &repo);
+    let s = text(&o);
+    assert_eq!(o.status.code(), Some(1), "a drifted pin fails check: {s}");
+    // The exact pinned range, not merely "some citation went stale" — shifting
+    // a real source file also moves the book's own citations into it, which
+    // would satisfy a looser assertion whether or not pins are cited at all.
+    assert!(
+        s.contains("api-gateway/src/routes/checkout.ts:1-3"),
+        "the authored pin itself is reported, as a citation like any other: {s}"
+    );
+
+    // 4. Prose with no pin is published and listed, never failed on: an
+    //    authored.json written before pinning existed must still pass.
+    std::fs::write(&routes, body).unwrap();
+    authored["operations"][&real_id]["evidence"] = serde_json::json!([]);
+    std::fs::write(&authored_path, serde_json::to_string_pretty(&authored).unwrap()).unwrap();
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let o = nunki(&["check", "."], &repo);
+    let s = text(&o);
+    assert!(o.status.success(), "unpinned prose does not fail: {s}");
+    assert!(s.contains("no evidence pin"), "but the gap is stated: {s}");
+
+    // 5. The starter file lists every operation with empty answers. When a
+    //    route goes, its untouched entry is orphaned but says nothing, and
+    //    failing CI over a blank the generator itself wrote would be absurd.
+    authored["operations"]["payments:POST /removed-but-never-filled-in"] =
+        serde_json::json!({ "name": "", "actor": "", "purpose": "", "acceptance": [] });
+    std::fs::write(&authored_path, serde_json::to_string_pretty(&authored).unwrap()).unwrap();
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let o = nunki(&["check", "."], &repo);
+    let s = text(&o);
+    assert!(o.status.success(), "an orphaned but empty entry says nothing, so it is not stale: {s}");
+    assert!(!s.contains("removed-but-never-filled-in"), "and is not reported: {s}");
+}

@@ -323,7 +323,17 @@ impl<'a> Builder<'a> {
 
             let mut purpose = vec![Inline::strong("Purpose ")];
             match (given(&intent.purpose), &op.summary) {
-                (Some(p), _) => purpose.extend(authored(p)),
+                // Authored prose carrying a pin is cited like anything else, so
+                // it is verified against the commit and reported when it drifts
+                // instead of being published on trust.
+                (Some(p), _) => {
+                    purpose.extend(authored(p));
+                    let pins: Vec<_> = intent.evidence.iter().filter_map(|e| crate::authored::parse_pin(e)).collect();
+                    for e in &pins {
+                        purpose.push(Inline::text(" "));
+                        purpose.push(self.cite(e));
+                    }
+                }
                 (None, Some(doc)) => {
                     purpose.push(Inline::text(format!("{doc} (handler documentation) ")));
                     purpose.push(self.cite(&op.handler.evidence));
