@@ -30,6 +30,24 @@ pub(super) struct RuleEntry {
     pub evidence: EvidenceRef,
 }
 
+/// An identifier derived from what a requirement describes, never from where
+/// it sits in a list.
+///
+/// The readable part is a slug of the operation, which is what makes the
+/// identifier worth citing. The digest is what makes it correct: slugging is
+/// lossy — `GET /user/profile` and `GET /user/{profile}` reduce to the same
+/// text — and two requirements sharing an anchor send every link to whichever
+/// came first. Disambiguating only on collision would have been prettier and
+/// wrong, because then adding one operation could change the identifier of
+/// another, which is the whole defect this replaces.
+pub(super) fn requirement_id(operation_id: &str) -> String {
+    const READABLE: usize = 48;
+    let mut slug = nunki_analyzer::scan::slug(operation_id);
+    slug.truncate(READABLE);
+    let slug = slug.trim_end_matches('-');
+    format!("FR-{slug}-{}", &crate::content_hash(operation_id)[..4])
+}
+
 pub(super) fn op_anchor(op: &Operation) -> String {
     // Handlers can share a route and differ by request condition.
     let selector = op.selector.as_deref().map(|s| format!(" {s}")).unwrap_or_default();
@@ -145,9 +163,14 @@ impl<'a> Builder<'a> {
                         ops: BTreeSet<String>,
                         ev: &EvidenceRef,
                         key: String| {
-            if seen.insert((key, statement.clone())) {
+            if seen.insert((key.clone(), statement.clone())) {
                 out.push(RuleEntry {
-                    id: String::new(),
+                    // A rule's natural name is its statement, which is a
+                    // sentence — too long to cite. The key it is already
+                    // deduplicated on, plus the statement, is what makes it
+                    // this rule and not another; a short digest of the pair is
+                    // stable under anything added or removed elsewhere.
+                    id: format!("BR-{}", &crate::content_hash(&format!("{key}\u{1}{statement}"))[..6]),
                     statement,
                     kind,
                     applies_to,
@@ -251,18 +274,21 @@ impl<'a> Builder<'a> {
                 }
             }
         }
-        for (i, r) in out.iter_mut().enumerate() {
-            r.id = format!("BR-{:03}", i + 1);
-        }
         out
     }
 
-    /// Operations in functional order (by service, then path), numbered FR-001….
+    /// Operations in functional order (by service, then path).
+    ///
+    /// The identifier is derived from the operation, not from its position in
+    /// this list. A position is not an identity: adding one endpoint used to
+    /// renumber every requirement after it, so `FR-005` in a commit message or
+    /// a ticket silently came to mean something else. An operation already has
+    /// a stable name — `api-gateway:POST /checkout` — and that is the key.
     pub(super) fn functional_requirements(&self) -> Vec<(String, &'a Operation)> {
         let Some(api) = self.api() else { return vec![] };
         let mut ops: Vec<&Operation> = api.operations.iter().collect();
         ops.sort_by(|a, b| (&a.unit, &a.path, &a.method).cmp(&(&b.unit, &b.path, &b.method)));
-        ops.into_iter().enumerate().map(|(i, o)| (format!("FR-{:03}", i + 1), o)).collect()
+        ops.into_iter().map(|o| (requirement_id(&o.id), o)).collect()
     }
 
     pub(super) fn functional_page(&mut self) {
@@ -566,7 +592,7 @@ impl<'a> Builder<'a> {
                 blocks.extend(fb);
             }
         }
-        blocks.extend(self.background_requirement_blocks(frs.len() + 1));
+        blocks.extend(self.background_requirement_blocks());
 
         let mut rule_blocks: Vec<Block> = Vec::new();
         let mut kind_pages: Vec<(String, String, Vec<Block>, usize)> = Vec::new();

@@ -269,7 +269,9 @@ fn behaviour_pages_document_contracts_flows_data_and_business_intent() {
     // Functional spec: numbered requirements and rules; intent is a gap, never invented.
     let functional = page("functional");
     let fr = headings("functional");
-    assert!(fr.iter().any(|h| h.starts_with("FR-001")), "{fr:?}");
+    // Identified by what they describe, not by position — see
+    // `journey_requirement_ids_survive_adding_a_requirement`.
+    assert!(fr.iter().any(|h| h.starts_with("FR-") && h.contains("get-catalog")), "{fr:?}");
     assert!(fr.contains(&"Business rules".to_string()));
     let text = serde_json::to_string(&functional.blocks).unwrap();
     assert!(text.contains("needs input: actor"));
@@ -372,7 +374,10 @@ fn flows_page_documents_scheduled_jobs_and_handlers_with_background_requirements
 
     let spec = headings("functional");
     assert!(spec.contains(&"Background processing".to_string()), "{spec:#?}");
-    assert!(spec.iter().any(|h| h.starts_with("FR-002 · ")), "background FRs continue the numbering: {spec:#?}");
+    assert!(
+        spec.iter().any(|h| h.starts_with("FR-") && h.contains("cron")),
+        "a background requirement is identified by what triggers it: {spec:#?}"
+    );
     let text = serde_json::to_string(&page("functional").blocks).unwrap();
     assert!(text.contains("cron 0 * * * *") && text.contains("Continues in"), "{text}");
 }

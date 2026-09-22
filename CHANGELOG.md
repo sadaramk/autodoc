@@ -10,6 +10,27 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- **A requirement identifier no longer changes when another requirement is
+  added.** `FR-001` and `BR-001` were positions in a list, produced by
+  `enumerate()`. Adding one endpoint to the first service renumbered five of
+  the demo's six requirements — every identifier still existed, and every one
+  of them now meant something else. Anything citing `FR-005` in a commit
+  message, a ticket or a test name was silently pointing at a different
+  requirement.
+
+  An identifier is now derived from what it describes. A requirement is an
+  operation, and an operation already had a stable name, so
+  `api-gateway:POST /checkout` becomes `FR-api-gateway-post-checkout-bf89`; a
+  rule is identified by the statement and the key it was already deduplicated
+  on. The digest is not decoration: slugging is lossy, `GET /user/profile` and
+  `GET /user/{profile}` reduce to the same text, and disambiguating only on
+  collision would have meant adding one operation could change another's
+  identifier — the same defect in a new place.
+
+  Identifiers in the example book all change once, and are then stable.
+
+### Fixed
+
 - Minimal-API routes written without a leading slash were not read.
   `app.MapGet("api/items", …)` is as ordinary in ASP.NET Core as
   `app.MapGet("/api/items", …)` — the route is relative to the app root — but
