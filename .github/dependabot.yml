@@ -55,6 +55,14 @@ updates:
     groups:
       actions-minor:
         update-types: [minor, patch]
+    ignore:
+      # `dtolnay/rust-toolchain@1.91.0` names a *Rust* version, not a version of
+      # the action — that is how the action is tagged. It has to equal
+      # `RUST_VERSION` in `Dockerfile`, or clippy disagrees between the container
+      # and CI and a lint failure depends on where it ran. Dependabot reads the
+      # ref as a version and offered `1.120.0`, a Rust release that does not
+      # exist; upgrading the toolchain is a deliberate edit in two places.
+      - dependency-name: dtolnay/rust-toolchain
 
   - package-ecosystem: docker
     # `rust:`, `debian:` and the Playwright image the test containers are built
