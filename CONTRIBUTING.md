@@ -78,6 +78,49 @@ make lint        # rustfmt + clippy -D warnings
 make demo        # regenerate the examples/polyglot-shop book
 ```
 
+## Changing DiagramIR or the CLI
+
+Both are published contracts, and 1.0 means a consumer can write against them
+without the ground moving ([#8](https://github.com/sadaramk/nunki/issues/8),
+[#9](https://github.com/sadaramk/nunki/issues/9)). Neither promise is kept by
+intention: each is enforced by a test that fails when it is broken.
+
+**Additive is free.** A new optional field, a new definition, a new enum
+variant, a new subcommand or flag — none of these break anything reading
+today's output, and none need ceremony beyond regenerating the snapshot.
+
+**Breaking is a decision.** Within a minor series the following are refused by
+`crates/ir-spec/tests/stability.rs`, comparing against the frozen baseline in
+`schema/stable/`:
+
+- a property or definition disappears
+- an optional property becomes required — anything writing the old shape now fails
+- a required property becomes optional — a reader that always found it present may not handle its absence
+- a type changes, or an enum loses a variant
+
+The deprecation path, when something genuinely has to go:
+
+1. Add the replacement alongside the old field, both optional. Ship it.
+2. Mark the old one deprecated in its doc comment, which reaches the schema's
+   `description`, and say what replaces it. Ship at least one minor release
+   this way, so a consumer meets the warning before the removal.
+3. Remove it only in a new minor series, and freeze a fresh baseline:
+   `cp schema/diagram-ir.schema.json schema/stable/diagram-ir-<x.y>.schema.json`,
+   then point the test at it. The removal goes in the changelog under
+   **Removed**, naming the release that deprecated it.
+
+The CLI works the same way. `crates/cli/tests/surface.rs` snapshots every
+subcommand's help, so a renamed flag or a changed default shows up in review as
+a diff of the promised surface. Regenerate only once the change is a decision:
+
+```bash
+UPDATE_CLI_SURFACE=1 cargo test -p nunki-cli --test surface
+```
+
+Renaming a flag breaks every workflow pinned to it, and a workflow pins a tag
+rather than tracking `main` — so the old spelling has to keep working for a
+series, not merely be mentioned in release notes.
+
 ## The architecture book
 
 `nunki generate` writes the same structure for every repository:
