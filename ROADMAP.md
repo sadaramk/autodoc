@@ -23,6 +23,7 @@ however useful it sounds.
 | | C# and ASP.NET Core: attribute routes, EF Core entities, `.csproj` modules |
 | | `comment: true` — the action keeps one diff comment per pull request |
 | | On the Marketplace as [Nunki Architecture Docs](https://github.com/marketplace/actions/nunki-architecture-docs) |
+| | Authored prose can be pinned to evidence; `check` reports it when it rots |
 
 Languages read today: Rust, TypeScript/TSX, Go, Python, Java, Kotlin, C#.
 
@@ -52,15 +53,15 @@ repository — not on effort.
 The ordering is the commitment, and it is not by size. **[#8](https://github.com/sadaramk/nunki/issues/8)
 and [#9](https://github.com/sadaramk/nunki/issues/9) are clocks rather than
 tasks**: both promise a surface *unchanged for a full minor cycle*, which no
-amount of work completes — only elapsed time without a violation does. Nothing
-can elapse until a violation would be noticed, so the machinery that notices
-comes first and the clock then runs underneath everything else.
+amount of work completes — only elapsed time without a violation does. The
+machinery that would notice a violation is in place, so the clock is running
+underneath everything below.
 
 | | | |
 |---|---|---|
-| 1 | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Publish the schema with each release; tell a breaking schema change from an additive one; snapshot the CLI surface; write the deprecation path. Starts the clock. |
-| 2 | [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored prose has gone stale — the one place the project still publishes a claim it has not checked. |
-| 3 | [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection. A spike with an exit, not a feature: one attempt already changed nothing on five real repositories. |
+| 1 | [#20](https://github.com/sadaramk/nunki/issues/20) | Keep a history of how the architecture changed, release by release. `diff` already answers it between any two tags; every answer is currently thrown away. |
+| 2 | [#21](https://github.com/sadaramk/nunki/issues/21) | Document a system that spans several repositories. Larger, and constrained by the same promise: a citation into a sibling repository has to be verified, not trusted. |
+| — | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Running. Nothing to do but not break them. |
 
 ## Not doing
 
@@ -76,6 +77,19 @@ than the list.
   looks correct. If it ever does become painful the answer is to parallelise
   the behaviour phase — parsing already is — which needs the same restructure
   without the staleness. ([#5](https://github.com/sadaramk/nunki/issues/5))
+
+- **Following dispatch that happens at runtime.** Twice investigated, twice
+  abandoned. A cross-unit expansion was built and reverted during 0.2 for
+  changing nothing on five real repositories; instrumenting the code path
+  later showed why, on five more — the function that resolves a port to its
+  adapter runs zero times on eShopOnWeb, CleanArchitecture, nunki itself and
+  the Spring Cloud fixture, and the multi-implementation case it is blamed for
+  never fired once. Whatever limits a request flow is upstream of interface
+  dispatch. If that changes, the approach is to read the dependency-injection
+  registration — `AddScoped<IOrderService, OrderService>` is an ordinary
+  citable line, and it names decorators a single-implementation guess gets
+  wrong — not to search harder.
+  ([#6](https://github.com/sadaramk/nunki/issues/6))
 
 - **Prose written by a language model.** The entire value here is that a claim
   can be traced to a line of code. Generated narrative cannot be, and mixing the
