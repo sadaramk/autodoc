@@ -11,6 +11,7 @@ Commands:
   generate  Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams
   export    Export a diagram for another tool. One way: the source stays authoritative
   spec      Write the specification in another toolchain's format, from the code
+  conform   Check the code against a specification someone else wrote
   diff      What changed architecturally between two revisions. Markdown for a PR comment
   check     Fail (exit 1) when the book is out of date or cites stale code. For CI
   verify    Verify evidence references like `src/main.rs:10-42`
@@ -149,6 +150,20 @@ Options:
 
   -h, --help
           Print help (see a summary with '-h')
+
+$ nunki conform --help
+Check the code against a specification someone else wrote
+
+Usage: nunki conform [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+      --spec <SPEC>  Specification files. Defaults to the layouts the toolkits use: `.kiro/specs/*/requirements.md`, `openspec/specs/*/spec.md`, `specs/*/spec.md`
+      --json         
+      --exit-code    Exit 1 when something declared is missing or contradicted
+  -h, --help         Print help
 
 $ nunki diff --help
 What changed architecturally between two revisions. Markdown for a PR comment

@@ -866,3 +866,74 @@ fn journey_requirement_ids_survive_adding_a_requirement() {
         .collect();
     assert!(moved.is_empty(), "identifiers now point somewhere else:\n  {}", moved.join("\n  "));
 }
+
+/// Checking code against a specification someone else wrote.
+///
+/// The fixture reproduces what a real repository actually looks like — it was
+/// built from `trilogy-group/ttv-pipeline`, whose Kiro spec declares five
+/// endpoints against an implementation that has seven. Two traps in that pair
+/// are the whole difficulty, and neither appears in a fixture designed to
+/// succeed: the spec writes `{id}` where the code writes `{job_id}`, and most
+/// of a real spec declares no endpoint at all.
+#[test]
+fn journey_conform_checks_code_against_a_specification() {
+    let (_tmp, repo) = repo_from("conform", "jobs", "git@github.com:acme/jobs.git");
+    let o = nunki(&["conform", "."], &repo);
+    let s = text(&o);
+    assert!(o.status.success(), "reporting gaps is not itself a failure: {s}");
+
+    // Declared and implemented. `{id}` and `{job_id}` are the same route; a
+    // literal comparison would report this endpoint as both missing and
+    // unrequested, which is two false findings for working code.
+    assert!(s.contains("2 matched"), "{s}");
+    assert!(
+        !s.contains("no operation answers GET /v1/jobs/{}  "),
+        "the status endpoint matched despite `{{id}}` vs `{{job_id}}`, so it must not also be reported missing: {s}"
+    );
+
+    // Declared and absent.
+    assert!(s.contains("no operation answers GET /v1/jobs/{}/artifact"), "{s}");
+    assert!(s.contains("no operation answers POST /v1/jobs/{}/cancel"), "{s}");
+
+    // Declared with a status the handler was never measured to return.
+    assert!(s.contains("declares 429"), "{s}");
+    assert!(s.contains("measured to return 202, 400"), "the measured statuses are named, not just the gap: {s}");
+
+    // Implemented and asked for by nobody — the finding a spec-first tool
+    // cannot produce, because it only looks where its own artifacts point.
+    assert!(s.contains("/v1/plans is implemented and declared nowhere"), "{s}");
+    assert!(s.contains("artifact-url is implemented and declared nowhere"), "{s}");
+
+    // And the one that matters most: a requirement about load shedding and
+    // restarts names no endpoint. Reporting it as missing would be the
+    // loudest possible false positive, and wrong about every non-endpoint
+    // requirement in every specification ever written.
+    assert!(s.contains("Requirement 3 names no endpoint"), "{s}");
+    assert!(s.contains("names `/healthz` with no method"), "a path with no verb is undecided, not missing: {s}");
+    assert!(!s.contains("missing      Requirement 3"), "{s}");
+    assert!(!s.contains("no operation answers  /healthz"), "{s}");
+
+    // Every finding about our side carries a citation back to the code.
+    let json = nunki(&["conform", ".", "--json"], &repo);
+    let report: Value = serde_json::from_slice(&json.stdout).unwrap();
+    for f in report["findings"].as_array().unwrap() {
+        if f["verdict"] == "unrequested" || f["verdict"] == "matched" || f["verdict"] == "partial" {
+            assert!(f["evidence"]["filePath"].as_str().is_some_and(|p| !p.is_empty()), "{f}");
+            assert!(f["requirement"].as_str().is_some_and(|r| r.starts_with("FR-")), "{f}");
+        }
+        if f["verdict"] == "missing" || f["verdict"] == "partial" {
+            assert!(f["declared"]["source"].as_str().is_some(), "a gap says where it was declared: {f}");
+        }
+    }
+
+    // `--exit-code` gates a pipeline on what is actually actionable: something
+    // declared and absent, or contradicted. Not on scope judgements.
+    let gated = nunki(&["conform", ".", "--exit-code"], &repo);
+    assert_eq!(gated.status.code(), Some(1), "{}", text(&gated));
+
+    // Nothing to read is a usage error, not a clean bill of health.
+    let (_t2, empty) = repo_from("go-mini", "gm", "git@github.com:acme/gm.git");
+    let none = nunki(&["conform", "."], &empty);
+    assert_eq!(none.status.code(), Some(2), "{}", text(&none));
+    assert!(text(&none).contains(".kiro/specs"), "it says where it looked: {}", text(&none));
+}

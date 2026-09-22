@@ -216,3 +216,51 @@ pub fn check(r: &nunki_book::CheckReport) -> String {
     );
     s
 }
+
+/// What the code does and does not answer in a specification.
+///
+/// Ordered by what a reader should act on: what is declared and absent, then
+/// what disagrees, then what exists unasked, then what could not be decided at
+/// all. The last group is printed rather than hidden, because a tool that
+/// silently drops what it could not judge is the kind that gets turned off.
+pub fn conform(r: &nunki_book::conform::Report) -> String {
+    use nunki_book::conform::Verdict;
+    let mut s = String::new();
+    let _ = writeln!(s, "read {}", r.sources.join(", "));
+
+    let group = |v: Verdict| r.findings.iter().filter(move |f| f.verdict == v);
+    let mut lines = |label: &str, v: Verdict| {
+        for f in group(v) {
+            let where_ = f
+                .declared
+                .as_ref()
+                .map(|d| format!("{}:{}", d.source, d.line))
+                .or_else(|| f.evidence.as_ref().map(|e| format!("{}:{}", e.file_path, e.start_line)))
+                .unwrap_or_default();
+            let subject = f
+                .declared
+                .as_ref()
+                .map(|d| d.requirement.clone())
+                .or_else(|| f.requirement.clone())
+                .unwrap_or_default();
+            let subject = if subject.is_empty() { String::new() } else { format!("{subject} — ") };
+            let _ = writeln!(s, "{label:<12} {subject}{}  {where_}", f.detail);
+        }
+    };
+    lines("missing", Verdict::Missing);
+    lines("disagrees", Verdict::Partial);
+    lines("unrequested", Verdict::Unrequested);
+    lines("undecidable", Verdict::NotCheckable);
+
+    let n = |k: &str| r.counts.get(k).copied().unwrap_or(0);
+    let _ = writeln!(
+        s,
+        "\n{} matched · {} missing · {} disagreeing · {} unrequested · {} not checkable from code",
+        n("matched"),
+        n("missing"),
+        n("partial"),
+        n("unrequested"),
+        n("not-checkable")
+    );
+    s
+}

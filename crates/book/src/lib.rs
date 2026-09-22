@@ -13,6 +13,7 @@
 pub mod authored;
 pub mod behaviour;
 pub mod build;
+pub mod conform;
 pub mod html;
 pub mod markdown;
 pub mod model;

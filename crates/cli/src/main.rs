@@ -202,6 +202,21 @@ enum Command {
         #[arg(short, long)]
         out: Option<PathBuf>,
     },
+    /// Check the code against a specification someone else wrote.
+    Conform {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Specification files. Defaults to the layouts the toolkits use:
+        /// `.kiro/specs/*/requirements.md`, `openspec/specs/*/spec.md`,
+        /// `specs/*/spec.md`.
+        #[arg(long)]
+        spec: Vec<PathBuf>,
+        #[arg(long)]
+        json: bool,
+        /// Exit 1 when something declared is missing or contradicted.
+        #[arg(long)]
+        exit_code: bool,
+    },
     /// What changed architecturally between two revisions. Markdown for a PR comment.
     Diff {
         #[arg(default_value = ".")]
@@ -344,6 +359,7 @@ fn run(cli: Cli) -> Result<ExitCode> {
         }
         Command::Export { ir, format, output, repo } => export(&ir, format, output, repo),
         Command::Spec { path, format, out } => spec(&path, format, out),
+        Command::Conform { path, spec, json, exit_code } => conform(&path, spec, json, exit_code),
         Command::Diff { path, base, head, include_tests, json, exit_code } => {
             diff(&path, &base, &head, include_tests, json, exit_code)
         }
@@ -472,6 +488,60 @@ fn generate(
 /// The book is generated into a temporary directory rather than the
 /// repository: this command answers "what does the code specify", and should
 /// not leave a book behind as a side effect of asking.
+/// Specification files in the layouts the surveyed toolkits use. Only these
+/// three, and only where they actually sit: guessing that any `requirements.md`
+/// anywhere is a specification would read a template or a sample and report
+/// findings about neither the code nor the spec.
+fn discover_specs(root: &Path) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    for (dir, file) in [(".kiro/specs", "requirements.md"), ("openspec/specs", "spec.md"), ("specs", "spec.md")] {
+        let Ok(entries) = std::fs::read_dir(root.join(dir)) else { continue };
+        let mut found: Vec<PathBuf> = entries.flatten().map(|e| e.path().join(file)).filter(|p| p.is_file()).collect();
+        found.sort();
+        out.extend(found);
+    }
+    out
+}
+
+/// Checks the code against a specification someone else wrote.
+fn conform(path: &Path, spec_files: Vec<PathBuf>, json: bool, exit_code: bool) -> Result<ExitCode> {
+    let files = if spec_files.is_empty() { discover_specs(path) } else { spec_files };
+    if files.is_empty() {
+        eprintln!(
+            "no specification found under {}. Looked in .kiro/specs/*/requirements.md, \
+             openspec/specs/*/spec.md and specs/*/spec.md; name one with --spec.",
+            path.display()
+        );
+        return Ok(ExitCode::from(2));
+    }
+
+    let cfg = Config::discover(path)?;
+    let scratch = tempfile::tempdir().context("cannot create a temporary directory for the build")?;
+    let opts = book_options(&cfg, None, None, false, true)?;
+    let planned = nunki_book::plan(path, scratch.path(), &opts)?;
+
+    let mut declared = Vec::new();
+    let mut undecidable = Vec::new();
+    let mut sources = Vec::new();
+    for f in &files {
+        let text = std::fs::read_to_string(f).with_context(|| format!("reading {}", f.display()))?;
+        let rel = f.strip_prefix(path).unwrap_or(f).to_string_lossy().replace('\\', "/");
+        let found = nunki_book::conform::parse_spec(&rel, &text);
+        undecidable.extend(nunki_book::conform::headings_without_endpoints(&text, &found));
+        declared.extend(found);
+        sources.push(rel);
+    }
+
+    let mut report = nunki_book::conform::compare(&declared, &undecidable, &planned.built.behaviour);
+    report.sources = sources;
+    if json {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+    } else {
+        print!("{}", report::conform(&report));
+    }
+    Ok(if exit_code && report.has_gaps() { ExitCode::from(1) } else { ExitCode::SUCCESS })
+}
+
 fn spec(path: &Path, format: SpecFormat, out: Option<PathBuf>) -> Result<ExitCode> {
     let cfg = Config::discover(path)?;
     let scratch = tempfile::tempdir().context("cannot create a temporary directory for the build")?;
