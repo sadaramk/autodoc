@@ -6,6 +6,14 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Read-only by default. Every job here reads the repository and reports through
+# the check itself; only `action` writes anything, and it says so and asks for
+# exactly what it needs. Without this, each job gets whatever the repository's
+# default happens to be — a token with write access to the repository, handed to
+# a build that runs code from a pull request.
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 

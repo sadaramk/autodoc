@@ -1,0 +1,18 @@
+# What CodeQL should and should not read.
+#
+# Two directories in this repository are not code this project runs; they are
+# code this project *reads*. Scanning them reports vulnerabilities in sample
+# applications as if they were ours, and a tool that cries wolf on its own test
+# data stops being read.
+name: nunki
+
+paths-ignore:
+  # Fixture repositories are input to the analyzer. An unrate-limited route or a
+  # reflected parameter in one of them is a property of the sample being
+  # documented, not of nunki — several are deliberately shaped like real-world
+  # code, warts included, because that is what makes them useful fixtures.
+  - tests/fixtures/**
+  # Generated books. The reader script here is a copy of
+  # `crates/book/src/assets/book.js`, so scanning both reports every finding
+  # twice and attributes it to output rather than to source.
+  - examples/**

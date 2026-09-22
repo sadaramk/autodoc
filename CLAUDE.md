@@ -100,6 +100,11 @@ Each must pass before merge.
 - `analyzer` heuristics: `crates/analyzer/tests/fixtures.rs`, journeys 1–4, then `make demo` to refresh examples.
 - `diff` / `export`: `crates/cli/tests/journeys.rs::journey_diff_*`, `journey_export_*`. Both compare
   against real output, so a wrong-but-plausible change shows up as a changed string, not a panic.
+- Escaping (`renderer/src/svg.rs` `esc`, `renderer/src/text.rs`, `book/src/html.rs`): a book is rendered
+  from an untrusted repository and the reader assigns `d.svg` with `innerHTML`, so
+  `crates/book/tests/escaping.rs` scans a repository whose **directory name** is markup — that is what
+  becomes a node label — and `geometry.rs::html_is_self_contained_and_escapes_untrusted_text` covers the
+  standalone page. Markdown output is deliberately not escaped: it quotes source verbatim.
 - Multi-repository support (`scan.rs` `resolve_against_members` / `adopted`, `Evidence.repo`,
   `build.rs` member contexts, `[workspace] members`): `crates/analyzer/tests/multi_repo.rs`,
   `crates/book/tests/multi_repo.rs`, `crates/cli/tests/multi_repo.rs`. The journey test is the only
