@@ -212,6 +212,40 @@ fn every_shape_renders_all_depths() {
     }
 }
 
+/// Two boxes are joined by one connector, never several in parallel. A service
+/// that both reads and writes one table, or reaches it from three call sites,
+/// is one dependency and has to be drawn as one line — the review that asked
+/// for the gutter to be legible was counting lines, not facts.
+///
+/// `RelBuilder` gets this right by being keyed on the pair, which makes the
+/// property easy to lose to a later edge added somewhere else. Stated here so
+/// it is a promise rather than an implementation detail.
+#[test]
+fn one_connector_joins_any_two_boxes() {
+    for name in [
+        "compose-subdir",
+        "grpc-env-file",
+        "unparsed-worker",
+        "rust-workspace",
+        "uv-workspace",
+        "spring-cloud",
+        "k8s-deploy",
+        "go-hexagonal",
+    ] {
+        let root = fixture(name);
+        for depth in [Depth::System, Depth::Container, Depth::Component] {
+            let r = scan(&root, &ScanOptions { depth, ..Default::default() }).unwrap();
+            let d = draft_ir(&r, &DraftOptions::default());
+            let mut seen: std::collections::BTreeMap<(&str, &str), usize> = Default::default();
+            for e in &d.ir.edges {
+                *seen.entry((e.source.as_str(), e.target.as_str())).or_default() += 1;
+            }
+            let doubled: Vec<_> = seen.iter().filter(|(_, n)| **n > 1).collect();
+            assert!(doubled.is_empty(), "{name}/{depth:?} draws parallel connectors: {doubled:?}");
+        }
+    }
+}
+
 #[test]
 fn spring_cloud_services_config_routes_feign_and_messaging() {
     let root = fixture("spring-cloud");
