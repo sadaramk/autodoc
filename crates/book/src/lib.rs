@@ -16,6 +16,7 @@ pub mod build;
 pub mod html;
 pub mod markdown;
 pub mod model;
+pub mod openspec;
 
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};

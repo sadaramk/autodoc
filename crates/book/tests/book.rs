@@ -719,3 +719,78 @@ fn behaviour_leaves_as_data_and_agrees_with_the_prose() {
         }
     }
 }
+
+/// The OpenSpec renderer, against the rules their validator enforces. CI runs
+/// the real `openspec validate --strict`; this is the same contract stated
+/// locally, so a change that breaks it fails before it reaches a runner that
+/// happens to have node.
+#[test]
+fn openspec_output_follows_the_rules_their_validator_enforces() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("polyglot-shop"), out.path(), &BookOptions::default()).unwrap();
+    let files = nunki_book::openspec::render(&planned.built.behaviour, &|_| None);
+    assert!(files.len() >= 3, "one capability per service: {:?}", files.keys().collect::<Vec<_>>());
+
+    for (path, text) in &files {
+        assert!(path.starts_with("openspec/specs/") && path.ends_with("/spec.md"), "{path}");
+        // Required sections.
+        assert!(text.contains("\n## Purpose\n"), "{path} has no Purpose");
+        assert!(text.contains("\n## Requirements\n"), "{path} has no Requirements");
+
+        let reqs: Vec<&str> = text.lines().filter(|l| l.starts_with("### Requirement: ")).collect();
+        assert!(!reqs.is_empty(), "{path} declares no requirement");
+
+        // The header text is the identity in this format, so duplicates inside
+        // one file are a validation error, not a cosmetic problem.
+        let mut seen = BTreeSet::new();
+        for r in &reqs {
+            assert!(seen.insert(r.trim()), "{path} repeats {r}, which their validator rejects");
+        }
+
+        // Every requirement needs narrative containing SHALL before its first
+        // scenario; an empty body is an error and a missing modal fails strict.
+        for chunk in text.split("### Requirement: ").skip(1) {
+            let name = chunk.lines().next().unwrap_or("");
+            let body = chunk.split("#### Scenario:").next().unwrap_or("");
+            assert!(
+                body.contains("SHALL") || body.contains("MUST"),
+                "{path}: requirement {name:?} has no SHALL, which strict mode fails on"
+            );
+            assert!(
+                body.lines().filter(|l| !l.starts_with("<!--") && !l.trim().is_empty()).count() >= 2,
+                "{path}: requirement {name:?} has an empty body"
+            );
+        }
+
+        // Scenarios are level four with bolded keywords; bulleted WHEN/THEN
+        // lines outside a Scenario header are warned about.
+        for line in text.lines().filter(|l| l.starts_with("- **")) {
+            assert!(
+                line.starts_with("- **WHEN**") || line.starts_with("- **THEN**") || line.starts_with("- **AND**"),
+                "{path}: {line:?} is not one of their keywords"
+            );
+        }
+
+        // Our identifier and evidence travel in a comment, because their format
+        // has no field for either and the heading is theirs.
+        assert!(text.contains("<!-- nunki:FR-"), "{path} carries no identifier back to the book");
+        assert!(text.contains(" evidence:"), "{path} carries no evidence");
+    }
+
+    // Nothing is claimed that was not measured: every status in a scenario is
+    // one the model recorded.
+    let statuses: BTreeSet<String> = planned
+        .built
+        .behaviour
+        .requirements
+        .iter()
+        .flat_map(|r| r.success_status.into_iter().chain(r.error_statuses.iter().copied()))
+        .map(|c| c.to_string())
+        .collect();
+    for text in files.values() {
+        for line in text.lines().filter(|l| l.starts_with("#### Scenario: Request fails with ")) {
+            let code = line.rsplit(' ').next().unwrap();
+            assert!(statuses.contains(code), "{line:?} invents a status the code never returns");
+        }
+    }
+}

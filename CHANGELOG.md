@@ -10,6 +10,25 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- **`nunki spec --format openspec`** writes `openspec/specs/<capability>/spec.md`
+  from the code: one current-state specification per service, in a format
+  another toolchain reads and validates. Adopting OpenSpec on a codebase that
+  already exists otherwise means writing those by hand.
+
+  Their validator is the point. CI runs `openspec validate --specs --strict`
+  against the demo repository — someone else's checker, which fails when our
+  output stops being something their tooling accepts. A check we wrote would
+  only confirm we agree with ourselves. It was verified to exit 1 on malformed
+  output before being trusted as a gate.
+
+  Their format has no field for an identifier and none for evidence, and the
+  requirement heading is their key, so both travel in an HTML comment beside
+  each requirement: their validator tolerates it and a reader can still follow
+  a claim back to the line it came from. Nothing is stated that was not
+  measured — a scenario exists because a status was observed in the handler,
+  not because an endpoint usually has one.
+
+
 - **`behaviour.json`** beside the book: requirements, the rules they must
   satisfy, and what the scan verified, as data. The book rendered all of it as
   prose, which a person can read and nothing else can — a Markdown table cannot
