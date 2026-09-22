@@ -188,11 +188,24 @@ pub fn check(r: &nunki_book::CheckReport) -> String {
     for c in &r.stale_citations {
         let _ = writeln!(s, "citation  {c}");
     }
+    for id in &r.orphaned_authored {
+        let _ = writeln!(s, "authored  `{id}` in authored.json names no operation — renamed, or removed");
+    }
+    if !r.unpinned_authored.is_empty() {
+        let _ = writeln!(
+            s,
+            "note: {} authored intent(s) have no evidence pin, so nothing checks them: {}",
+            r.unpinned_authored.len(),
+            r.unpinned_authored.join(", ")
+        );
+    }
     let _ = writeln!(
         s,
         "{} — {}/{} citations verified",
         if r.ok {
             "book is up to date"
+        } else if !r.orphaned_authored.is_empty() {
+            "authored prose describes operations that are gone"
         } else if r.up_to_date {
             "book is current but cites code that changed"
         } else {

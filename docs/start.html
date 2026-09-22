@@ -203,6 +203,26 @@ nunki render docs/architecture/diagrams/containers.ir.json -o containers.html</c
     and <code>authored.json</code> is where you supply it. Anything you write there is shown as
     authored, kept apart from what was measured, and never overwritten by a later run.
   </p>
+  <p>
+    Prose about code goes out of date too, so an operation's intent can carry
+    <code>evidence</code>: the lines it describes, written the way
+    <code>nunki verify</code> takes them. A pin becomes a citation like any other, verified against
+    the commit, and <code>check</code> reports it when it drifts.
+  </p>
+  <pre><code>"operations": {
+  "api-gateway:POST /checkout": {
+    "name": "Place an order",
+    "actor": "Shopper",
+    "purpose": "Take payment and start fulfilment.",
+    "evidence": ["api-gateway/src/routes/checkout.ts:12-40"]
+  }
+}</code></pre>
+  <p class="meta">
+    Pins are optional: prose without one is published and listed as unchecked, so a file written
+    before pinning existed keeps working. <code>check</code> does fail on an entry naming an
+    operation that no longer exists — a renamed route otherwise orphans its intent silently, and
+    the prose just stops appearing.
+  </p>
 
   <h2>Let an agent drive it</h2>
   <p>

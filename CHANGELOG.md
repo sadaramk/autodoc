@@ -8,6 +8,24 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Authored prose can be pinned, and `check` reports it when it rots.**
+  `authored.json` is the one thing in a book nunki does not derive, and it was
+  the one thing it never checked. Two ways it went stale, both silent. An
+  intent keyed to an operation that is later renamed simply stopped appearing:
+  the lookup missed, the prose vanished, and nothing said so — `check` now
+  fails and names the entry. And prose describing code that moved stayed on the
+  page and quietly stopped being true; an operation intent can now carry
+  `evidence` — `path:START-END`, the spelling `nunki verify` takes — which
+  becomes a citation like any other, verified against the commit.
+
+  Pinning is optional by design. An `authored.json` written before this
+  existed keeps working untouched: unpinned prose is published and listed as
+  unchecked rather than failing a build on upgrade. An untouched starter file
+  reports nothing at all, since every entry in it is blank and a blank claims
+  nothing — including when the operation it was generated for disappears.
+
 ## [0.4.1] - 2026-09-21
 
 ### Changed

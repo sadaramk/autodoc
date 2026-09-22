@@ -63,6 +63,12 @@ pub struct Built {
     pub warnings: Vec<String>,
     /// Starter `authored.json` (written only when none exists).
     pub authored_template: String,
+    /// Authored intents naming an operation this build did not find.
+    pub authored_orphans: Vec<String>,
+    /// Authored intents with prose but no evidence pin. Not an error — the
+    /// file is the human's — but the book should be able to say how much of
+    /// its authored prose is checkable.
+    pub authored_unpinned: Vec<String>,
 }
 
 const SNIPPET_LINES: u32 = 40;
@@ -124,6 +130,8 @@ pub fn build(
     };
 
     let (authored, authored_warning) = Authored::load(out_dir);
+    // Kept for the post-build audit: the builder consumes its copy.
+    let authored_for_audit = authored.clone();
     let mut b = Builder {
         authored,
         report: &report,
@@ -200,11 +208,20 @@ pub fn build(
     let Builder { pages, figures, cites, diagrams, warnings, .. } = b;
     let operation_ids: Vec<String> =
         report.api.as_ref().map(|a| a.operations.iter().map(|o| o.id.clone()).collect()).unwrap_or_default();
+    let authored_orphans = authored_for_audit.orphans(&operation_ids);
+    let authored_unpinned: Vec<String> = authored_for_audit
+        .operations
+        .iter()
+        .filter(|(id, i)| i.says_something() && i.evidence.is_empty() && operation_ids.contains(id))
+        .map(|(id, _)| id.clone())
+        .collect();
     Ok(Built {
         book: Book { meta, nav, pages, diagrams: figures, cites },
         diagrams,
         warnings,
         authored_template: Authored::template(&operation_ids),
+        authored_orphans,
+        authored_unpinned,
         report,
     })
 }

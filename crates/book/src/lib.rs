@@ -102,6 +102,14 @@ pub struct CheckReport {
     pub missing: Vec<String>,
     pub evidence: model::EvidenceHealth,
     pub stale_citations: Vec<String>,
+    /// Authored intents naming an operation that no longer exists. Failing,
+    /// because the prose has silently stopped being published: the lookup
+    /// misses and the book simply omits it.
+    pub orphaned_authored: Vec<String>,
+    /// Authored intents with prose and no pin. Reported, never failing — the
+    /// file belongs to the human, and a book written before pinning existed
+    /// must not start failing CI on upgrade.
+    pub unpinned_authored: Vec<String>,
     pub ok: bool,
 }
 
@@ -243,13 +251,17 @@ pub fn check(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<CheckRep
         .map(|c| format!("{}:{}-{} ({}: {})", c.file, c.start, c.end, c.state, c.detail.clone().unwrap_or_default()))
         .collect();
     let up_to_date = changed.is_empty() && missing.is_empty();
+    let orphaned_authored = planned.built.authored_orphans.clone();
+    let unpinned_authored = planned.built.authored_unpinned.clone();
     Ok(CheckReport {
         up_to_date,
-        ok: up_to_date && stale_citations.is_empty(),
+        ok: up_to_date && stale_citations.is_empty() && orphaned_authored.is_empty(),
         changed,
         missing,
         evidence: book.meta.evidence.clone(),
         stale_citations,
+        orphaned_authored,
+        unpinned_authored,
     })
 }
 
