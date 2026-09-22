@@ -11,6 +11,7 @@
 //! ```
 
 pub mod authored;
+pub mod behaviour;
 pub mod build;
 pub mod html;
 pub mod markdown;
@@ -162,6 +163,9 @@ pub fn plan(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<Planned, 
         files.insert(path, text);
     }
     files.insert("index.html".into(), html::render(&built.book, &opts.accent));
+    // A generated file like any other: `check` compares it, so the model
+    // cannot drift from the prose built beside it.
+    files.insert("behaviour.json".into(), built.behaviour.to_json_pretty());
     Ok(Planned { built, files })
 }
 

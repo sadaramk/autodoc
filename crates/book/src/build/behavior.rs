@@ -291,6 +291,74 @@ impl<'a> Builder<'a> {
         ops.into_iter().map(|o| (requirement_id(&o.id), o)).collect()
     }
 
+    /// The behaviour model as data, assembled from the same two layers the
+    /// functional page renders: requirements derived from operations, and the
+    /// rule catalog. Built here because this is the only place both exist.
+    pub(super) fn behaviour_export(&mut self) -> crate::behaviour::Behaviour {
+        use crate::behaviour as b;
+        let frs = self.functional_requirements();
+        let rules = self.rule_catalog();
+        // operation id → requirement id, so a rule can name requirements and a
+        // consumer has one kind of key to understand rather than two.
+        let req_of: std::collections::BTreeMap<&str, &str> =
+            frs.iter().map(|(id, op)| (op.id.as_str(), id.as_str())).collect();
+
+        let requirements = frs
+            .iter()
+            .map(|(id, op)| b::Requirement {
+                id: id.clone(),
+                operation: op.id.clone(),
+                unit: op.unit.clone(),
+                method: op.method.clone(),
+                path: op.path.clone(),
+                path_partial: op.path_partial,
+                summary: op.summary.clone(),
+                request_model: op.request_body.as_ref().map(|t| t.type_name.clone()),
+                response_model: op.response.as_ref().map(|t| t.type_name.clone()),
+                success_status: op.success_status,
+                error_statuses: {
+                    let mut v: Vec<u16> = op.errors.iter().filter_map(|e| e.status).collect();
+                    v.sort_unstable();
+                    v.dedup();
+                    v
+                },
+                auth: op.auth.iter().map(|a| format!("{}: {}", a.kind, a.detail)).collect(),
+                rules: rules.iter().filter(|r| r.operations.contains(&op.id)).map(|r| r.id.clone()).collect(),
+                evidence: op.evidence.clone(),
+            })
+            .collect();
+
+        let rules = rules
+            .iter()
+            .map(|r| b::Rule {
+                id: r.id.clone(),
+                statement: r.statement.clone(),
+                kind: r.kind.to_string(),
+                requirements: r
+                    .operations
+                    .iter()
+                    .filter_map(|o| req_of.get(o.as_str()).map(|s| s.to_string()))
+                    .collect(),
+                evidence: r.evidence.clone(),
+            })
+            .collect();
+
+        let meta = &self.report.repo;
+        b::Behaviour {
+            provenance: b::Provenance {
+                generator: nunki_renderer::GENERATOR.to_string(),
+                repository: meta.name.clone(),
+                commit: meta.commit_hash.clone(),
+                branch: meta.branch.clone(),
+                files_read: self.report.stats.files,
+                citations_verified: self.cites.values().filter(|c| c.state == "verified").count(),
+                citations_total: self.cites.len(),
+            },
+            requirements,
+            rules,
+        }
+    }
+
     pub(super) fn functional_page(&mut self) {
         let frs = self.functional_requirements();
         if frs.is_empty() {
