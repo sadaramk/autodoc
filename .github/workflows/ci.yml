@@ -96,6 +96,30 @@ jobs:
           command: diff
           comment: true
 
+  openspec:
+    name: Generated specs pass OpenSpec's validator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.91.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Someone else's validator, deliberately. A check we wrote would only
+      # confirm we agree with ourselves; this one fails when our output stops
+      # being something their toolchain accepts, which is the whole point of
+      # emitting their format. Verified to exit 1 on malformed output.
+      # Written outside the repository: asking what the code specifies should
+      # not leave files in the fixture it was asked about.
+      - name: Write specs from the demo repository
+        run: cargo run -q -p nunki-cli -- spec tests/fixtures/polyglot-shop --out "$RUNNER_TEMP/spec-check"
+      - name: Validate them
+        working-directory: ${{ runner.temp }}/spec-check
+        env:
+          OPENSPEC_TELEMETRY: "0"
+        run: npx -y @fission-ai/openspec@1.13 validate --specs --strict
+
   example:
     name: Example book is up to date
     runs-on: ubuntu-latest

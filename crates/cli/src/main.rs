@@ -49,6 +49,12 @@ enum FormatArg {
 }
 
 #[derive(Clone, Copy, ValueEnum)]
+enum SpecFormat {
+    /// `openspec/specs/<capability>/spec.md`, the current-state layout.
+    Openspec,
+}
+
+#[derive(Clone, Copy, ValueEnum)]
 enum ExportFormat {
     /// A draw.io file, carrying the book's layout: open it directly.
     Drawio,
@@ -182,6 +188,19 @@ enum Command {
         /// directory holding the IR, which for a generated book is inside it.
         #[arg(long)]
         repo: Option<PathBuf>,
+    },
+    /// Write the specification in another toolchain's format, from the code.
+    Spec {
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Dialect to write. `openspec` writes one current-state spec per
+        /// capability, which `openspec validate --strict` will check.
+        #[arg(long, value_enum, default_value = "openspec")]
+        format: SpecFormat,
+        /// Directory to write into. Defaults to the repository root, so the
+        /// files land where the toolchain expects them.
+        #[arg(short, long)]
+        out: Option<PathBuf>,
     },
     /// What changed architecturally between two revisions. Markdown for a PR comment.
     Diff {
@@ -324,6 +343,7 @@ fn run(cli: Cli) -> Result<ExitCode> {
             generate(&path, out, accent, theme, include_tests, allow_partial, json)
         }
         Command::Export { ir, format, output, repo } => export(&ir, format, output, repo),
+        Command::Spec { path, format, out } => spec(&path, format, out),
         Command::Diff { path, base, head, include_tests, json, exit_code } => {
             diff(&path, &base, &head, include_tests, json, exit_code)
         }
@@ -447,6 +467,48 @@ fn generate(
 /// travels is the evidence — every shape carries its `file:line` and, when the
 /// repository has a forge remote, a link to it — so an exported diagram pasted
 /// into a review can still be checked against the code.
+/// Writes the specification in another toolchain's format.
+///
+/// The book is generated into a temporary directory rather than the
+/// repository: this command answers "what does the code specify", and should
+/// not leave a book behind as a side effect of asking.
+fn spec(path: &Path, format: SpecFormat, out: Option<PathBuf>) -> Result<ExitCode> {
+    let cfg = Config::discover(path)?;
+    let scratch = tempfile::tempdir().context("cannot create a temporary directory for the build")?;
+    let opts = book_options(&cfg, None, None, false, true)?;
+    let planned = nunki_book::plan(path, scratch.path(), &opts)?;
+    let built = &planned.built;
+
+    let purpose = |unit: &str| -> Option<String> {
+        built.report.containers.iter().find(|u| u.id == unit).and_then(|u| u.description.clone())
+    };
+    let files = match format {
+        SpecFormat::Openspec => nunki_book::openspec::render(&built.behaviour, &purpose),
+    };
+    if files.is_empty() {
+        eprintln!("nothing to write: no API operations were found in {}", path.display());
+        return Ok(ExitCode::from(1));
+    }
+
+    let root = out.unwrap_or_else(|| path.to_path_buf());
+    for (rel, text) in &files {
+        let dest = root.join(rel);
+        if let Some(dir) = dest.parent() {
+            std::fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
+        }
+        std::fs::write(&dest, text).with_context(|| format!("writing {}", dest.display()))?;
+        println!("{}", dest.display());
+    }
+    println!(
+        "{} capabilit{} from {} requirement{}",
+        files.len(),
+        if files.len() == 1 { "y" } else { "ies" },
+        built.behaviour.requirements.len(),
+        if built.behaviour.requirements.len() == 1 { "" } else { "s" }
+    );
+    Ok(ExitCode::SUCCESS)
+}
+
 fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option<PathBuf>) -> Result<ExitCode> {
     let text = std::fs::read_to_string(ir).with_context(|| format!("reading {}", ir.display()))?;
     let diagram: nunki_ir::DiagramIR =

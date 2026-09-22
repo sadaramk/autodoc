@@ -10,6 +10,7 @@ Commands:
   render    Compile a DiagramIR into standalone HTML or SVG
   generate  Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams
   export    Export a diagram for another tool. One way: the source stays authoritative
+  spec      Write the specification in another toolchain's format, from the code
   diff      What changed architecturally between two revisions. Markdown for a PR comment
   check     Fail (exit 1) when the book is out of date or cites stale code. For CI
   verify    Verify evidence references like `src/main.rs:10-42`
@@ -121,6 +122,30 @@ Options:
 
       --repo <REPO>
           Repository the evidence belongs to, for permalinks. Defaults to the directory holding the IR, which for a generated book is inside it
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+$ nunki spec --help
+Write the specification in another toolchain's format, from the code
+
+Usage: nunki spec [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]
+          [default: .]
+
+Options:
+      --format <FORMAT>
+          Dialect to write. `openspec` writes one current-state spec per capability, which `openspec validate --strict` will check
+
+          Possible values:
+          - openspec: `openspec/specs/<capability>/spec.md`, the current-state layout
+          
+          [default: openspec]
+
+  -o, --out <OUT>
+          Directory to write into. Defaults to the repository root, so the files land where the toolchain expects them
 
   -h, --help
           Print help (see a summary with '-h')
