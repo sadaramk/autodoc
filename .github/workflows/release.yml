@@ -162,7 +162,7 @@ jobs:
       - name: Stage the DiagramIR schema
         run: cp schema/diagram-ir.schema.json dist/diagram-ir.schema.json
 
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.TAG }}
           files: dist/*
