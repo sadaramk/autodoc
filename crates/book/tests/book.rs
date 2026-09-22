@@ -644,3 +644,78 @@ fn the_overview_says_how_much_of_the_source_was_read() {
         "no coverage callout when everything was read"
     );
 }
+
+/// The behaviour model has to leave as data, not only as prose. A Markdown
+/// table cannot be compared against a specification someone else wrote, handed
+/// to an agent, or read by anything that wants more than page text.
+///
+/// What this guards is not that the file exists but that it agrees with the
+/// pages built beside it: the same requirement identifiers, the same rules,
+/// and evidence a reader can follow back rather than trust.
+#[test]
+fn behaviour_leaves_as_data_and_agrees_with_the_prose() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("polyglot-shop"), out.path(), &BookOptions::default()).unwrap();
+
+    let text = planned.files.get("behaviour.json").expect("written beside the book");
+    let v: serde_json::Value = serde_json::from_str(text).unwrap();
+
+    // Provenance, so a consumer knows what it is reading and can re-verify.
+    let p = &v["provenance"];
+    assert!(p["generator"].as_str().is_some_and(|g| g.starts_with("nunki")), "{p}");
+    assert_eq!(p["citationsVerified"], p["citationsTotal"], "the book verified everything it cites");
+    assert!(p["filesRead"].as_u64().unwrap_or(0) > 0);
+
+    let reqs = v["requirements"].as_array().unwrap();
+    let rules = v["rules"].as_array().unwrap();
+    assert!(reqs.len() >= 5, "{} requirements", reqs.len());
+    assert!(!rules.is_empty());
+
+    // Every requirement carries the identifier it is cited by, the operation it
+    // came from, and evidence.
+    for r in reqs {
+        let id = r["id"].as_str().unwrap();
+        assert!(id.starts_with("FR-"), "{id}");
+        assert!(r["operation"].as_str().is_some_and(|o| o.contains(':')), "{r}");
+        assert!(r["evidence"]["filePath"].as_str().is_some_and(|f| !f.is_empty()), "{r}");
+        assert!(r["evidence"]["startLine"].as_u64().unwrap_or(0) > 0, "{r}");
+    }
+
+    // The identifiers are the ones the functional page prints. A model that
+    // disagreed with the prose beside it would be worse than no model.
+    let page =
+        serde_json::to_string(&planned.built.book.pages.iter().find(|p| p.id == "functional").unwrap().blocks).unwrap();
+    for r in reqs {
+        let id = r["id"].as_str().unwrap();
+        assert!(page.contains(id), "{id} is in the model but not on the page");
+    }
+    for r in rules {
+        let id = r["id"].as_str().unwrap();
+        assert!(page.contains(id), "{id} is in the model but not on the page");
+    }
+
+    // Rules name requirements, not raw operations, so a consumer has one kind
+    // of key to understand.
+    let ids: std::collections::BTreeSet<&str> = reqs.iter().map(|r| r["id"].as_str().unwrap()).collect();
+    let mut linked = 0;
+    for rule in rules {
+        for req in rule["requirements"].as_array().map(Vec::as_slice).unwrap_or_default() {
+            let r = req.as_str().unwrap();
+            assert!(ids.contains(r), "rule {} names {r}, which is not a requirement", rule["id"]);
+            linked += 1;
+        }
+    }
+    assert!(linked > 0, "rules that constrain nothing would mean the link was never built");
+
+    // And a requirement's rule list is the mirror of that.
+    for r in reqs {
+        for rule_id in r["rules"].as_array().map(Vec::as_slice).unwrap_or_default() {
+            let rule = rules.iter().find(|x| x["id"] == *rule_id).expect("rule exists");
+            assert!(
+                rule["requirements"].as_array().unwrap().iter().any(|x| x == &r["id"]),
+                "{} lists {rule_id}, which does not list it back",
+                r["id"]
+            );
+        }
+    }
+}

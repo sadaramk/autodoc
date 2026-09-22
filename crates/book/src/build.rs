@@ -69,6 +69,8 @@ pub struct Built {
     /// file is the human's — but the book should be able to say how much of
     /// its authored prose is checkable.
     pub authored_unpinned: Vec<String>,
+    /// The behaviour model as data, for everything that cannot read prose.
+    pub behaviour: crate::behaviour::Behaviour,
 }
 
 const SNIPPET_LINES: u32 = 40;
@@ -205,6 +207,9 @@ pub fn build(
         evidence: health,
         generator: nunki_renderer::GENERATOR.to_string(),
     };
+    // Assembled before the builder is taken apart: it reads the same two
+    // layers the functional page does.
+    let behaviour = b.behaviour_export();
     let Builder { pages, figures, cites, diagrams, warnings, .. } = b;
     let operation_ids: Vec<String> =
         report.api.as_ref().map(|a| a.operations.iter().map(|o| o.id.clone()).collect()).unwrap_or_default();
@@ -222,6 +227,7 @@ pub fn build(
         authored_template: Authored::template(&operation_ids),
         authored_orphans,
         authored_unpinned,
+        behaviour,
         report,
     })
 }

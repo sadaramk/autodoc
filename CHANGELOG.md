@@ -8,6 +8,24 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **`behaviour.json`** beside the book: requirements, the rules they must
+  satisfy, and what the scan verified, as data. The book rendered all of it as
+  prose, which a person can read and nothing else can — a Markdown table cannot
+  be compared against a specification someone else wrote, handed to an agent,
+  or read by anything wanting more than page text.
+
+  The API and data models always serialised; they were simply never written
+  out. The requirements layer did not exist as data at all — it was derived
+  inside the page builder and rendered straight to prose. Now both leave, keyed
+  by the identifiers from the functional page and carrying the evidence each
+  claim was verified against. Rules name requirements rather than raw
+  operations, so a consumer has one kind of key to learn.
+
+  It is a generated file like any other, so `check` compares it and the model
+  cannot drift from the prose built beside it.
+
 ### Fixed
 
 - **A requirement identifier no longer changes when another requirement is

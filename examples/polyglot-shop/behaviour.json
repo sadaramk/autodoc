@@ -1,0 +1,343 @@
+{
+  "provenance": {
+    "generator": "nunki 0.4.1",
+    "repository": "polyglot-shop",
+    "filesRead": 24,
+    "citationsVerified": 138,
+    "citationsTotal": 138
+  },
+  "requirements": [
+    {
+      "id": "FR-api-gateway-get-catalog-7980",
+      "operation": "api-gateway:GET /catalog",
+      "unit": "api-gateway",
+      "method": "GET",
+      "path": "/catalog",
+      "summary": "GET /catalog — product list, cached in Redis for 60 seconds.",
+      "successStatus": 200,
+      "evidence": {
+        "filePath": "api-gateway/src/routes/catalog.ts",
+        "startLine": 8,
+        "endLine": 11
+      }
+    },
+    {
+      "id": "FR-api-gateway-post-checkout-bf89",
+      "operation": "api-gateway:POST /checkout",
+      "unit": "api-gateway",
+      "method": "POST",
+      "path": "/checkout",
+      "summary": "POST /checkout — the critical transaction path.",
+      "requestModel": "CheckoutRequest",
+      "responseModel": "CheckoutPostResponse",
+      "successStatus": 201,
+      "errorStatuses": [
+        400,
+        402
+      ],
+      "auth": [
+        "authenticated: requireCustomer"
+      ],
+      "rules": [
+        "BR-ff06d5",
+        "BR-c71e9e",
+        "BR-bb85df",
+        "BR-05050d",
+        "BR-521885",
+        "BR-55e2f4",
+        "BR-bc9e34",
+        "BR-9acd65"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 33,
+        "endLine": 48
+      }
+    },
+    {
+      "id": "FR-ledger-audit-get-reports-daily-241b",
+      "operation": "ledger-audit:GET /reports/daily",
+      "unit": "ledger-audit",
+      "method": "GET",
+      "path": "/reports/daily",
+      "summary": "GET /reports/daily — today's payment totals by status.",
+      "responseModel": "Vec<DailyTotal>",
+      "successStatus": 200,
+      "evidence": {
+        "filePath": "ledger-audit/src/routes.rs",
+        "startLine": 22,
+        "endLine": 22
+      }
+    },
+    {
+      "id": "FR-ledger-audit-get-reports-daily-status-e7f7",
+      "operation": "ledger-audit:GET /reports/daily/{status}",
+      "unit": "ledger-audit",
+      "method": "GET",
+      "path": "/reports/daily/{status}",
+      "summary": "GET /reports/daily/{status} — today's total for one payment status.",
+      "responseModel": "DailyTotal",
+      "successStatus": 200,
+      "errorStatuses": [
+        404,
+        503
+      ],
+      "evidence": {
+        "filePath": "ledger-audit/src/routes.rs",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "FR-payments-post-charges-4b48",
+      "operation": "payments:POST /charges",
+      "unit": "payments",
+      "method": "POST",
+      "path": "/charges",
+      "summary": "createCharge charges the card through Stripe and records the attempt in the ledger.",
+      "requestModel": "chargeRequest",
+      "responseModel": "chargeResponse",
+      "successStatus": 201,
+      "errorStatuses": [
+        400,
+        402,
+        422
+      ],
+      "rules": [
+        "BR-cb375e",
+        "BR-4ea204",
+        "BR-e0dce6"
+      ],
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 41,
+        "endLine": 41
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "BR-ff06d5",
+      "statement": "requires authenticated: requireCustomer",
+      "kind": "authorization",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 33,
+        "endLine": 33
+      }
+    },
+    {
+      "id": "BR-c71e9e",
+      "statement": "at least 1 item",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 13,
+        "endLine": 13
+      }
+    },
+    {
+      "id": "BR-bb85df",
+      "statement": "at least 1 character",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 22,
+        "endLine": 22
+      }
+    },
+    {
+      "id": "BR-05050d",
+      "statement": "at most 32 characters",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "BR-521885",
+      "statement": "at least 1 character",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 16,
+        "endLine": 16
+      }
+    },
+    {
+      "id": "BR-55e2f4",
+      "statement": "must be an integer",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 17,
+        "endLine": 17
+      }
+    },
+    {
+      "id": "BR-bc9e34",
+      "statement": "must be greater than 0",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 17,
+        "endLine": 17
+      }
+    },
+    {
+      "id": "BR-9acd65",
+      "statement": "must be ≤ 99",
+      "kind": "validation",
+      "requirements": [
+        "FR-api-gateway-post-checkout-bf89"
+      ],
+      "evidence": {
+        "filePath": "api-gateway/src/routes/checkout.ts",
+        "startLine": 17,
+        "endLine": 17
+      }
+    },
+    {
+      "id": "BR-cb375e",
+      "statement": "must be a UUID",
+      "kind": "validation",
+      "requirements": [
+        "FR-payments-post-charges-4b48"
+      ],
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 15,
+        "endLine": 15
+      }
+    },
+    {
+      "id": "BR-4ea204",
+      "statement": "must be > 0",
+      "kind": "validation",
+      "requirements": [
+        "FR-payments-post-charges-4b48"
+      ],
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 16,
+        "endLine": 16
+      }
+    },
+    {
+      "id": "BR-e0dce6",
+      "statement": "one of: usd, eur, gbp",
+      "kind": "validation",
+      "requirements": [
+        "FR-payments-post-charges-4b48"
+      ],
+      "evidence": {
+        "filePath": "payments/internal/httpapi/handler.go",
+        "startLine": 17,
+        "endLine": 17
+      }
+    },
+    {
+      "id": "BR-34ca4e",
+      "statement": "CHECK (quantity > 0)",
+      "kind": "data integrity",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 23,
+        "endLine": 23
+      }
+    },
+    {
+      "id": "BR-7eb29c",
+      "statement": "CHECK (total_cents > 0)",
+      "kind": "data integrity",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 12,
+        "endLine": 12
+      }
+    },
+    {
+      "id": "BR-3db52d",
+      "statement": "CHECK (status IN ('pending', 'paid', 'shipped', 'cancelled'))",
+      "kind": "data integrity",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 13,
+        "endLine": 13
+      }
+    },
+    {
+      "id": "BR-b77af1",
+      "statement": "CHECK (status IN ('succeeded', 'failed'))",
+      "kind": "data integrity",
+      "evidence": {
+        "filePath": "db/migrations/002_payments.sql",
+        "startLine": 7,
+        "endLine": 7
+      }
+    },
+    {
+      "id": "BR-09680e",
+      "statement": "CHECK (price_cents >= 0)",
+      "kind": "data integrity",
+      "evidence": {
+        "filePath": "db/migrations/001_init.sql",
+        "startLine": 6,
+        "endLine": 6
+      }
+    },
+    {
+      "id": "BR-fa47c7",
+      "statement": "orders.status may become paid only from pending",
+      "kind": "state",
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 30,
+        "endLine": 30
+      }
+    },
+    {
+      "id": "BR-ff1e56",
+      "statement": "orders.status may become cancelled only from pending",
+      "kind": "state",
+      "evidence": {
+        "filePath": "api-gateway/src/db.ts",
+        "startLine": 35,
+        "endLine": 35
+      }
+    },
+    {
+      "id": "BR-ff0554",
+      "statement": "orders.status may become shipped only from paid",
+      "kind": "state",
+      "evidence": {
+        "filePath": "fulfillment/fulfillment/shipping.py",
+        "startLine": 14,
+        "endLine": 14
+      }
+    }
+  ]
+}

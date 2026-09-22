@@ -1,6 +1,6 @@
 {
   "generator": "nunki 0.4.1",
-  "generatedAt": "2026-09-22T11:39:42Z",
+  "generatedAt": "2026-09-22T12:17:26Z",
   "repository": "polyglot-shop",
   "commit": null,
   "commitDate": null,
@@ -304,6 +304,7 @@
   "warnings": [],
   "files": {
     "README.md": "b7d73c033fb4535a",
+    "behaviour.json": "ac628a882c87f864",
     "diagrams/capabilities-api-gateway.ir.json": "19d31a0729f4b04b",
     "diagrams/capabilities-api-gateway.svg": "10d0e31ef5db2456",
     "diagrams/components-api-gateway.ir.json": "ac2cd3654f551ff8",
