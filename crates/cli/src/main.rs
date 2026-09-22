@@ -234,6 +234,14 @@ enum Command {
         /// Exit 1 when anything changed, so a pipeline can require a review.
         #[arg(long)]
         exit_code: bool,
+        /// Append this comparison to the book's architecture history, as the
+        /// release named here. Run at release time: the entry is committed and
+        /// never recomputed, so the history survives the code it describes.
+        #[arg(long, value_name = "VERSION")]
+        record: Option<String>,
+        /// Book directory to record into. Defaults to whatever nunki.toml says.
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
     /// Fail (exit 1) when the book is out of date or cites stale code. For CI.
     Check {
@@ -360,8 +368,8 @@ fn run(cli: Cli) -> Result<ExitCode> {
         Command::Export { ir, format, output, repo } => export(&ir, format, output, repo),
         Command::Spec { path, format, out } => spec(&path, format, out),
         Command::Conform { path, spec, json, exit_code } => conform(&path, spec, json, exit_code),
-        Command::Diff { path, base, head, include_tests, json, exit_code } => {
-            diff(&path, &base, &head, include_tests, json, exit_code)
+        Command::Diff { path, base, head, include_tests, json, exit_code, record, out } => {
+            diff(&path, &base, &head, include_tests, json, exit_code, record, out)
         }
         Command::Check { path, out, json } => check(&path, out, json),
         Command::Verify { refs, repo, commit, json } => {
@@ -639,7 +647,17 @@ fn export(ir: &Path, format: ExportFormat, output: Option<PathBuf>, repo: Option
 /// Worktrees rather than the directory in place: comparing revisions must not
 /// touch the caller's working tree, and in CI the checkout is the thing being
 /// tested.
-fn diff(path: &Path, base: &str, head: &str, include_tests: bool, json: bool, exit_code: bool) -> Result<ExitCode> {
+#[allow(clippy::too_many_arguments)]
+fn diff(
+    path: &Path,
+    base: &str,
+    head: &str,
+    include_tests: bool,
+    json: bool,
+    exit_code: bool,
+    record: Option<String>,
+    out: Option<PathBuf>,
+) -> Result<ExitCode> {
     let ctx = nunki_git::repo_context(path);
     let git_root =
         ctx.git_root.clone().with_context(|| format!("{} is not inside a git repository", path.display()))?;
@@ -665,6 +683,32 @@ fn diff(path: &Path, base: &str, head: &str, include_tests: bool, json: bool, ex
     } else {
         print!("{}", nunki_analyzer::diff::markdown(&d));
     }
+
+    if let Some(release) = record {
+        let cfg = Config::discover(path)?;
+        let book = match out {
+            Some(explicit) => explicit,
+            None => {
+                crate::config::confined(&cfg.output.dir)?;
+                path.join(&cfg.output.dir)
+            }
+        };
+        let (mut history, warning) = nunki_book::history::History::load(&book);
+        if let Some(w) = warning {
+            eprintln!("warning: {w}");
+        }
+        let replaced = history.record(nunki_book::history::Entry {
+            release: release.clone(),
+            date: nunki_git::commit_date(&ctx, head),
+            base: base.to_string(),
+            diff: d.clone(),
+        });
+        let dest = book.join(nunki_book::history::HISTORY);
+        std::fs::create_dir_all(&book).with_context(|| format!("creating {}", book.display()))?;
+        std::fs::write(&dest, history.to_json_pretty()).with_context(|| format!("writing {}", dest.display()))?;
+        println!("{} {release} in {}", if replaced { "replaced" } else { "recorded" }, dest.display());
+    }
+
     Ok(if exit_code && !d.is_empty() { ExitCode::from(1) } else { ExitCode::SUCCESS })
 }
 

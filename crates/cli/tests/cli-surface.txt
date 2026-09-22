@@ -174,12 +174,14 @@ Arguments:
   [PATH]  [default: .]
 
 Options:
-      --base <BASE>    Revision to compare against, such as `main` or `origin/main` [default: HEAD~1]
-      --head <HEAD>    Revision to compare. Defaults to the working tree's HEAD [default: HEAD]
-      --include-tests  
-      --json           
-      --exit-code      Exit 1 when anything changed, so a pipeline can require a review
-  -h, --help           Print help
+      --base <BASE>       Revision to compare against, such as `main` or `origin/main` [default: HEAD~1]
+      --head <HEAD>       Revision to compare. Defaults to the working tree's HEAD [default: HEAD]
+      --include-tests     
+      --json              
+      --exit-code         Exit 1 when anything changed, so a pipeline can require a review
+      --record <VERSION>  Append this comparison to the book's architecture history, as the release named here. Run at release time: the entry is committed and never recomputed, so the history survives the code it describes
+      --out <OUT>         Book directory to record into. Defaults to whatever nunki.toml says
+  -h, --help              Print help
 
 $ nunki check --help
 Fail (exit 1) when the book is out of date or cites stale code. For CI

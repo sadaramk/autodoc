@@ -10,6 +10,29 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- **An architecture history.** `nunki diff … --record v1.1` appends what a
+  release changed to `history.json` beside the book, and the book renders it as
+  a page. `diff` could always answer "what changed between these two releases";
+  every answer was thrown away, on every pull request and at every tag.
+
+  Entries are written at release time and never recomputed. Rebuilding the
+  history at build time would make the book depend on which tags exist in the
+  clone it is built in rather than on its own commit, which `check` cannot
+  allow, and would cost a full scan of every release on every build. It is the
+  rule `authored.json` already follows. Re-recording a release replaces that
+  entry and leaves every other one untouched.
+
+  An entry names the two commits it was computed between, so a reader can
+  reproduce it instead of taking it on faith. The changes carry no line
+  citations, because `diff` compares two models rather than reading lines.
+
+- The book records the **release** it documents, not only the commit, when it
+  is generated from a tagged commit. Exactly at `HEAD`, never the nearest
+  ancestor: a book built three commits after `v1.1` documents those three
+  commits, and calling it `v1.1` would be a claim about code that release does
+  not contain.
+
+
 - **`nunki conform`** checks the code against a specification somebody else
   wrote. It reads the layouts the spec-driven toolkits use —
   `.kiro/specs/*/requirements.md`, `openspec/specs/*/spec.md`,
