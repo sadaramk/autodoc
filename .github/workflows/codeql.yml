@@ -41,6 +41,8 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
+          # Excludes fixture repositories and generated books; see the config.
+          config-file: .github/codeql/codeql-config.yml
           # Nothing here needs compiling to be analysed, and building the
           # workspace again would double the cost of a pull request for
           # findings that do not depend on it.
