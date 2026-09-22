@@ -615,7 +615,12 @@ fn minimal_api(idx: &Index, fi: usize, ops: &mut Vec<Draft>) {
             let args = split_args(code, open + 1, close);
             let Some(&(s, e)) = args.first() else { continue };
             let Some(path) = text::string_lit(&f.src.text[s..e]) else { continue };
-            if !path.starts_with('/') {
+            // ASP.NET Core takes a route relative to the app root, so
+            // `MapGet("api/items", …)` is as ordinary as `MapGet("/api/items", …)`
+            // — eShopOnWeb writes every one of its endpoints without the slash.
+            // What must still be rejected is a string that is not a route at all:
+            // a tag, a group name, a URL somewhere else.
+            if path.contains("://") || path.trim().is_empty() {
                 continue;
             }
             let full = text::join_path(&base, &path);
