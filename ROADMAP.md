@@ -59,14 +59,23 @@ comes first and the clock then runs underneath everything else.
 | | | |
 |---|---|---|
 | 1 | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Publish the schema with each release; tell a breaking schema change from an additive one; snapshot the CLI surface; write the deprecation path. Starts the clock. |
-| 2 | [#5](https://github.com/sadaramk/nunki/issues/5) | Cache per-file facts. Measured on etcd (550 files): `check` is 4.5 s, and 77% of it is per-file analysis that a content-hash cache can skip — data-model extraction alone is 36%. |
-| 3 | [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored prose has gone stale — the one place the project still publishes a claim it has not checked. |
-| 4 | [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection. A spike with an exit, not a feature: one attempt already changed nothing on five real repositories. |
+| 2 | [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored prose has gone stale — the one place the project still publishes a claim it has not checked. |
+| 3 | [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection. A spike with an exit, not a feature: one attempt already changed nothing on five real repositories. |
 
 ## Not doing
 
 These are not backlog items. They are decisions, and the reasoning matters more
 than the list.
+
+- **A parsed-fact cache.** Measured before building, on five large
+  repositories: a complete, fully verified book takes 0.3 s on etcd and 9.4 s
+  on kubernetes — 8,167 files and 1.8 million lines, where `git clone` alone
+  takes minutes. The premise was right that `check` re-parses everything every
+  run; the cost was not. A cache would buy a few seconds and introduce the one
+  failure this project exists to prevent, a stale entry producing a book that
+  looks correct. If it ever does become painful the answer is to parallelise
+  the behaviour phase — parsing already is — which needs the same restructure
+  without the staleness. ([#5](https://github.com/sadaramk/nunki/issues/5))
 
 - **Prose written by a language model.** The entire value here is that a claim
   can be traced to a line of code. Generated narrative cannot be, and mixing the
