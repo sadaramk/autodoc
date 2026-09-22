@@ -1,0 +1,50 @@
+# CodeQL static analysis.
+#
+# A workflow rather than the repository's "default setup" toggle, so what is
+# scanned is reviewable in a pull request like everything else here.
+#
+# `actions` is the pack that earns this workflow. nunki ships an action other
+# people run — `action.yml` and `scripts/action-*.sh` — and that entry point
+# interpolates pull-request data it does not control into a shell. That is the
+# one place in this repository where untrusted input meets execution, and it is
+# where quoting has gone wrong before.
+#
+# `rust` support is newer and finds little in safe Rust; it is here because the
+# cost of including it is one matrix entry.
+name: Code scanning
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Queries improve without the code changing, so a weekly run on main says
+    # something a per-commit run does not.
+    - cron: "37 5 * * 1"
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      # Upload the results; read the code. Nothing else.
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, rust, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          # Nothing here needs compiling to be analysed, and building the
+          # workspace again would double the cost of a pull request for
+          # findings that do not depend on it.
+          build-mode: none
+      - uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
