@@ -8,6 +8,17 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Minimal-API routes written without a leading slash were not read.
+  `app.MapGet("api/items", …)` is as ordinary in ASP.NET Core as
+  `app.MapGet("/api/items", …)` — the route is relative to the app root — but
+  the extractor required the slash and silently skipped the rest. On
+  eShopOnWeb, Microsoft's own reference application, that was **every endpoint
+  in its public API**: seven operations and the whole API page for that
+  service, absent from the book with nothing saying so. Found by pointing
+  nunki at real repositories while investigating #6.
+
 ### Added
 
 - **Authored prose can be pinned, and `check` reports it when it rots.**

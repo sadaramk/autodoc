@@ -818,10 +818,12 @@ fn csharp_aspnet_core_controllers_and_minimal_api() {
             "catalog:POST /api/Products",
             "catalog:GET /api/Products/{id}",
             "catalog:DELETE /api/Products/{id}",
+            "catalog:GET /api/stock",
             "catalog:GET /v1/orders/by-reference",
             "catalog:PUT /v1/orders/{reference}"
         ],
-        "`[Route(\"api/[controller]\")]` expands the token from the class name"
+        "`[Route(\"api/[controller]\")]` expands the token from the class name, and a minimal-API \
+         route without a leading slash is still a route"
     );
     assert_eq!(
         api.excluded.iter().map(|e| (e.operation.as_str(), e.reason.as_str())).collect::<Vec<_>>(),
