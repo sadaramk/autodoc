@@ -613,7 +613,14 @@ mod tests {
     }
 
     fn op(unit: &str, method: &str, path: &str, partial: bool) -> Operation {
-        let ev = EvidenceRef { file_path: "x".into(), start_line: 1, end_line: 1, symbol_name: None, note: None };
+        let ev = EvidenceRef {
+            file_path: "x".into(),
+            start_line: 1,
+            end_line: 1,
+            symbol_name: None,
+            note: None,
+            repo: None,
+        };
         let mut o = new_op(unit, "t", method, path.into(), SymbolRef { name: "h".into(), evidence: ev.clone() }, ev);
         o.path_partial = partial;
         o

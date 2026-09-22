@@ -899,6 +899,7 @@ pub(crate) fn module_facts(root: &Path, unit: &Unit, files: &[FileRec], view: &m
                             end_line: line,
                             symbol_name: None,
                             note: Some("`@ApplicationModule(allowedDependencies)`".into()),
+                            repo: None,
                         });
                     }
                 }
@@ -985,6 +986,7 @@ pub(crate) fn module_facts(root: &Path, unit: &Unit, files: &[FileRec], view: &m
                         end_line: s.end_line,
                         symbol_name: Some(s.name.clone()),
                         note: None,
+                        repo: None,
                     },
                     doc: s.doc.as_deref().and_then(|d| d.lines().next()).map(str::to_string),
                 });
@@ -1024,6 +1026,7 @@ pub(crate) fn module_facts(root: &Path, unit: &Unit, files: &[FileRec], view: &m
                         end_line: imp.line,
                         symbol_name: None,
                         note: Some(format!("imports `{spec}`")),
+                        repo: None,
                     };
                     let internal = jb
                         .packages
@@ -1096,7 +1099,14 @@ mod tests {
     }
 
     fn ev(line: u32) -> EvidenceRef {
-        EvidenceRef { file_path: "schema.sql".into(), start_line: line, end_line: line, symbol_name: None, note: None }
+        EvidenceRef {
+            file_path: "schema.sql".into(),
+            start_line: line,
+            end_line: line,
+            symbol_name: None,
+            note: None,
+            repo: None,
+        }
     }
 
     fn entity(table: &str, refs: &[&str]) -> Entity {

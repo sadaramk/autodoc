@@ -1159,6 +1159,7 @@ impl Models<'_, '_> {
             end_line: cl.end_line,
             symbol_name: Some(cl.name.clone()),
             note: None,
+            repo: None,
         };
         self.out.push(Model {
             id: id.clone(),
@@ -1595,6 +1596,7 @@ fn controller_ops(
                     end_line: m.end_line,
                     symbol_name: Some(m.name.clone()),
                     note: None,
+                    repo: None,
                 },
             });
             continue;
@@ -1632,6 +1634,7 @@ fn controller_ops(
                     end_line: m.end_line,
                     symbol_name: Some(m.name.clone()),
                     note: None,
+                    repo: None,
                 };
                 let mut op = new_op(
                     unit,
@@ -2103,6 +2106,7 @@ fn functional_routes(idx: &Index, models: &mut Models, unit: &str, classes: &[us
                         end_line: m.end_line,
                         symbol_name: Some(m.name.clone()),
                         note: None,
+                        repo: None,
                     };
                     if let Some((bs, be)) = m.body {
                         let hcode = &hsrc.code;

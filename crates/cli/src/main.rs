@@ -317,6 +317,11 @@ fn run(cli: Cli) -> Result<ExitCode> {
                     max_density: cfg.validation.max_density,
                     strict: strict || cfg.validation.strict,
                     evidence_cache: None,
+                    // `validate` checks one file against one repository. Evidence
+                    // from a member is reported as unverifiable here rather than
+                    // checked against the wrong root; `check` is what reads a
+                    // whole workspace.
+                    member_roots: Default::default(),
                 },
             );
             if json {
@@ -442,18 +447,24 @@ fn init(path: &Path, force: bool) -> Result<ExitCode> {
 }
 
 fn book_options(
+    repo: &Path,
     cfg: &Config,
     accent: Option<&str>,
     theme: Option<ThemeArg>,
     include_tests: bool,
     allow_partial: bool,
 ) -> Result<nunki_book::BookOptions> {
+    let (members, warnings) = config::members_of(repo, &cfg.workspace.members);
+    for w in warnings {
+        eprintln!("warning: {w}");
+    }
     Ok(nunki_book::BookOptions {
         theme: theme.map(Theme::from).unwrap_or(cfg.style.theme),
         accent: parse_accent(accent, cfg)?,
         include_tests: include_tests || cfg.analysis.include_tests,
         max_density: cfg.validation.max_density,
         allow_partial,
+        members,
     })
 }
 
@@ -474,7 +485,7 @@ fn generate(
             path.join(&cfg.output.dir)
         }
     };
-    let opts = book_options(&cfg, accent.as_deref(), theme, include_tests, allow_partial)?;
+    let opts = book_options(path, &cfg, accent.as_deref(), theme, include_tests, allow_partial)?;
     let report = nunki_book::generate(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);
@@ -525,7 +536,7 @@ fn conform(path: &Path, spec_files: Vec<PathBuf>, json: bool, exit_code: bool) -
 
     let cfg = Config::discover(path)?;
     let scratch = tempfile::tempdir().context("cannot create a temporary directory for the build")?;
-    let opts = book_options(&cfg, None, None, false, true)?;
+    let opts = book_options(path, &cfg, None, None, false, true)?;
     let planned = nunki_book::plan(path, scratch.path(), &opts)?;
 
     let mut declared = Vec::new();
@@ -553,7 +564,7 @@ fn conform(path: &Path, spec_files: Vec<PathBuf>, json: bool, exit_code: bool) -
 fn spec(path: &Path, format: SpecFormat, out: Option<PathBuf>) -> Result<ExitCode> {
     let cfg = Config::discover(path)?;
     let scratch = tempfile::tempdir().context("cannot create a temporary directory for the build")?;
-    let opts = book_options(&cfg, None, None, false, true)?;
+    let opts = book_options(path, &cfg, None, None, false, true)?;
     let planned = nunki_book::plan(path, scratch.path(), &opts)?;
     let built = &planned.built;
 
@@ -664,6 +675,10 @@ fn diff(
     let prefix = ctx.prefix.clone();
     let tmp = tempfile::tempdir().context("cannot create a temporary directory for the comparison")?;
 
+    // No workspace members: `diff` compares two revisions of *this* repository.
+    // A member has one working copy, at whatever commit it is on, so it would
+    // contribute the same thing to both sides and could only add noise — or,
+    // worse, report a change in a member as a change here.
     let opts = nunki_analyzer::ScanOptions { behavior: true, include_tests, ..Default::default() };
     let scan_at = |rev: &str| -> Result<nunki_analyzer::ScanReport> {
         let wt = nunki_git::worktree_at(&git_root, rev, tmp.path())
@@ -722,7 +737,7 @@ fn check(path: &Path, out: Option<PathBuf>, json: bool) -> Result<ExitCode> {
         }
     };
     // A book generated with --allow-partial must still be checkable.
-    let opts = book_options(&cfg, None, None, false, true)?;
+    let opts = book_options(path, &cfg, None, None, false, true)?;
     let report = nunki_book::check(path, &out, &opts)?;
     if json {
         println!("{}", serde_json::to_string_pretty(&report)?);

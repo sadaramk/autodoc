@@ -100,3 +100,9 @@ Each must pass before merge.
 - `analyzer` heuristics: `crates/analyzer/tests/fixtures.rs`, journeys 1–4, then `make demo` to refresh examples.
 - `diff` / `export`: `crates/cli/tests/journeys.rs::journey_diff_*`, `journey_export_*`. Both compare
   against real output, so a wrong-but-plausible change shows up as a changed string, not a panic.
+- Multi-repository support (`scan.rs` `resolve_against_members` / `adopted`, `Evidence.repo`,
+  `build.rs` member contexts, `[workspace] members`): `crates/analyzer/tests/multi_repo.rs`,
+  `crates/book/tests/multi_repo.rs`, `crates/cli/tests/multi_repo.rs`. The journey test is the only
+  one that proves per-repository permalinks and `check` naming a member that moved, because both
+  need two real git repositories. `stamp_repo` finds evidence by its serialized shape, so
+  `scan.rs::stamp_repo_recognises_evidence` fails if that shape changes — do not delete it.

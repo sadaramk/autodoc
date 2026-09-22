@@ -104,6 +104,25 @@ nunki render diagrams/x.ir.json    # compile to HTML or SVG</code></pre>
     diagram; a request that writes two stores and publishes an event is.
   </p>
 
+  <h2>A system, not a checkout</h2>
+  <p>
+    Most systems are several repositories. Name the others in <code>[workspace] members</code> and a call
+    that leaves this one is resolved against the service that answers it, with the same matching rule used
+    inside a single repository — so the flow crosses the boundary and comes back, and the contract on the far
+    side is described rather than guessed at.
+  </p>
+  <p>
+    A path stops being an address once there is more than one root, so every citation says which repository
+    it was read from, is verified in <em>that</em> repository at that repository's commit, and links there.
+    A member's operations are never claimed as this repository's own: no requirement, no flow of its own, not
+    in its API surface. It is a dependency, and the book says whose.
+  </p>
+  <p>
+    The cost is stated rather than hidden. A book describing several checkouts is out of date when any of
+    them moves, so <code>nunki check</code> fails and names the repository that moved; and a member that is
+    not checked out is reported, never guessed at — the call stays unresolved and the book says so.
+  </p>
+
   <h2>What it cannot see</h2>
   <p>
     A book is read from the source, not from the running system. Extraction is necessarily heuristic, and

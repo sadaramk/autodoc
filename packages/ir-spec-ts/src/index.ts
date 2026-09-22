@@ -52,6 +52,8 @@ export const EvidenceSchema = z.strictObject({
   startLine: u32,
   endLine: u32,
   symbolName: z.string().nullish(),
+  /** The repository this line was read from; absent means the one being documented. */
+  repo: z.string().nullish(),
 });
 
 export const AttributeSchema = z.strictObject({

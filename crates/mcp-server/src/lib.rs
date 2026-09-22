@@ -218,6 +218,10 @@ impl Server {
             include_tests: args.get("includeTests").and_then(Value::as_bool).unwrap_or(false),
             allow_partial: args.get("allowPartial").and_then(Value::as_bool).unwrap_or(false),
             max_density: nunki_ir::MAX_VISUAL_DENSITY,
+            // An agent asks for a book over stdio and cannot be assumed to have
+            // sibling checkouts on disk; multi-repository resolution is a
+            // configured, deliberate thing rather than a default.
+            members: Vec::new(),
         };
         if args.get("checkOnly").and_then(Value::as_bool).unwrap_or(false) {
             let report = nunki_book::check(&repo, &out, &opts).map_err(|e| e.to_string())?;

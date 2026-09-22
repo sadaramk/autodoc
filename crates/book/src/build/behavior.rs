@@ -180,7 +180,7 @@ impl<'a> Builder<'a> {
             }
         };
         if let Some(api) = self.api() {
-            let mut ops: Vec<&Operation> = api.operations.iter().collect();
+            let mut ops: Vec<&Operation> = api.operations.iter().filter(|o| !o.external()).collect();
             ops.sort_by(|a, b| (&a.unit, &a.path, &a.method).cmp(&(&b.unit, &b.path, &b.method)));
             // Which operations accept each model (directly or nested one level).
             let mut model_ops: BTreeMap<&str, BTreeSet<String>> = BTreeMap::new();
@@ -286,7 +286,10 @@ impl<'a> Builder<'a> {
     /// a stable name — `api-gateway:POST /checkout` — and that is the key.
     pub(super) fn functional_requirements(&self) -> Vec<(String, &'a Operation)> {
         let Some(api) = self.api() else { return vec![] };
-        let mut ops: Vec<&Operation> = api.operations.iter().collect();
+        // A requirement is a statement about what *this* repository must do. An
+        // operation read from a member repository is a dependency, and writing a
+        // requirement for it would put another team's contract into our spec.
+        let mut ops: Vec<&Operation> = api.operations.iter().filter(|o| !o.external()).collect();
         ops.sort_by(|a, b| (&a.unit, &a.path, &a.method).cmp(&(&b.unit, &b.path, &b.method)));
         ops.into_iter().map(|o| (requirement_id(&o.id), o)).collect()
     }

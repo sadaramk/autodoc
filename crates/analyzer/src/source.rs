@@ -37,5 +37,12 @@ impl<'a> SourceIndex<'a> {
 }
 
 pub fn line_ref(path: &str, line: u32) -> EvidenceRef {
-    EvidenceRef { file_path: path.to_string(), start_line: line, end_line: line, symbol_name: None, note: None }
+    EvidenceRef {
+        file_path: path.to_string(),
+        start_line: line,
+        end_line: line,
+        symbol_name: None,
+        note: None,
+        repo: None,
+    }
 }

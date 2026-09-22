@@ -145,6 +145,7 @@ fn ev(file: &str, line: u32, note: &str) -> EvidenceRef {
         end_line: line,
         symbol_name: None,
         note: Some(note.to_string()),
+        repo: None,
     }
 }
 

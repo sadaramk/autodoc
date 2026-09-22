@@ -41,6 +41,7 @@ fn base() -> DiagramIR {
         start_line: 3,
         end_line: 5,
         symbol_name: Some("handler".into()),
+        repo: None,
     });
     DiagramIR {
         version: IrVersion::V1_0_0,
@@ -250,9 +251,9 @@ fn evidence_is_verified_against_the_filesystem() {
     .unwrap();
     let mut ir = base();
     ir.nodes[0].evidence =
-        Some(Evidence { file_path: "src/web.ts".into(), start_line: 1, end_line: 2, symbol_name: None });
+        Some(Evidence { file_path: "src/web.ts".into(), start_line: 1, end_line: 2, symbol_name: None, repo: None });
     ir.nodes[2].evidence =
-        Some(Evidence { file_path: "src/api.ts".into(), start_line: 4, end_line: 40, symbol_name: None });
+        Some(Evidence { file_path: "src/api.ts".into(), start_line: 4, end_line: 40, symbol_name: None, repo: None });
     let o = ValidateOptions { repo_root: Some(dir.path().into()), ..Default::default() };
     let r = validate(&ir, &o);
     let c = codes_of(&r);
@@ -381,10 +382,15 @@ fn edge_evidence_is_verified_and_healed() {
     std::fs::write(dir.path().join("a.ts"), "export function pay() {\n  return 1;\n}\n").unwrap();
     let mut ir = fixture("sequence-checkout.json");
     ir.nodes[1].is_key_focal_point = false;
-    ir.edges[0].evidence =
-        Some(Evidence { file_path: "a.ts".into(), start_line: 1, end_line: 3, symbol_name: Some("pay".into()) });
+    ir.edges[0].evidence = Some(Evidence {
+        file_path: "a.ts".into(),
+        start_line: 1,
+        end_line: 3,
+        symbol_name: Some("pay".into()),
+        repo: None,
+    });
     ir.edges[1].evidence =
-        Some(Evidence { file_path: "missing.ts".into(), start_line: 1, end_line: 1, symbol_name: None });
+        Some(Evidence { file_path: "missing.ts".into(), start_line: 1, end_line: 1, symbol_name: None, repo: None });
     let o = ValidateOptions { repo_root: Some(dir.path().into()), ..Default::default() };
     let r = validate(&ir, &o);
     let d = r.diagnostics.iter().find(|d| d.code == codes::EVIDENCE_FILE_MISSING).expect("edge evidence checked");

@@ -57,6 +57,9 @@
   function citeAnchor(c) { return c.start === c.end ? "#L" + c.start : "#L" + c.start + "-L" + c.end; }
   function citePermalink(c) {
     if (c.permalink) return c.permalink;
+    // A citation from another repository is not derivable from this book's
+    // repository and commit: the same path there holds different code.
+    if (c.repo) return null;
     var m = book.meta;
     if (!m.webUrl || !m.commit) return null;
     return m.webUrl + "/blob/" + m.commit + "/" + (m.pathPrefix || "") + c.file + citeAnchor(c);
@@ -178,8 +181,11 @@
   }
 
   function citeLabel(c) {
-    return basename(c.file) + ":" + c.start + (c.end !== c.start ? "–" + c.end : "");
+    return (c.repo ? c.repo + " · " : "") + basename(c.file) + ":" + c.start + (c.end !== c.start ? "–" + c.end : "");
   }
+  // A path is only an address once you know its root, so a citation from another
+  // repository says which one everywhere it appears.
+  function citePath(c) { return (c.repo ? c.repo + "/" : "") + c.file; }
 
   function citeChip(id) {
     var c = book.cites[id];
@@ -188,7 +194,7 @@
       class: "cite",
       type: "button",
       "data-cite": id,
-      title: c.file + ":" + c.start + (c.end !== c.start ? "-" + c.end : "") + " — " + (STATE_TEXT[c.state] || c.state),
+      title: citePath(c) + ":" + c.start + (c.end !== c.start ? "-" + c.end : "") + " — " + (STATE_TEXT[c.state] || c.state),
       "aria-haspopup": "dialog",
       "aria-expanded": "false"
     }, [h("span", { class: "dot " + stateClass(c.state) }), h("span", { class: "loc", text: citeLabel(c) })]);
@@ -229,7 +235,7 @@
     popover.textContent = "";
     var lines = c.start === c.end ? "Line " + c.start : "Lines " + c.start + "–" + c.end;
     var head = h("div", { class: "pop-head" }, [
-      h("p", { class: "pop-path", id: "pop-path", text: c.file }),
+      h("p", { class: "pop-path", id: "pop-path", text: citePath(c) }),
       h("div", { class: "pop-sub" }, [
         h("span", { text: lines }),
         c.symbol ? h("code", { text: c.symbol }) : null,
@@ -787,6 +793,9 @@
     var dl = h("dl");
     function row(k, v) { if (v) { dl.appendChild(h("dt", { text: k })); dl.appendChild(h("dd", { text: v })); } }
     row("Repository", m.repo);
+    if (m.members && m.members.length) {
+      row("With", m.members.map(function (x) { return x.name + " @ " + short(x.commit); }).join(", "));
+    }
     row("Commit", m.commit ? short(m.commit) : "working tree");
     row("Branch", m.branch);
     row("Date", m.commitDate ? m.commitDate.slice(0, 10) : null);
@@ -822,7 +831,7 @@
   // ── Search ───────────────────────────────────────────────────────────────
   function plain(list) {
     return (list || []).map(function (i) {
-      if (i.t === "cite") { var c = book.cites[i.id]; return c ? " " + c.file : ""; }
+      if (i.t === "cite") { var c = book.cites[i.id]; return c ? " " + citePath(c) : ""; }
       return i.v || "";
     }).join("");
   }

@@ -41,7 +41,24 @@ pub struct BookMeta {
     pub lines: u64,
     pub languages: Vec<(String, usize)>,
     pub evidence: EvidenceHealth,
+    /// The other repositories of this system that were read, and the commit each
+    /// was read at. A citation into one of them is only meaningful at a commit,
+    /// so the commit is part of the book: when a member moves, the book is out
+    /// of date and `check` says so.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub members: Vec<MemberMeta>,
     pub generator: String,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct MemberMeta {
+    /// As citations name it: the repository's directory.
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub commit: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub web_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, PartialEq, Eq)]
@@ -208,6 +225,10 @@ pub struct NodeTarget {
 #[serde(rename_all = "camelCase")]
 pub struct Cite {
     pub id: String,
+    /// The member repository this was read from. Absent means the repository the
+    /// book describes — a file path is only an address once you know its root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repo: Option<String>,
     pub file: String,
     pub start: u32,
     pub end: u32,
@@ -243,6 +264,13 @@ impl Cite {
     pub fn permalink_in(&self, meta: &BookMeta) -> Option<String> {
         if self.permalink.is_some() {
             return self.permalink.clone();
+        }
+        // A citation from a member repository is never derivable from this
+        // book's repository and commit: deriving one would produce a URL that
+        // resolves, in the wrong repository, to whatever happens to sit at
+        // those lines.
+        if self.repo.is_some() {
+            return None;
         }
         let (base, commit) = (meta.web_url.as_deref()?, meta.commit.as_deref()?);
         Some(format!("{base}/blob/{commit}/{}{}{}", meta.path_prefix, self.file, self.anchor()))

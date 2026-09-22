@@ -156,6 +156,9 @@ pub fn compile_diagram(req: &CompileRequest) -> Result<CompileOutcome, EngineErr
         max_density: req.max_density,
         strict: req.strict,
         evidence_cache: None,
+        // An agent validates one IR against one repository it named; evidence
+        // from a member is reported as unverifiable rather than checked here.
+        member_roots: Default::default(),
     };
     let parsed = match &req.ir {
         IrInput::Typed(ir) => Ok((**ir).clone()),

@@ -28,6 +28,13 @@ include_tests = false       # scan test, fixture and example directories too
 [validation]
 max_density = 0.40          # may be lowered, never raised above 0.40
 strict = false              # treat warnings as errors
+
+# [workspace]
+# Other repositories of the same system, relative to this one. A call that
+# leaves this repository is resolved against the service that answers it, and
+# the citation says which repository it was read from. Each has to be checked
+# out, and has to be a git repository — nunki reads and cites its lines.
+# members = ["../billing-service", "../identity-service"]
 "#;
 
 #[derive(Debug, Deserialize, Default)]
@@ -37,6 +44,14 @@ pub struct Config {
     pub style: StyleConfig,
     pub analysis: AnalysisConfig,
     pub validation: ValidationConfig,
+    pub workspace: WorkspaceConfig,
+}
+
+#[derive(Debug, Deserialize, Default)]
+#[serde(default, deny_unknown_fields)]
+pub struct WorkspaceConfig {
+    /// Sibling repositories of the same system.
+    pub members: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -100,6 +115,53 @@ pub fn confined(dir: &str) -> Result<()> {
         );
     }
     Ok(())
+}
+
+/// Resolves configured member repositories against the repository being
+/// documented.
+///
+/// Members are *meant* to escape the repository — a sibling checkout is the
+/// normal shape — so `confined` does not apply. What applies instead is that a
+/// member must be a git repository: nunki reads its lines and cites them at a
+/// commit, so a directory with no commit cannot be cited, and requiring one
+/// keeps a scanned `nunki.toml` from pointing nunki at an arbitrary directory
+/// and quoting it into the book.
+///
+/// A member that is missing or is not a repository is reported and dropped
+/// rather than failing the build: the common cause is a checkout that has not
+/// happened yet, and the honest result is a book that says the call is
+/// unresolved.
+pub fn members_of(repo: &Path, declared: &[String]) -> (Vec<std::path::PathBuf>, Vec<String>) {
+    let mut paths = Vec::new();
+    let mut warnings = Vec::new();
+    for m in declared {
+        let p = Path::new(m);
+        let joined = if p.is_absolute() { p.to_path_buf() } else { repo.join(p) };
+        let resolved = joined.canonicalize().unwrap_or(joined);
+        if !resolved.is_dir() {
+            warnings.push(format!("workspace member `{m}` is not checked out; calls to it stay unresolved"));
+        } else if !resolved.join(".git").exists() {
+            warnings.push(format!(
+                "workspace member `{m}` is not a git repository; its lines could not be cited at a commit"
+            ));
+        } else if resolved == repo.canonicalize().unwrap_or_else(|_| repo.to_path_buf()) {
+            warnings.push(format!("workspace member `{m}` is this repository; ignored"));
+        } else if let Some(clash) = paths.iter().find(|p: &&std::path::PathBuf| {
+            nunki_analyzer::scan::member_name(p) == nunki_analyzer::scan::member_name(&resolved)
+        }) {
+            // One name per repository is what makes a citation's `repo` an
+            // address. Two members answering to the same name would attribute
+            // each other's lines, so the second is refused rather than renamed
+            // behind the reader's back.
+            warnings.push(format!(
+                "workspace member `{m}` is named the same as `{}`; ignored — rename one checkout",
+                clash.display()
+            ));
+        } else {
+            paths.push(resolved);
+        }
+    }
+    (paths, warnings)
 }
 
 impl Config {

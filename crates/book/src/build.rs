@@ -32,6 +32,9 @@ pub struct BookOptions {
     pub max_density: f64,
     /// Write the book even when almost nothing could be read.
     pub allow_partial: bool,
+    /// Sibling repositories of the same system, so a call that leaves this one
+    /// can be resolved against the service that answers it.
+    pub members: Vec<PathBuf>,
 }
 
 impl Default for BookOptions {
@@ -42,6 +45,7 @@ impl Default for BookOptions {
             include_tests: false,
             max_density: 0.40,
             allow_partial: false,
+            members: Vec::new(),
         }
     }
 }
@@ -103,6 +107,7 @@ pub fn build(
             behavior: true,
             allow_partial: opts.allow_partial,
             ignore_dirs: vec![out_dir.to_path_buf()],
+            members: opts.members.clone(),
             ..Default::default()
         },
     )?;
@@ -123,12 +128,22 @@ pub fn build(
         // there is no stable clock to pin to.
         generated_at: Some(commit_date.clone().unwrap_or_else(|| "unversioned".to_string())),
     };
+    // One git context per member repository, read once and shared by every
+    // citation into it. A member is read at its own HEAD: unlike this
+    // repository, the book is not committed into it, so there is nothing to
+    // describe around.
+    let members: Vec<(String, nunki_git::RepoContext)> =
+        opts.members.iter().map(|m| (nunki_analyzer::scan::member_name(m), cache.context(m))).collect();
+
     let validate_opts = ValidateOptions {
         repo_root: Some(root.clone()),
         verify_evidence: true,
         max_density: opts.max_density,
         strict: false,
         evidence_cache: Some(cache.clone()),
+        // So a figure citing a member is checked in that member, rather than
+        // having a true citation stripped as unverifiable.
+        member_roots: members.iter().map(|(n, c)| (n.clone(), c.root.clone())).collect(),
     };
 
     let (authored, authored_warning) = Authored::load(out_dir);
@@ -143,6 +158,8 @@ pub fn build(
         report: &report,
         ctx: &ctx,
         verifier: nunki_git::Verifier::cached(&ctx, None, Some(&cache)),
+        members: &members,
+        cache: Some(&cache),
         cites: BTreeMap::new(),
         cite_keys: BTreeMap::new(),
         pages: Vec::new(),
@@ -211,6 +228,14 @@ pub fn build(
         lines: report.stats.lines,
         languages: report.stats.languages.iter().map(|(l, s)| (l.clone(), s.files)).collect(),
         evidence: health,
+        members: members
+            .iter()
+            .map(|(name, c)| crate::model::MemberMeta {
+                name: name.clone(),
+                commit: c.head_commit.clone(),
+                web_url: c.remote_url.as_deref().and_then(nunki_git::web_base),
+            })
+            .collect(),
         generator: nunki_renderer::GENERATOR.to_string(),
     };
     // Assembled before the builder is taken apart: it reads the same two
@@ -244,8 +269,15 @@ struct Builder<'a> {
     report: &'a ScanReport,
     ctx: &'a RepoContext,
     verifier: nunki_git::Verifier<'a>,
+    /// One git context per member repository, by the name evidence carries.
+    /// Citations read from a member are verified there, at that repository's
+    /// commit, and linked into it.
+    members: &'a [(String, RepoContext)],
+    cache: Option<&'a nunki_git::EvidenceCache>,
     cites: BTreeMap<String, Cite>,
-    cite_keys: BTreeMap<(String, u32, u32), String>,
+    /// Keyed by repository as well as file: the same path exists in every
+    /// repository of a system, and two of them are not the same citation.
+    cite_keys: BTreeMap<(String, String, u32, u32), String>,
     pages: Vec<Page>,
     figures: BTreeMap<String, Figure>,
     diagrams: Vec<BuiltDiagram>,
@@ -298,7 +330,30 @@ impl<'a> Builder<'a> {
     }
 
     /// A name that links to the element's page when it has one.
+    /// Splits a member-qualified unit id into repository and unit.
+    ///
+    /// Matched against the members actually read, not on the separator alone: an
+    /// id is only a member's because a member of that name was read, and reading
+    /// the punctuation instead would attribute this repository's code elsewhere.
+    fn member_of<'s>(&'s self, id: &'s str) -> Option<(&'s str, &'s str)> {
+        self.members.iter().find_map(|(name, _)| {
+            let unit = id.strip_prefix(name.as_str())?.strip_prefix(nunki_analyzer::scan::MEMBER_SEP)?;
+            Some((name.as_str(), unit))
+        })
+    }
+
+    /// How a unit in another repository reads. The repository is always named —
+    /// that it is not in this one is the most important thing about it — and a
+    /// repository named for its one service is not repeated.
+    fn member_label(&self, id: &str) -> Option<String> {
+        let (repo, unit) = self.member_of(id)?;
+        Some(if unit == repo { repo.to_string() } else { format!("{unit} ({repo})") })
+    }
+
     fn element(&self, id: &str) -> Inline {
+        if let Some(label) = self.member_label(id) {
+            return Inline::strong(label);
+        }
         if self.has_page(id) {
             let name = self.unit(id).map(|u| self.unit_name(u)).unwrap_or_else(|| id.to_string());
             return Inline::link(format!("containers/{id}"), name);
@@ -312,6 +367,9 @@ impl<'a> Builder<'a> {
     }
 
     fn element_name(&self, id: &str) -> String {
+        if let Some(label) = self.member_label(id) {
+            return label;
+        }
         self.infra(id)
             .map(|i| i.label.clone())
             .or_else(|| self.unit(id).map(|u| u.name.clone()))
@@ -354,7 +412,7 @@ impl<'a> Builder<'a> {
     /// Registers evidence once (by file + range) and verifies it against the
     /// working tree and HEAD.
     fn cite(&mut self, e: &EvidenceRef) -> Inline {
-        let key = (e.file_path.clone(), e.start_line, e.end_line);
+        let key = (e.repo.clone().unwrap_or_default(), e.file_path.clone(), e.start_line, e.end_line);
         if let Some(id) = self.cite_keys.get(&key) {
             return Inline::Cite { id: id.clone() };
         }
@@ -365,7 +423,29 @@ impl<'a> Builder<'a> {
             end_line: Some(e.end_line),
             symbol_name: e.symbol_name.clone(),
         };
-        let r = self.verifier.verify(&q);
+        // Which repository this line lives in decides where it is read, verified
+        // and linked. A member named in evidence but absent from this build is
+        // the one case that must not fall back to this repository: the same path
+        // usually exists here too, and verifying it here would pass while
+        // describing different code.
+        let member = match e.repo.as_deref() {
+            Some(name) => match self.members.iter().find(|(n, _)| n == name) {
+                Some(m) => Some(m),
+                None => {
+                    let inline = self.unverifiable_cite(&id, e, name);
+                    self.cite_keys.insert(key, id);
+                    return inline;
+                }
+            },
+            None => None,
+        };
+        let vctx = member.map(|(_, c)| c).unwrap_or(self.ctx);
+        let mut member_verifier =
+            member.map(|(_, c)| nunki_git::Verifier::cached(c, c.head_commit.as_deref(), self.cache));
+        let r = match member_verifier.as_mut() {
+            Some(v) => v.verify(&q),
+            None => self.verifier.verify(&q),
+        };
         let state = serde_json::to_value(r.state).ok().and_then(|v| v.as_str().map(str::to_string)).unwrap_or_default();
         let anchor = if e.start_line == e.end_line {
             format!("#L{}", e.start_line)
@@ -373,14 +453,13 @@ impl<'a> Builder<'a> {
             format!("#L{}-L{}", e.start_line, e.end_line)
         };
         let snippet = matches!(r.state, EvidenceState::Verified | EvidenceState::Stale | EvidenceState::Untracked)
-            .then(|| nunki_git::read_snippet(&self.ctx.root, &e.file_path, e.start_line, e.end_line, SNIPPET_LINES))
+            .then(|| nunki_git::read_snippet(&vctx.root, &e.file_path, e.start_line, e.end_line, SNIPPET_LINES))
             .flatten();
         // What a reader can rebuild from the book's repository, commit and path
         // prefix isn't stored: on a large book these three fields are ~40% of it.
-        let prefix =
-            if self.ctx.prefix.is_empty() { String::new() } else { format!("{}/", self.ctx.prefix.trim_matches('/')) };
+        let prefix = if vctx.prefix.is_empty() { String::new() } else { format!("{}/", vctx.prefix.trim_matches('/')) };
         let derived_permalink =
-            match (self.ctx.remote_url.as_deref().and_then(nunki_git::web_base), self.ctx.head_commit.as_deref()) {
+            match (vctx.remote_url.as_deref().and_then(nunki_git::web_base), vctx.head_commit.as_deref()) {
                 (Some(base), Some(commit)) => Some(format!("{base}/blob/{commit}/{prefix}{}{anchor}", e.file_path)),
                 _ => None,
             };
@@ -390,6 +469,7 @@ impl<'a> Builder<'a> {
             id.clone(),
             Cite {
                 id: id.clone(),
+                repo: e.repo.clone(),
                 file: e.file_path.clone(),
                 start: e.start_line,
                 end: e.end_line,
@@ -399,15 +479,47 @@ impl<'a> Builder<'a> {
                 // that sentence, the permalink and the reference are ~40% of the payload.
                 detail: (r.state != EvidenceState::Verified).then(|| r.detail.clone()),
                 snippet,
-                permalink: r
-                    .permalink
-                    .clone()
-                    .filter(|p| p.starts_with("https://") && Some(p) != derived_permalink.as_ref()),
+                // A member's permalink is stored outright: a reader rebuilds a
+                // link from the book's own repository and commit, which are not
+                // this line's.
+                permalink: match member {
+                    Some(_) => r.permalink.clone().or(derived_permalink.clone()).filter(|p| p.starts_with("https://")),
+                    None => r
+                        .permalink
+                        .clone()
+                        .filter(|p| p.starts_with("https://") && Some(p) != derived_permalink.as_ref()),
+                },
                 git_ref: Some(git_ref).filter(|g| *g != derived_ref),
             },
         );
         self.cite_keys.insert(key, id.clone());
         Inline::Cite { id }
+    }
+
+    /// A citation into a member repository this build cannot see.
+    ///
+    /// Recorded as unverified and named, rather than dropped or verified against
+    /// this repository. `check` fails on any citation that is not verified, so a
+    /// missing member checkout is a loud failure rather than a book that quietly
+    /// cites code nobody read.
+    fn unverifiable_cite(&mut self, id: &str, e: &EvidenceRef, repo: &str) -> Inline {
+        self.cites.insert(
+            id.to_string(),
+            Cite {
+                id: id.to_string(),
+                repo: Some(repo.to_string()),
+                file: e.file_path.clone(),
+                start: e.start_line,
+                end: e.end_line,
+                symbol: e.symbol_name.clone(),
+                state: "unverified".into(),
+                detail: Some(format!("repository `{repo}` was not read in this build")),
+                snippet: None,
+                permalink: None,
+                git_ref: None,
+            },
+        );
+        Inline::Cite { id: id.to_string() }
     }
 
     fn cites(&mut self, evidence: &[EvidenceRef], max: usize) -> Vec<Inline> {
@@ -514,6 +626,10 @@ impl<'a> Builder<'a> {
                         end_line: e.end_line,
                         symbol_name: e.symbol_name.clone(),
                         note: None,
+                        // Carried, not dropped: a hand-edited diagram may cite a
+                        // member repository, and verifying that line here would
+                        // check the wrong file and pass.
+                        repo: e.repo.clone(),
                     };
                     match self.cite(&ev) {
                         Inline::Cite { id } => id,
@@ -1328,9 +1444,47 @@ impl<'a> Builder<'a> {
         ]
     }
 
+    /// The repositories this book was read from, and the commit each was read at.
+    ///
+    /// A citation names a repository; a reader has to be able to turn that name
+    /// into a place. It also states the cost of documenting a system rather than
+    /// a repository: this book describes several checkouts at once, so it goes
+    /// out of date when any of them moves, not only this one.
+    fn repositories_block(&mut self) -> Vec<Block> {
+        if self.members.is_empty() {
+            return vec![];
+        }
+        let mut rows = vec![vec![
+            vec![Inline::strong(self.report.repo.name.clone())],
+            vec![Inline::text("this repository")],
+            vec![Inline::code(nunki_git::short(self.ctx.head_commit.as_deref().unwrap_or("unversioned")))],
+        ]];
+        for (name, c) in self.members {
+            rows.push(vec![
+                vec![Inline::code(name.clone())],
+                vec![Inline::text(match c.is_git() {
+                    true => "read as part of this system",
+                    false => "not a git repository: its lines cannot be pinned to a commit",
+                })],
+                vec![Inline::code(nunki_git::short(c.head_commit.as_deref().unwrap_or("unversioned")))],
+            ]);
+        }
+        vec![
+            Block::Heading { level: 2, id: "repositories".into(), text: "Repositories this book was read from".into() },
+            Block::Para {
+                inl: vec![Inline::text(
+                    "Citations name the repository they were read from. Each was read at the commit below, and this \
+                     book is out of date when any of them moves — not only when this one does.",
+                )],
+            },
+            Block::Table { columns: vec!["Repository".into(), "Role".into(), "Commit".into()], rows },
+        ]
+    }
+
     fn evidence_page(&mut self) {
         let r = self.report;
         let mut blocks = Vec::new();
+        blocks.extend(self.repositories_block());
         blocks.extend(self.unresolved_calls_block());
         let observed = r.relationships.iter().filter(|x| Self::observed(x)).count();
         let declared = r.relationships.len() - observed;
@@ -1603,6 +1757,7 @@ fn readme_evidence(root: &Path, description: &str) -> Option<EvidenceRef> {
                     end_line: i as u32 + 1,
                     symbol_name: None,
                     note: None,
+                    repo: None,
                 });
             }
         }

@@ -8,6 +8,40 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **A system spread over several repositories can be documented as one system.**
+  `nunki.toml` gains a `[workspace] members` list of sibling checkouts. A call
+  that leaves this repository is resolved against the service that answers it,
+  using the same matching rule as a call inside one repository, and the
+  operation it reaches is brought into the model so the book can describe the
+  far side of the edge instead of naming a host and stopping. Flows cross the
+  repository boundary and come back.
+
+  Every citation now says which repository it was read from. `Evidence` gains
+  an optional `repo` (absent means the repository being documented — an
+  additive schema change), a citation into a member is verified *in that
+  member* at that member's commit, and its permalink points there rather than
+  being derived from this book's repository, where the same path holds
+  different code. The evidence page lists the repositories the book was read
+  from and the commit each was read at.
+
+  A member's operation is not claimed as ours: it gets no functional
+  requirement, no flow of its own, and does not appear in this repository's API
+  surface. Only operations something here actually calls are adopted.
+
+  The cost is stated rather than hidden: a book that describes several
+  checkouts is out of date when any of them moves, so `nunki check` reports
+  `member <name>: <was> → <now> moved since this book was built` and fails. A
+  member that is not checked out is reported in *what remains unknown* and the
+  call stays unresolved — generation does not fail, because a book that says
+  the call is unresolved is the honest answer to a missing clone.
+
+  Configuring nothing changes nothing: a single-repository book's pages,
+  Markdown, figures and manifest are unchanged, and the only difference in the
+  output is the embedded reader, which now knows how to show a citation from
+  another repository.
+
 ### Fixed
 
 - **An outbound call the book could not attribute was documented nowhere.**
