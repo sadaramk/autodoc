@@ -257,7 +257,8 @@ test("behaviour pages: sequence flows, data model, API contract, functional spec
   await expect(page.locator(".callout", { hasText: "Contract coverage" })).toBeVisible();
 
   await page.locator(".sidenav .nav-link", { hasText: "Functional specification" }).click();
-  await expect(page.locator(".article h3", { hasText: /^FR-001/ })).toBeVisible();
+  // Identified by what it describes, not by position: `FR-<operation>-<digest>`.
+  await expect(page.locator(".article h3", { hasText: /^FR-[a-z0-9-]+-[0-9a-f]{4}\b/ }).first()).toBeVisible();
   await expect(page.locator(".badge.gap").first()).toContainText("needs input");
   await expect(page.locator(".article h2", { hasText: "Business rules" })).toBeVisible();
 
