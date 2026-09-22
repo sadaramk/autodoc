@@ -10,6 +10,32 @@ All notable changes to this project are recorded here. The format follows
 
 ### Added
 
+- **`nunki conform`** checks the code against a specification somebody else
+  wrote. It reads the layouts the spec-driven toolkits use —
+  `.kiro/specs/*/requirements.md`, `openspec/specs/*/spec.md`,
+  `specs/*/spec.md` — and reports what is declared and absent, what disagrees
+  with the handler, what is implemented and asked for by nobody, and what the
+  code cannot answer either way.
+
+  Those toolkits write a specification and build from it; none can tell you
+  afterwards whether the code still matches, because none keeps a link from a
+  requirement to the code implementing it. Spec Kit's `converge` and OpenSpec's
+  `verify` do check, by searching the codebase for each requirement on every
+  run. This starts from a model where every claim already carries a file, a
+  line, and the commit it was verified against.
+
+  Built against a real repository rather than a fixture designed to succeed.
+  Two things only real specifications do: they write `{id}` where the code
+  writes `{job_id}`, so paths are compared by position rather than by the name
+  a parameter was given; and most of a real specification names no endpoint at
+  all. Reporting *the system SHALL support HTTP/3* as a missing endpoint would
+  be the loudest possible false positive, so a requirement the code cannot
+  answer is reported as undecidable and never guessed at.
+
+  `--exit-code` gates on what is actionable — something declared and absent, or
+  contradicted. Not on scope judgements, which belong to a person.
+
+
 - **`nunki spec --format openspec`** writes `openspec/specs/<capability>/spec.md`
   from the code: one current-state specification per service, in a format
   another toolchain reads and validates. Adopting OpenSpec on a codebase that
