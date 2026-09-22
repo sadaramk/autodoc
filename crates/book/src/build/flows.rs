@@ -218,8 +218,8 @@ impl<'a> Builder<'a> {
     }
 
     /// Functional requirements for work that doesn't start with a request,
-    /// numbered after the operations' (`first` is the next FR number).
-    pub(super) fn background_requirement_blocks(&mut self, first: usize) -> Vec<Block> {
+    /// identified the same way, by what triggers them.
+    pub(super) fn background_requirement_blocks(&mut self) -> Vec<Block> {
         let flows: Vec<&'a Flow> = self.report.flows.iter().filter(|f| !is_request(f) && worth_drawing(f)).collect();
         if flows.is_empty() {
             return vec![];
@@ -235,8 +235,11 @@ impl<'a> Builder<'a> {
         ];
         let mut ordered = flows.clone();
         ordered.sort_by(|a, b| (&a.entry, &a.id).cmp(&(&b.entry, &b.id)));
-        for (i, flow) in ordered.into_iter().enumerate() {
-            let fr = format!("FR-{:03}", first + i);
+        for flow in ordered {
+            // Same rule as an HTTP requirement: the identity is the thing it
+            // describes. A background flow is named by its entry point, which
+            // does not move when another handler is added beside it.
+            let fr = super::behavior::requirement_id(&flow.entry);
             let unit = flow.entry.split(':').next().unwrap_or("").to_string();
             let title = match self.authored.operation(&flow.entry).and_then(|x| given(&x.name)) {
                 Some(n) => format!("{fr} · {n}"),

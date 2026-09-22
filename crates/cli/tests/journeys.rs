@@ -795,3 +795,74 @@ fn journey_authored_prose_is_reported_when_it_goes_stale() {
     assert!(o.status.success(), "an orphaned but empty entry says nothing, so it is not stale: {s}");
     assert!(!s.contains("removed-but-never-filled-in"), "and is not reported: {s}");
 }
+
+/// A requirement identifier is a reference. People put it in a commit message,
+/// a ticket and a test name, and the architecture history will put it in a
+/// changelog entry that outlives the release.
+///
+/// It used to be a position in a list: `FR-{:03}` straight from `enumerate()`.
+/// Adding one endpoint to the first service renumbered five of the demo's six
+/// requirements — so every identifier still *existed*, and every one of them
+/// had quietly come to mean a different requirement. That is what this checks:
+/// not that the strings survive, but that they still point at the same thing.
+#[test]
+fn journey_requirement_ids_survive_adding_a_requirement() {
+    let (_tmp, repo) = shop_repo();
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let spec = repo.join("docs/architecture/pages/07-functional-specification.md");
+
+    // id -> what it describes. `### FR-x · Subject` and `| **BR-x** | Statement |`.
+    let subjects = |text: &str| -> std::collections::BTreeMap<String, String> {
+        let mut m = std::collections::BTreeMap::new();
+        for line in text.lines() {
+            if let Some(rest) = line.strip_prefix("### FR-") {
+                let (id, subject) = rest.split_once(" · ").unwrap_or((rest, ""));
+                m.insert(format!("FR-{id}"), subject.trim().to_string());
+            }
+            if let Some(rest) = line.strip_prefix("| **BR-") {
+                if let Some((id, tail)) = rest.split_once("** | ") {
+                    let statement = tail.split(" | ").next().unwrap_or("").trim().to_string();
+                    m.insert(format!("BR-{id}"), statement);
+                }
+            }
+        }
+        m
+    };
+
+    let before = subjects(&std::fs::read_to_string(&spec).unwrap());
+    assert!(before.keys().filter(|k| k.starts_with("FR-")).count() >= 5, "{before:?}");
+    assert!(before.keys().any(|k| k.starts_with("BR-")), "{before:?}");
+
+    // A new endpoint on the first service, which is where it does most damage:
+    // every requirement sorted after it used to shift by one.
+    let catalog = repo.join("api-gateway/src/routes/catalog.ts");
+    let src = std::fs::read_to_string(&catalog).unwrap();
+    let marker = "catalogRouter.get(\"/\"";
+    assert!(src.contains(marker), "fixture shape changed");
+    // Guarded, so it adds a business rule too — otherwise the rule ordering
+    // never moves and a positional BR identifier would survive by luck.
+    let added = format!(
+        "catalogRouter.get(\"/brands\", requireCustomer, async (_req, res) => {{\n  res.json([]);\n}});\n\n{marker}"
+    );
+    let src = src.replacen(marker, &added, 1).replace(
+        "import { cached } from \"../cache\";",
+        "import { cached } from \"../cache\";\nimport { requireCustomer } from \"./auth\";",
+    );
+    std::fs::write(&catalog, src).unwrap();
+    git(&repo, &["commit", "-aqm", "add a brands endpoint"]);
+    assert!(nunki(&["generate", "."], &repo).status.success());
+
+    let after = subjects(&std::fs::read_to_string(&spec).unwrap());
+    assert!(after.len() > before.len(), "the new endpoint is a new requirement");
+
+    // Every identifier that existed before still describes what it described.
+    let moved: Vec<String> = before
+        .iter()
+        .filter_map(|(id, was)| match after.get(id) {
+            Some(now) if now == was => None,
+            Some(now) => Some(format!("{id}: was {was:?}, now {now:?}")),
+            None => Some(format!("{id}: gone (was {was:?})")),
+        })
+        .collect();
+    assert!(moved.is_empty(), "identifiers now point somewhere else:\n  {}", moved.join("\n  "));
+}

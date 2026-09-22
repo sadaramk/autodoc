@@ -1,6 +1,6 @@
 {
   "generator": "nunki 0.4.1",
-  "generatedAt": "2026-09-21T12:48:09Z",
+  "generatedAt": "2026-09-22T11:39:42Z",
   "repository": "polyglot-shop",
   "commit": null,
   "commitDate": null,
@@ -338,8 +338,8 @@
     "diagrams/runtime-compose.svg": "44db35aea28e2a88",
     "diagrams/system-context.ir.json": "fc7ab47e8c980f86",
     "diagrams/system-context.svg": "e9a7f7e624df968d",
-    "index.html": "122ab1d26de65052",
-    "llms-full.txt": "81fe7ae9ee43dd8c",
+    "index.html": "b161b1b7d0e3482b",
+    "llms-full.txt": "be54351dc254e0d9",
     "llms.txt": "e294e2976209edee",
     "pages/01-overview.md": "c796d2fb25d66f7e",
     "pages/02-architecture.md": "38917fc32ee45d33",
@@ -354,8 +354,8 @@
     "pages/06-api-api-gateway.md": "3e14e4487a64aa5a",
     "pages/06-api-ledger-audit.md": "d752c48b29c819ac",
     "pages/06-api-payments.md": "07c5756c71f91952",
-    "pages/07-functional-specification.md": "8a0f096727e0ba64",
-    "pages/08-business-requirements.md": "5fe272542359e5a2",
+    "pages/07-functional-specification.md": "cbcf1045b8372bf7",
+    "pages/08-business-requirements.md": "119376986ad8eb1e",
     "pages/09-evidence-and-unknowns.md": "630e65c6f96f17e8"
   }
 }

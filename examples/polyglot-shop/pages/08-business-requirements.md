@@ -33,9 +33,9 @@ _from code_ user-facing clients: [Web](../pages/03-containers-web.md).
 
 | Service | Capabilities |
 |---|---|
-| [API Gateway](../pages/03-containers-api-gateway.md) | [FR-001 GET /catalog](../pages/07-functional-specification.md#fr-001), [FR-002 POST /checkout](../pages/07-functional-specification.md#fr-002) |
-| [Ledger Audit](../pages/03-containers-ledger-audit.md) | [FR-003 GET /reports/daily](../pages/07-functional-specification.md#fr-003), [FR-004 GET /reports/daily/{status}](../pages/07-functional-specification.md#fr-004) |
-| [Payments](../pages/03-containers-payments.md) | [FR-005 POST /charges](../pages/07-functional-specification.md#fr-005) |
+| [API Gateway](../pages/03-containers-api-gateway.md) | [FR-api-gateway-get-catalog-7980 GET /catalog](../pages/07-functional-specification.md#fr-api-gateway-get-catalog-7980), [FR-api-gateway-post-checkout-bf89 POST /checkout](../pages/07-functional-specification.md#fr-api-gateway-post-checkout-bf89) |
+| [Ledger Audit](../pages/03-containers-ledger-audit.md) | [FR-ledger-audit-get-reports-daily-241b GET /reports/daily](../pages/07-functional-specification.md#fr-ledger-audit-get-reports-daily-241b), [FR-ledger-audit-get-reports-daily-status-e7f7 GET /reports/daily/{status}](../pages/07-functional-specification.md#fr-ledger-audit-get-reports-daily-status-e7f7) |
+| [Payments](../pages/03-containers-payments.md) | [FR-payments-post-charges-4b48 POST /charges](../pages/07-functional-specification.md#fr-payments-post-charges-4b48) |
 
 ## 5. Business rules
 
@@ -62,6 +62,6 @@ _needs input: how success is measured, with targets_
 ## 9. Open questions
 
 - 5 of 5 requirements have no authored actor or purpose.
-- [FR-001](../pages/07-functional-specification.md#fr-001) GET /catalog declares no request or response type: what does it accept and return?
+- [FR-api-gateway-get-catalog-7980](../pages/07-functional-specification.md#fr-api-gateway-get-catalog-7980) GET /catalog declares no request or response type: what does it accept and return?
 - [Web](../pages/03-containers-web.md) reads estimatedDelivery from POST /checkout, which the operation does not declare `web/src/api/client.ts:10` — CheckoutPostResponse declares orderId, status `api-gateway/src/routes/checkout.ts:47`
 
