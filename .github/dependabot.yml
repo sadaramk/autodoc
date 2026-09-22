@@ -1,0 +1,70 @@
+# Dependabot version updates.
+#
+# Security updates were already on; this adds the routine ones, which matter
+# here for a specific reason: a release builds with `--locked`, so `Cargo.lock`
+# ages silently between releases and the first thing to notice would be a
+# release build.
+#
+# Grouped and weekly on purpose. The point is a small number of reviewable pull
+# requests that CI has an opinion about, not a stream of them.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # A grammar bump changes parse trees, which moves fixtures and example
+      # output. That review is the same review whether it is one grammar or
+      # eight, so they arrive together.
+      tree-sitter:
+        patterns: ["tree-sitter", "tree-sitter-*"]
+      rust-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    # The zod mirror of the IR contract. A bump here has to keep agreeing with
+    # the Rust side, which `test-ts` checks.
+    directory: /packages/ir-spec-ts
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    # Playwright. The version here has to match the image in `Dockerfile`, so a
+    # bump is two edits; the pull request is the reminder.
+    directory: /tests/e2e
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    # This repository publishes an action, and the workflows pin theirs.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions-minor:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    # `rust:`, `debian:` and the Playwright image the test containers are built
+    # from. The Rust version is also the toolchain CI pins, so these move
+    # together or lints disagree between the container and CI.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+
+# Deliberately not tracked: `tests/fixtures/*/package.json`. Those are inputs to
+# the tests — a fixture's manifest is data the analyzer reads, and upgrading it
+# would change what the tests assert rather than what the project depends on.
