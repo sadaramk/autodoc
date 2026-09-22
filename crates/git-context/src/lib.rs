@@ -35,6 +35,10 @@ pub struct RepoContext {
     pub head_commit: Option<String>,
     pub branch: Option<String>,
     pub remote_url: Option<String>,
+    /// A tag pointing exactly at HEAD, when there is one — the release this
+    /// commit is, rather than the one it comes after. A book generated from a
+    /// tagged commit can then say which release it documents.
+    pub tag: Option<String>,
     /// Paths (relative to `root`) with uncommitted changes.
     pub dirty_files: Vec<String>,
 }
@@ -147,6 +151,7 @@ pub fn repo_context(root: &Path) -> RepoContext {
             head_commit: None,
             branch: None,
             remote_url: None,
+            tag: None,
             dirty_files: vec![],
         };
     };
@@ -165,6 +170,13 @@ pub fn repo_context(root: &Path) -> RepoContext {
         head_commit: git_opt(&root, &["rev-parse", "HEAD"]),
         branch: git_opt(&root, &["rev-parse", "--abbrev-ref", "HEAD"]).filter(|b| b != "HEAD"),
         remote_url: git_opt(&root, &["remote", "get-url", "origin"]),
+        // Exactly at HEAD, not the nearest ancestor: a book built three commits
+        // after v1.1 documents those three commits, and calling it v1.1 would
+        // be a claim about code the release does not contain. Sorted so a
+        // commit carrying two tags resolves the same way every time.
+        tag: git_opt(&root, &["tag", "--points-at", "HEAD", "--sort=-version:refname"])
+            .and_then(|s| s.lines().next().map(str::to_string))
+            .filter(|t| !t.is_empty()),
         root,
         git_root: Some(top),
         prefix,

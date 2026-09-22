@@ -937,3 +937,84 @@ fn journey_conform_checks_code_against_a_specification() {
     assert_eq!(none.status.code(), Some(2), "{}", text(&none));
     assert!(text(&none).contains(".kiro/specs"), "it says where it looked: {}", text(&none));
 }
+
+/// How the architecture changed, release by release.
+///
+/// `diff` has always been able to answer this between any two tags, and every
+/// answer was discarded. What makes the recorded form worth having is that it
+/// is written once: a rebuild must say what the release said, not what a
+/// rebuild would conclude now.
+#[test]
+fn journey_architecture_history_is_recorded_once_and_never_recomputed() {
+    let (_tmp, repo) = shop_repo();
+    git(&repo, &["tag", "v1.0.0"]);
+
+    // A release that adds an endpoint.
+    let catalog = repo.join("api-gateway/src/routes/catalog.ts");
+    let src = std::fs::read_to_string(&catalog).unwrap();
+    let marker = "catalogRouter.get(\"/\"";
+    std::fs::write(
+        &catalog,
+        src.replacen(
+            marker,
+            &format!("catalogRouter.get(\"/brands\", async (_req, res) => {{ res.json([]); }});\n\n{marker}"),
+            1,
+        ),
+    )
+    .unwrap();
+    git(&repo, &["commit", "-aqm", "add a brands endpoint"]);
+    git(&repo, &["tag", "v1.1.0"]);
+
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let out = repo.join("docs/architecture");
+    let page = out.join("pages/09-architecture-history.md");
+    assert!(!page.exists(), "no history recorded yet, so no page invented");
+
+    // Record the release.
+    let o = nunki(&["diff", ".", "--base", "v1.0.0", "--head", "v1.1.0", "--record", "v1.1.0"], &repo);
+    assert!(o.status.success(), "{}", text(&o));
+    assert!(text(&o).contains("recorded v1.1.0"), "{}", text(&o));
+
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    let rendered = std::fs::read_to_string(&page).unwrap();
+    assert!(rendered.contains("## v1.1.0"), "{rendered}");
+    assert!(rendered.contains("GET /catalog/brands"), "the change itself, not just a count: {rendered}");
+    assert!(rendered.contains("1 change against v1.0.0"), "{rendered}");
+
+    // The two commits it was computed between, so a reader can repeat it.
+    let history: Value = serde_json::from_str(&std::fs::read_to_string(out.join("history.json")).unwrap()).unwrap();
+    let entry = &history["entries"][0];
+    assert_eq!(entry["release"], "v1.1.0");
+    assert!(entry["diff"]["baseCommit"].as_str().is_some_and(|c| c.len() >= 7), "{entry}");
+    assert!(entry["diff"]["headCommit"].as_str().is_some_and(|c| c.len() >= 7), "{entry}");
+
+    // The book says which release it documents, not only which commit.
+    let manifest: Value = serde_json::from_str(&std::fs::read_to_string(out.join("manifest.json")).unwrap()).unwrap();
+    assert_eq!(manifest["release"], "v1.1.0", "generated from a tagged commit");
+
+    // Never recomputed. The code moves on; the entry does not.
+    let before = std::fs::read_to_string(out.join("history.json")).unwrap();
+    std::fs::write(&catalog, "export const catalogRouter = {};\n").unwrap();
+    git(&repo, &["commit", "-aqm", "gut the router"]);
+    assert!(nunki(&["generate", "."], &repo).status.success());
+    assert_eq!(
+        std::fs::read_to_string(out.join("history.json")).unwrap(),
+        before,
+        "a rebuild rewrote what a release recorded"
+    );
+    assert!(
+        std::fs::read_to_string(&page).unwrap().contains("GET /catalog/brands"),
+        "the page still says what the release said"
+    );
+
+    // Past the tag, the book stops claiming to be that release.
+    let manifest: Value = serde_json::from_str(&std::fs::read_to_string(out.join("manifest.json")).unwrap()).unwrap();
+    assert!(manifest["release"].is_null(), "three commits after v1.1.0 is not v1.1.0: {manifest}");
+
+    // Re-recording a release replaces its entry and leaves the rest alone.
+    git(&repo, &["tag", "-f", "v1.1.0"]);
+    let again = nunki(&["diff", ".", "--base", "v1.0.0", "--head", "v1.1.0", "--record", "v1.1.0"], &repo);
+    assert!(text(&again).contains("replaced v1.1.0"), "{}", text(&again));
+    let history: Value = serde_json::from_str(&std::fs::read_to_string(out.join("history.json")).unwrap()).unwrap();
+    assert_eq!(history["entries"].as_array().unwrap().len(), 1, "replaced, not appended twice");
+}

@@ -28,6 +28,10 @@ pub struct BookMeta {
     pub commit_date: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub branch: Option<String>,
+    /// The release this book documents, when it was generated from a tagged
+    /// commit. A commit is what was read; a release is what people cite.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub release: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub web_url: Option<String>,
     /// Path of the scanned directory inside the repository ("" at the root).

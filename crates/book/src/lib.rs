@@ -14,6 +14,7 @@ pub mod authored;
 pub mod behaviour;
 pub mod build;
 pub mod conform;
+pub mod history;
 pub mod html;
 pub mod markdown;
 pub mod model;
@@ -280,6 +281,7 @@ fn manifest(planned: &Planned) -> Value {
         "commit": b.book.meta.commit,
         "commitDate": b.book.meta.commit_date,
         "branch": b.book.meta.branch,
+        "release": b.book.meta.release,
         "evidence": b.book.meta.evidence,
         "pages": b.book.pages.iter().map(|p| json!({"id": p.id, "title": p.title, "section": p.section, "markdown": p.md_path})).collect::<Vec<_>>(),
         "diagrams": b.diagrams.iter().map(|d| json!({

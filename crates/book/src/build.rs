@@ -132,10 +132,14 @@ pub fn build(
     };
 
     let (authored, authored_warning) = Authored::load(out_dir);
+    // Read, never written by a build: a release records an entry, and a
+    // rebuild of an old book must not rewrite what it said.
+    let (history, history_warning) = crate::history::History::load(out_dir);
     // Kept for the post-build audit: the builder consumes its copy.
     let authored_for_audit = authored.clone();
     let mut b = Builder {
         authored,
+        history,
         report: &report,
         ctx: &ctx,
         verifier: nunki_git::Verifier::cached(&ctx, None, Some(&cache)),
@@ -144,7 +148,7 @@ pub fn build(
         pages: Vec::new(),
         figures: BTreeMap::new(),
         diagrams: Vec::new(),
-        warnings: authored_warning.into_iter().collect(),
+        warnings: authored_warning.into_iter().chain(history_warning).collect(),
         opts,
         api_index: api_ref::ApiIndex::new(&report),
     };
@@ -188,6 +192,7 @@ pub fn build(
     // reports fewer citations than the book does, and a stale one among them
     // never reaches the page's warning.
     b.link_figure_nodes();
+    b.history_page();
     b.evidence_page();
 
     let nav = b.nav(&deployables);
@@ -199,6 +204,7 @@ pub fn build(
         commit: ctx.head_commit.clone(),
         commit_date,
         branch: ctx.branch.clone(),
+        release: ctx.tag.clone(),
         web_url: ctx.remote_url.as_deref().and_then(nunki_git::web_base),
         path_prefix: if ctx.prefix.is_empty() { String::new() } else { format!("{}/", ctx.prefix.trim_matches('/')) },
         files: report.stats.files,
@@ -234,6 +240,7 @@ pub fn build(
 
 struct Builder<'a> {
     authored: Authored,
+    history: crate::history::History,
     report: &'a ScanReport,
     ctx: &'a RepoContext,
     verifier: nunki_git::Verifier<'a>,
@@ -553,6 +560,7 @@ impl<'a> Builder<'a> {
             }
             "requirements" => "pages/08-business-requirements.md".to_string(),
             "evidence" => "pages/09-evidence-and-unknowns.md".to_string(),
+            "history" => "pages/09-architecture-history.md".to_string(),
             api if api.starts_with("api/") => format!("pages/06-{}.md", slug_md(api)),
             other => format!("pages/03-{}.md", slug_md(other)),
         };
@@ -1201,6 +1209,71 @@ impl<'a> Builder<'a> {
         let summary =
             vec![Inline::text("The paths that matter most, hop by hop, each pinned to the code that makes the call.")];
         self.push_page("flows", "Critical flows", "Flows", summary, blocks);
+    }
+
+    /// How the architecture changed, release by release.
+    ///
+    /// Read from `history.json` and never recomputed. Rebuilding an old book
+    /// must not rewrite what a release recorded, and a build must not depend
+    /// on which tags happen to exist in the clone it is running in.
+    fn history_page(&mut self) {
+        if self.history.entries.is_empty() {
+            return;
+        }
+        let mut blocks = vec![Block::Para {
+            inl: vec![Inline::text(
+                "What each release changed about the architecture, recorded when it was cut by comparing \
+                 it with the release before. Entries are written once and never recomputed, so this says \
+                 what was true then rather than what a rebuild would conclude now.",
+            )],
+        }];
+
+        for entry in &self.history.entries {
+            let when = entry.date.as_deref().and_then(|d| d.split('T').next()).unwrap_or("");
+            let heading = if when.is_empty() { entry.release.clone() } else { format!("{} · {when}", entry.release) };
+            blocks.push(Block::Heading {
+                level: 2,
+                id: format!("release-{}", nunki_analyzer::scan::slug(&entry.release)),
+                text: heading,
+            });
+
+            // The two commits it was computed between, so a reader can repeat
+            // it instead of taking it on faith.
+            let range = match (&entry.diff.base_commit, &entry.diff.head_commit) {
+                (Some(b), Some(h)) => {
+                    format!("`{}` → `{}`", &b[..b.len().min(8)], &h[..h.len().min(8)])
+                }
+                _ => format!("`{}` → `{}`", entry.base, entry.release),
+            };
+            let total: usize = entry.diff.sections.iter().map(|x| x.changes.len()).sum();
+            blocks.push(Block::Para {
+                inl: vec![Inline::text(if total == 0 {
+                    format!("Nothing this book describes differs from {}. {range}", entry.base)
+                } else {
+                    format!("{total} change{} against {}. {range}", if total == 1 { "" } else { "s" }, entry.base)
+                })],
+            });
+
+            for section in entry.diff.sections.iter().filter(|x| !x.changes.is_empty()) {
+                let mut rows = Vec::new();
+                for c in &section.changes {
+                    rows.push(vec![
+                        vec![Inline::text(c.verb.word().to_string())],
+                        vec![Inline::strong(c.subject.clone())],
+                        vec![Inline::text(c.details.join("; "))],
+                    ]);
+                }
+                blocks.push(Block::Table { columns: vec![String::new(), section.title.clone(), String::new()], rows });
+            }
+        }
+
+        self.push_page(
+            "history",
+            "Architecture history",
+            "Trust",
+            vec![Inline::text("What each release changed, recorded when it was cut.")],
+            blocks,
+        );
     }
 
     fn evidence_page(&mut self) {
