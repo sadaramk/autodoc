@@ -59,7 +59,7 @@ comes first and the clock then runs underneath everything else.
 | | | |
 |---|---|---|
 | 1 | [#8](https://github.com/sadaramk/nunki/issues/8) · [#9](https://github.com/sadaramk/nunki/issues/9) | Publish the schema with each release; tell a breaking schema change from an additive one; snapshot the CLI surface; write the deprecation path. Starts the clock. |
-| 2 | [#5](https://github.com/sadaramk/nunki/issues/5) | Cache parsed facts. What stops nunki being used on a large repository: ~9 ms per file today, so an etcd-sized tree is tens of seconds on every push. |
+| 2 | [#5](https://github.com/sadaramk/nunki/issues/5) | Cache per-file facts. Measured on etcd (550 files): `check` is 4.5 s, and 77% of it is per-file analysis that a content-hash cache can skip — data-model extraction alone is 36%. |
 | 3 | [#7](https://github.com/sadaramk/nunki/issues/7) | Detect when authored prose has gone stale — the one place the project still publishes a claim it has not checked. |
 | 4 | [#6](https://github.com/sadaramk/nunki/issues/6) | Trace through runtime indirection. A spike with an exit, not a feature: one attempt already changed nothing on five real repositories. |
 

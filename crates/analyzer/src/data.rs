@@ -185,7 +185,9 @@ fn schema_files(root: &Path) -> Vec<String> {
         for entry in rd.flatten() {
             let p = entry.path();
             let name = entry.file_name().to_string_lossy().to_string();
-            if p.is_dir() {
+            // `file_type()` comes off the directory entry; `p.is_dir()` is a
+            // second stat per file, which on a large tree is the whole cost.
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or_else(|_| p.is_dir()) {
                 if !SKIP_DIRS.contains(&name.as_str()) && !name.starts_with('.') {
                     stack.push(p);
                 }
@@ -217,7 +219,7 @@ fn changelog_candidates(root: &Path) -> Vec<String> {
         for entry in rd.flatten() {
             let p = entry.path();
             let name = entry.file_name().to_string_lossy().to_string();
-            if p.is_dir() {
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or_else(|_| p.is_dir()) {
                 if !SKIP_DIRS.contains(&name.as_str()) && !name.starts_with('.') && name != "test" {
                     stack.push(p);
                 }
