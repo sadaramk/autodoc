@@ -46,12 +46,12 @@ Docker works too, and is how the project tests itself:
 ## Keep it true in CI
 
 ```yaml
-- uses: sadaramk/nunki@v0.4.1
+- uses: sadaramk/nunki@v0.5.0
   with:
     out: docs/architecture
 ```
 
-Pinning the action pins the binary: `@v0.4.1` runs that build, verified against the checksum
+Pinning the action pins the binary: `@v0.5.0` runs that build, verified against the checksum
 published with it. `@v0` tracks the newest 0.x instead. It is on the Marketplace as
 [Nunki Architecture Docs](https://github.com/marketplace/actions/nunki-architecture-docs); the
 listing title differs from the repository name because a Marketplace name has to be unique across
@@ -72,7 +72,7 @@ steps:
   - uses: actions/checkout@v7
     with:
       fetch-depth: 0          # `diff` checks out the base commit itself
-  - uses: sadaramk/nunki@v0.4.1
+  - uses: sadaramk/nunki@v0.5.0
     with:
       command: diff
       comment: true

@@ -25,8 +25,8 @@ inputs:
     default: ""
   version:
     description: >-
-      Release to download, such as v0.4.1. Left empty, the action uses the
-      version it was pinned to (`uses: …/nunki@v0.4.1`), falling back to the
+      Release to download, such as v0.5.0. Left empty, the action uses the
+      version it was pinned to (`uses: …/nunki@v0.5.0`), falling back to the
       newest release when the ref is a branch or a moving major tag.
     default: ""
   comment:
