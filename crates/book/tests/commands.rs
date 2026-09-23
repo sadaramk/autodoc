@@ -62,3 +62,22 @@ fn a_repository_without_a_cli_gets_no_command_page() {
     assert!(planned.built.book.pages.iter().all(|p| p.id != "commands"));
     assert!(planned.built.book.nav.iter().all(|g| g.title != "Command reference"));
 }
+
+/// The flows page used to tell a CLI repository to edit a diagram and mark a
+/// primary path it will never have.
+///
+/// A command-line tool has no client-to-service chain. Advice that cannot be
+/// followed reads as a defect in the repository rather than a fact about it, so
+/// the page now says what the entry point actually is and points at it.
+#[test]
+fn a_cli_is_told_where_its_entry_points_are_not_to_invent_a_primary_path() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("cli-tool"), out.path(), &BookOptions::default()).unwrap();
+    let flows = planned.built.book.pages.iter().find(|p| p.id == "flows").expect("a flows page");
+    let text = serde_json::to_string(&flows.blocks).unwrap();
+
+    assert!(!text.contains("isPrimaryPath"), "a CLI cannot follow that advice: {text}");
+    assert!(text.contains("No request flows"), "{text}");
+    assert!(text.contains("command, not a request"), "{text}");
+    assert!(text.contains("\"page\":\"commands\""), "and it links to where the commands are: {text}");
+}

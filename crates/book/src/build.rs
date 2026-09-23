@@ -1250,13 +1250,36 @@ impl<'a> Builder<'a> {
         let chain = container.as_ref().map(primary_chain).unwrap_or_default();
 
         if chain.is_empty() {
-            blocks.push(Block::Callout {
-                tone: "note".into(),
-                title: "No critical path identified".into(),
-                inl: vec![Inline::text(
-                    "The container view has no primary path: there is no client-to-service chain with observed calls. Edit containers.ir.json to mark one with isPrimaryPath.",
-                )],
-            });
+            // A command-line tool has no client-to-service chain and never will.
+            // Telling its book to hand-edit a diagram and mark a primary path is
+            // advice that cannot be followed, which is worse than saying nothing:
+            // it reads as a defect in the repository rather than a fact about it.
+            let commands = self.report.cli.iter().map(|c| c.commands.len()).sum::<usize>();
+            // Asked of the report, not of `self.pages`: this page is built before
+            // the command reference is, so a page check here is always false.
+            // The command reference exists whenever a command was found, which
+            // is the same condition.
+            let callout = if commands > 0 {
+                let mut inl = vec![Inline::text(format!(
+                    "This repository's entry point is a command, not a request. Its {commands} command{} and \
+                     the arguments each one takes are in ",
+                    if commands == 1 { "" } else { "s" }
+                ))];
+                inl.push(Inline::link("commands", "Commands"));
+                inl.push(Inline::text("."));
+                Block::Callout { tone: "note".into(), title: "No request flows".into(), inl }
+            } else {
+                Block::Callout {
+                    tone: "note".into(),
+                    title: "No critical path identified".into(),
+                    inl: vec![Inline::text(
+                        "The container view has no primary path: no client-to-service chain with observed calls was \
+                         found. If this system does have one, mark it with isPrimaryPath in containers.ir.json; if it \
+                         does not — a library, or a tool run from a terminal — there is nothing here to draw.",
+                    )],
+                }
+            };
+            blocks.push(callout);
         } else {
             let ir = container.as_ref().unwrap();
             blocks.push(Block::Heading { level: 2, id: "primary-path".into(), text: "Primary path".into() });
