@@ -121,15 +121,21 @@ fn normalise(path: &str) -> String {
 /// immediately adjacent.
 fn endpoints_in(line: &str) -> Vec<(Option<String>, String)> {
     let mut out = Vec::new();
-    for (at, token) in path_tokens(line) {
-        let before = &line[..at].to_uppercase();
-        let method = METHODS
-            .iter()
-            .filter_map(|m| before.rfind(*m).map(|i| (i, *m)))
-            // The nearest one before the path, so two endpoints on one line do
-            // not both take the first method mentioned.
-            .max_by_key(|(i, _)| *i)
-            .map(|(_, m)| m.to_string());
+    for (at, in_span, token) in path_tokens(line) {
+        // A method inside the code span is already known — `` `POST /charges` ``
+        // is how nunki writes its own specs. Re-deriving it from the text before
+        // the span would look in the wrong place and find nothing, which is
+        // exactly what made nunki unable to read its own output.
+        let method = in_span.or_else(|| {
+            let before = &line[..at].to_uppercase();
+            METHODS
+                .iter()
+                .filter_map(|m| before.rfind(*m).map(|i| (i, *m)))
+                // The nearest one before the path, so two endpoints on one line
+                // do not both take the first method mentioned.
+                .max_by_key(|(i, _)| *i)
+                .map(|(_, m)| m.to_string())
+        });
         out.push((method, token));
     }
     out
@@ -137,7 +143,7 @@ fn endpoints_in(line: &str) -> Vec<(Option<String>, String)> {
 
 /// Backticked paths first, since that is how specifications write them; then
 /// bare ones, so a spec that does not use code spans still works.
-fn path_tokens(line: &str) -> Vec<(usize, String)> {
+fn path_tokens(line: &str) -> Vec<(usize, Option<String>, String)> {
     let mut out = Vec::new();
     let bytes = line.as_bytes();
     let mut i = 0;
@@ -147,12 +153,11 @@ fn path_tokens(line: &str) -> Vec<(usize, String)> {
                 let inner = line[i + 1..end].trim();
                 // `POST /v1/jobs` — method and path inside one span.
                 let (m, p) = match inner.split_once(' ') {
-                    Some((a, b)) if METHODS.contains(&a.to_uppercase().as_str()) => (Some(a), b.trim()),
+                    Some((a, b)) if METHODS.contains(&a.to_uppercase().as_str()) => (Some(a.to_uppercase()), b.trim()),
                     _ => (None, inner),
                 };
                 if p.starts_with('/') {
-                    let at = if m.is_some() { i } else { i + 1 };
-                    out.push((at, p.to_string()));
+                    out.push((i + 1, m, p.to_string()));
                 }
                 i = end + 1;
                 continue;
@@ -168,7 +173,7 @@ fn path_tokens(line: &str) -> Vec<(usize, String)> {
         }) {
             let w = word.trim_end_matches([',', '.', ';', ':', ')']);
             if w.starts_with('/') && w.len() > 1 && !w.contains("//") {
-                out.push((at, w.to_string()));
+                out.push((at, None, w.to_string()));
             }
         }
     }
