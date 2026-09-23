@@ -600,6 +600,25 @@ fn status_method(expr: &str) -> Option<String> {
     last.strip_prefix("Method").map(|m| m.to_uppercase())
 }
 
+/// Whether a function's parameters are the ones this framework hands a handler.
+///
+/// Bare type names, because `go_bare_type` has already dropped the package.
+/// `net/http`, chi and gorilla pass a `ResponseWriter`; fiber passes a `Ctx`;
+/// gin and echo pass a single context value — and *single* is what separates
+/// them from a gRPC method, which takes a `Context` **and** a request message.
+/// That distinction is the whole point: taking `Context` alone as evidence would
+/// match every gRPC method in the package.
+fn handler_shaped(sym: &Symbol, framework: &str) -> bool {
+    let has = |t: &str| sym.params.iter().any(|p| p == t);
+    let lone_context = sym.params.len() == 1 && sym.params[0] == "Context";
+    match framework {
+        "net/http" | "chi" | "gorilla" => has("ResponseWriter"),
+        "gin" | "echo" => lone_context,
+        "fiber" => has("Ctx"),
+        _ => has("ResponseWriter") || has("Ctx") || lone_context,
+    }
+}
+
 fn framework_of(f: &Loaded) -> &'static str {
     let t = &f.src.text;
     if t.contains("github.com/gin-gonic/gin") {
@@ -633,7 +652,22 @@ fn handler(u: &Unit, fi: usize, (hs, he): (usize, usize), d: &mut Draft, synth: 
             .filter(|i| !generated(i))
             .chain((0..u.files.len()).filter(generated))
             .collect();
-        let found = order.into_iter().find_map(|i| u.files[i].function(&name).map(|s| (i, s)));
+        // A name is not an address. `MakeHourAvailable` exists four times in one
+        // package of wild-workouts — the HTTP handler, a gRPC method, and two
+        // generated wrappers — and taking the first match by file order cited the
+        // gRPC method for an HTTP route: a wrong citation that verifies, because
+        // the symbol name really is on that line, and an operation that comes out
+        // `Opaque` because a gRPC method has no request to read a body from.
+        //
+        // So a candidate that takes what this framework hands a handler wins.
+        // Nothing is rejected on this basis: a handler nunki does not recognise
+        // the shape of is still better than no handler at all, so a signature
+        // match only reorders.
+        let shaped = |sym: &&Symbol| handler_shaped(sym, &d.op.framework);
+        let found = order
+            .iter()
+            .find_map(|&i| u.files[i].function(&name).filter(shaped).map(|s| (i, s)))
+            .or_else(|| order.iter().find_map(|&i| u.files[i].function(&name).map(|s| (i, s))));
         let Some((i, sym)) = found else {
             d.op.handler.name = name;
             return;
