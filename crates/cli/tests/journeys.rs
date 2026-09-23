@@ -1018,3 +1018,58 @@ fn journey_architecture_history_is_recorded_once_and_never_recomputed() {
     let history: Value = serde_json::from_str(&std::fs::read_to_string(out.join("history.json")).unwrap()).unwrap();
     assert_eq!(history["entries"].as_array().unwrap().len(), 1, "replaced, not appended twice");
 }
+
+/// What `spec` writes, `conform` has to be able to read.
+///
+/// Both features were tested, and never against each other: the `conform`
+/// fixture writes ``GET `/v1/jobs` `` with the method outside the code span, and
+/// `spec` emits `` `GET /v1/jobs` `` with it inside. The parser knew that shape —
+/// it split the span and recognised the verb — and then reported the index of the
+/// backtick, so the method search looked at the text *before* the span and found
+/// nothing.
+///
+/// The result was nunki declaring its own output unreadable: 4 matched, 1
+/// unrequested and 10 "not checkable" against a specification it had just
+/// written from that same code.
+///
+/// This is the property worth pinning, and it is cheap to state: generate a
+/// specification from a repository, check the repository against it, and
+/// everything must match. A gap means the two halves disagree about a format
+/// nunki controls on both sides.
+#[test]
+fn journey_a_generated_specification_conforms_to_the_code_it_came_from() {
+    let (_tmp, repo) = shop_repo();
+
+    let written = nunki(&["spec", ".", "--out", "."], &repo);
+    assert!(written.status.success(), "{}", text(&written));
+    assert!(repo.join("openspec/specs").is_dir(), "specs land in the layout conform looks for");
+
+    let o = nunki(&["conform", "."], &repo);
+    let s = text(&o);
+    assert!(o.status.success(), "{s}");
+
+    // Read from the openspec layout — the discovery path the `.kiro` fixture
+    // never exercised.
+    assert!(s.contains("openspec/specs/"), "the openspec layout was discovered: {s}");
+
+    // Every requirement matches, because both sides were derived from the same
+    // code. Any other verdict is the two halves disagreeing.
+    assert!(s.contains("0 missing"), "{s}");
+    assert!(s.contains("0 disagreeing"), "{s}");
+    assert!(s.contains("0 unrequested"), "an operation nunki declared cannot be undeclared: {s}");
+    assert!(s.contains("0 not checkable from code"), "nunki writes the method next to the path: {s}");
+    assert!(!s.contains("with no method"), "the method is inside the code span, and is read there: {s}");
+
+    // And it is not vacuous: something was actually compared.
+    let matched: u32 = s
+        .split_whitespace()
+        .zip(s.split_whitespace().skip(1))
+        .find(|(_, w)| *w == "matched")
+        .and_then(|(n, _)| n.parse().ok())
+        .expect("the summary reports a matched count");
+    assert!(matched >= 5, "only {matched} requirements were compared: {s}");
+
+    // `--exit-code` is what CI would gate on, and nothing here is actionable.
+    let gated = nunki(&["conform", ".", "--exit-code"], &repo);
+    assert!(gated.status.success(), "a generated spec must not fail its own gate: {}", text(&gated));
+}
