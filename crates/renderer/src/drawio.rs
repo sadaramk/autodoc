@@ -33,6 +33,27 @@ fn field(v: &str) -> String {
     }
 }
 
+/// One line. A newline in a value that travels in a `#` directive or a comment
+/// would let the scanned repository add directives of its own.
+fn one_line(v: &str) -> String {
+    v.chars().map(|c| if c == '\n' || c == '\r' || (c as u32) < 0x20 { ' ' } else { c }).collect()
+}
+
+/// A JSON string body for a `connect` directive: draw.io parses that line as
+/// JSON, so a quote has to be escaped rather than swapped for an apostrophe, and
+/// a backslash has to survive being read twice.
+fn json_string(v: &str) -> String {
+    let mut out = String::with_capacity(v.len());
+    for c in one_line(v).chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            c => out.push(c),
+        }
+    }
+    out
+}
+
 fn evidence_ref(e: &Evidence) -> String {
     if e.start_line == e.end_line {
         format!("{}:{}", e.file_path, e.start_line)
@@ -112,7 +133,10 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     // one node actually resolves to a URL.
     let links = ir.nodes.iter().filter_map(|n| n.evidence.as_ref()).any(|e| permalink(e).is_some());
     let mut out = String::new();
-    out.push_str(&format!("# {} — exported from nunki, one way.\n", ir.title));
+    // Flattened: a newline in the title would end this comment and the next line
+    // would be read as another `#` directive, which is a scanned repository
+    // choosing how its own diagram imports.
+    out.push_str(&format!("# {} — exported from nunki, one way.\n", one_line(&ir.title)));
     out.push_str("# Import with Extras → Insert → Advanced → CSV. Evidence travels as shape data:\n");
     out.push_str("# right-click a shape → Edit Data to see the file and line it came from.\n");
     out.push_str("#\n");
@@ -159,7 +183,9 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
         let (style, label) = key.split_once('\u{1}').unwrap_or((key.as_str(), ""));
         out.push_str(&format!(
             "# connect: {{\"from\":\"{col}\",\"to\":\"id\",\"invert\":true,\"label\":\"{}\",\"style\":\"{}\"}}\n",
-            label.replace('"', "'"),
+            // An edge label draw.io renders with `html=1` like any other, and
+            // then quotes for the JSON line it travels in.
+            json_string(&html_label(label)),
             style
         ));
     }
@@ -201,7 +227,7 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
         let r = at.get(c.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 240.0, h: 160.0 });
         let mut row = vec![
             field(&safe_id(&c.id)),
-            field(&c.label),
+            field(&html_label(&c.label)),
             field("rounded=0;html=1;fillColor=none;strokeColor=#cbd5e1;dashed=1;verticalAlign=top;align=left;spacingLeft=8;fontColor=#475569;"),
         ];
         row.extend(geometry(&r));
@@ -219,7 +245,8 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     }
 
     for n in &ir.nodes {
-        let mut row = vec![field(&safe_id(&n.id)), field(&n.label), field(&shape_style(n.is_key_focal_point))];
+        let mut row =
+            vec![field(&safe_id(&n.id)), field(&html_label(&n.label)), field(&shape_style(n.is_key_focal_point))];
         // A child's position is relative to its parent in draw.io, so a node
         // inside a boundary is offset by that boundary's origin.
         let r = at.get(n.id.as_str()).copied().unwrap_or(Rect { x: 0.0, y: 0.0, w: 160.0, h: 60.0 });
@@ -251,6 +278,32 @@ pub fn to_csv(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     out
 }
 
+/// A label, escaped for a shape that draw.io renders as HTML.
+///
+/// Every shape style here sets `html=1`, which is what gives labels their line
+/// wrapping — and it also means draw.io parses the label as markup. XML escaping
+/// alone is undone by the XML parser before draw.io ever sees the text, so a
+/// label of `<img src=x onerror=…>` from a scanned repository arrives as a live
+/// tag and renders inside the person's drawing.
+///
+/// So the text is escaped twice on purpose: once for the HTML that draw.io
+/// renders, and then once more by `xml` for the attribute it travels in. A
+/// reader sees the characters the repository actually contains.
+fn html_label(v: &str) -> String {
+    let mut out = String::with_capacity(v.len());
+    for c in v.chars() {
+        match c {
+            '&' => out.push_str("&amp;"),
+            '<' => out.push_str("&lt;"),
+            '>' => out.push_str("&gt;"),
+            '"' => out.push_str("&quot;"),
+            '\'' => out.push_str("&#39;"),
+            _ => out.push(c),
+        }
+    }
+    out
+}
+
 /// XML escaping for an attribute value.
 fn xml(v: &str) -> String {
     let mut out = String::with_capacity(v.len());
@@ -260,7 +313,14 @@ fn xml(v: &str) -> String {
             '<' => out.push_str("&lt;"),
             '>' => out.push_str("&gt;"),
             '"' => out.push_str("&quot;"),
+            // Single quotes are escaped although every attribute here is
+            // double-quoted: an attribute that later changes quoting should not
+            // silently become injectable.
+            '\'' => out.push_str("&#39;"),
             '\n' | '\r' => out.push(' '),
+            // A control character makes the document unparseable, and draw.io
+            // reports that as a corrupt file rather than as a bad label.
+            c if (c as u32) < 0x20 => {}
             _ => out.push(c),
         }
     }
@@ -310,7 +370,7 @@ fn text_cell(t: Text<'_>) -> String {
          align=left;verticalAlign=middle;whiteSpace=wrap;fontSize={size};fontColor={color};fontStyle={weight};\
          movable=1;resizable=1;connectable=0;\" vertex=\"1\" parent=\"1\">\n          \
          <mxGeometry x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" as=\"geometry\" />\n        </mxCell>\n",
-        xml(v),
+        xml(&html_label(v)),
         x.round() as i64,
         y.round() as i64,
         w.round() as i64,
@@ -338,7 +398,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
     out.push_str(&format!(
         "<mxfile host=\"nunki\" agent=\"nunki {}\">\n  <diagram name=\"{}\">\n",
         env!("CARGO_PKG_VERSION"),
-        xml(&ir.title)
+        xml(&html_label(&ir.title))
     ));
     out.push_str(&format!(
         "    <mxGraphModel dx=\"{}\" dy=\"{}\" grid=\"1\" gridSize=\"10\" guides=\"1\" tooltips=\"1\" \
@@ -357,7 +417,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
              vertex=\"1\" parent=\"1\">\n          <mxGeometry x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" \
              as=\"geometry\" />\n        </mxCell>\n",
             cell(&c.id),
-            xml(&c.label),
+            xml(&html_label(&c.label)),
             r.x.round() as i64,
             r.y.round() as i64,
             r.w.round() as i64,
@@ -372,7 +432,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
         let ev = n.evidence.as_ref();
         // An `<object>` rather than a bare cell: its attributes are the shape's
         // data, which is where the evidence has to live to survive editing.
-        let mut attrs = format!("label=\"{}\"", xml(&n.label));
+        let mut attrs = format!("label=\"{}\"", xml(&html_label(&n.label)));
         if let Some(t) = n.tech_stack.as_deref() {
             attrs.push_str(&format!(" tech=\"{}\"", xml(t)));
         }
@@ -410,7 +470,7 @@ pub fn to_xml(ir: &DiagramIR, permalink: &dyn Fn(&Evidence) -> Option<String>) -
         out.push_str(&format!(
             "        <mxCell id=\"nunki-e{i}\" value=\"{}\" style=\"{}\" edge=\"1\" parent=\"1\" \
              source=\"{}\" target=\"{}\">\n          <mxGeometry relative=\"1\" as=\"geometry\">\n",
-            xml(&label),
+            xml(&html_label(&label)),
             xml(&edge_style(e)),
             cell(&route.source),
             cell(&route.target)
@@ -556,6 +616,41 @@ mod tests {
     fn an_id_draw_io_cannot_use_is_made_safe() {
         assert_eq!(safe_id("api-gateway"), "api-gateway");
         assert_eq!(safe_id("db:orders"), "db-orders");
+    }
+
+    /// Every shape style here sets `html=1`, so draw.io renders a label as
+    /// markup. One round of XML escaping is undone by the XML parser before
+    /// draw.io sees the text, which turned a label from a scanned repository into
+    /// a live tag inside the person's drawing. The export is one way and lands in
+    /// another application, so nothing downstream would have caught it.
+    #[test]
+    fn a_hostile_label_is_not_markup_when_draw_io_renders_it() {
+        const HOSTILE: &str = "<img src=x onerror=alert(1)>";
+
+        // Escaped twice: once so draw.io's HTML renderer prints the characters,
+        // once for the attribute that carries them. After the XML parser has had
+        // its round, `&lt;` is what draw.io reads — not `<`.
+        let once = xml(HOSTILE);
+        let twice = xml(&html_label(HOSTILE));
+        assert_eq!(once, "&lt;img src=x onerror=alert(1)&gt;", "one round is what the bug looked like");
+        assert_eq!(twice, "&amp;lt;img src=x onerror=alert(1)&amp;gt;");
+        assert!(!twice.contains("&lt;img"), "an XML parser would hand draw.io a live tag");
+
+        // `'` and control characters, which `xml` used to pass through.
+        assert_eq!(xml("it's"), "it&#39;s");
+        assert_eq!(xml("a\u{7}b"), "ab", "a control character makes the document unparseable");
+    }
+
+    /// draw.io reads a `#` line as an import directive and a `connect` line as
+    /// JSON. A newline or a quote in a label from a scanned repository would let
+    /// it write directives of its own.
+    #[test]
+    fn a_label_cannot_add_directives_of_its_own() {
+        assert_eq!(one_line("title\n# link: url"), "title # link: url");
+        assert_eq!(one_line("a\rb"), "a b");
+        assert_eq!(json_string("says \"hi\""), "says \\\"hi\\\"");
+        assert_eq!(json_string("a\\b"), "a\\\\b", "a backslash survives being read twice");
+        assert_eq!(json_string("one\ntwo"), "one two");
     }
 
     #[test]

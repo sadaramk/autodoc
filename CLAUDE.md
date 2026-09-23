@@ -99,7 +99,10 @@ Each must pass before merge.
   prove, so the `action` CI job runs it for real on every pull request.
 - `analyzer` heuristics: `crates/analyzer/tests/fixtures.rs`, journeys 1–4, then `make demo` to refresh examples.
 - `diff` / `export`: `crates/cli/tests/journeys.rs::journey_diff_*`, `journey_export_*`. Both compare
-  against real output, so a wrong-but-plausible change shows up as a changed string, not a panic.
+  against real output, so a wrong-but-plausible change shows up as a changed string, not a panic. The
+  draw.io side also has `geometry.rs::drawio_export_does_not_hand_draw_io_a_live_tag`: every shape sets
+  `html=1`, so a label needs HTML escaping *before* the format's own — twice for XML, once for CSV,
+  because the XML parser undoes a round. Assert per format; asserting the same of both calls one a bug.
 - Escaping (`renderer/src/svg.rs` `esc`, `renderer/src/text.rs`, `book/src/html.rs`): a book is rendered
   from an untrusted repository and the reader assigns `d.svg` with `innerHTML`, so
   `crates/book/tests/escaping.rs` scans a repository whose **directory name** is markup — that is what

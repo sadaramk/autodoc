@@ -8,6 +8,27 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **A label from a scanned repository was markup when draw.io rendered it.**
+  Every shape the draw.io export writes sets `html=1`, which is what gives
+  labels their wrapping — and it also means draw.io parses a label as HTML. The
+  XML file is parsed as XML first, which undid the one round of escaping the
+  export applied, so a node called `<img src=x onerror=…>` arrived as a live tag
+  inside the person's drawing. The export is one way and lands in another
+  application, so nothing downstream would ever have noticed.
+
+  Labels are now escaped for HTML before the format's own escaping, which for
+  XML means twice and for CSV means once — the two formats put a different
+  number of parsers between the file and the renderer, and treating them alike
+  would break one of them. `xml` also escapes `'` and drops control characters
+  that made the document unparseable rather than merely wrong.
+
+  Two directive-injection paths went with it: a newline in the diagram's title
+  ended the CSV's header comment, and the `connect` rule swapped quotes for
+  apostrophes instead of escaping the JSON it writes. Both are a scanned
+  repository choosing how its own diagram imports.
+
 ### Added
 
 - **A system spread over several repositories can be documented as one system.**
