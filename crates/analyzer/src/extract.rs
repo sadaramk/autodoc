@@ -745,8 +745,11 @@ impl<'a> Extractor<'a> {
                     && !NOT_EVENT_TYPES.contains(&t);
                 named_type.then(|| simple_type(t))
             }
+            // tree-sitter 0.27 indexes children by `u32` while still counting them
+            // as `usize`. A node cannot have more children than a `u32` holds, so
+            // the conversion cannot lose anything.
             "cast_expression" | "parenthesized_expression" => arg
-                .named_child(arg.named_child_count().saturating_sub(1))
+                .named_child(arg.named_child_count().saturating_sub(1) as u32)
                 .and_then(|c| self.java_event_type(c, resolve_variables)),
             "identifier" if resolve_variables => self.java_variable_type(arg),
             _ => None,

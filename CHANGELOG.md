@@ -8,6 +8,15 @@ All notable changes to this project are recorded here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **tree-sitter 0.27.** 0.27 indexes a node's children by `u32` while still
+  counting them as `usize`, which is the whole of the change on this side. Only
+  one `tree-sitter` resolves in the tree, because the grammar crates depend on
+  `tree-sitter-language` rather than on the core; no grammar version moved, which
+  is what a parse tree depends on. Every fixture, the example book's 138
+  citations and the browser journeys are unchanged.
+
 ### Fixed
 
 - **A label from a scanned repository was markup when draw.io rendered it.**
