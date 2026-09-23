@@ -220,6 +220,90 @@ fn html_is_self_contained_and_escapes_untrusted_text() {
     assert!(html.contains("Content-Security-Policy"));
 }
 
+/// The draw.io export lands in another application, so nothing downstream sees
+/// it again. Every shape style it writes sets `html=1`, which means draw.io
+/// renders the label as markup.
+///
+/// The two formats need different amounts of escaping, because a different
+/// number of parsers stand between the file and the HTML renderer. The XML file
+/// is parsed as XML first, and that undoes one round — so a label has to be
+/// escaped twice, and `&lt;img` in the file means `<img` reaches the renderer.
+/// The CSV file is not, so one round is right and `&lt;img` in the file is
+/// exactly what makes draw.io *display* the characters. Asserting the same thing
+/// of both would call one of them a bug.
+#[test]
+fn drawio_export_does_not_hand_draw_io_a_live_tag() {
+    let mut ir = random_ir(5);
+    ir.title = "</script><script>alert(1)</script>".into();
+    ir.nodes[0].label = "<img src=x onerror=alert(1)>".into();
+    if let Some(e) = ir.edges.first_mut() {
+        e.label = Some("<img src=x onerror=alert(1)>".into());
+    }
+    let no_links = |_: &Evidence| None;
+
+    let xml = nunki_renderer::drawio::to_xml(&ir, &no_links);
+    assert!(!xml.contains("<img src=x"), "a raw img tag is in the XML");
+    assert!(!xml.contains("<script>alert"), "a raw script tag is in the XML");
+    assert!(!xml.contains("&lt;img"), "the XML parser would hand draw.io a live img tag");
+    // Escaped, not dropped: without this the assertions above would pass on an
+    // export that silently lost every label.
+    assert!(xml.contains("&amp;lt;img"), "the label is absent from the XML, so this proves nothing");
+
+    let csv = nunki_renderer::drawio::to_csv(&ir, &no_links);
+    // Rows only. The header comment prints the diagram's title for a person
+    // reading the file, and draw.io renders nothing from a `#` line — escaping it
+    // would only make the comment harder to read. What matters for a comment is
+    // that it cannot become a directive, which is the last assertion here.
+    let rows: String = csv.lines().filter(|l| !l.starts_with('#')).collect::<Vec<_>>().join("\n");
+    assert!(!rows.contains("<img src=x"), "a raw img tag is in a CSV row");
+    assert!(!rows.contains("<script>alert"), "a raw script tag is in a CSV row");
+    assert!(rows.contains("&lt;img"), "the label is absent from the CSV, so this proves nothing");
+
+    // An edge label travels inside the `connect` directive, which is a `#` line —
+    // so the row scan above cannot see it, and draw.io renders it as a label like
+    // any other. Without this, removing the escaping there changes nothing any
+    // assertion notices.
+    for line in csv.lines().filter(|l| l.starts_with("# connect:")) {
+        assert!(!line.contains("<img src=x"), "a raw img tag is in a connect directive: {line}");
+        assert!(!line.contains("<script>alert"), "a raw script tag is in a connect directive: {line}");
+    }
+
+    // A newline in a title or a label must not add a line the CSV reader reads as
+    // a directive of its own. The title and the edge label do appear on `#` lines
+    // — the header comment and the `connect` rule — so the invariant is not that
+    // they are absent, but that no *directive* exists which the exporter did not
+    // write.
+    let directives: std::collections::BTreeSet<&str> = csv
+        .lines()
+        .filter_map(|l| l.strip_prefix("# "))
+        .filter_map(|l| l.split_once(':'))
+        .map(|(key, _)| key)
+        .filter(|k| !k.contains(' '))
+        .collect();
+    let expected: std::collections::BTreeSet<&str> = [
+        "label",
+        "style",
+        "namespace",
+        "identity",
+        "parent",
+        "parentstyle",
+        "left",
+        "top",
+        "width",
+        "height",
+        "layout",
+        "connect",
+        "ignore",
+    ]
+    .into_iter()
+    .collect();
+    assert!(
+        directives.is_subset(&expected),
+        "a label wrote a directive the exporter did not: {:?}",
+        directives.difference(&expected).collect::<Vec<_>>()
+    );
+}
+
 #[test]
 fn standalone_svg_has_viewbox_and_no_interaction_attributes() {
     let ir = random_ir(3);
