@@ -629,6 +629,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
                     })
                 })
                 .collect(),
+            include_tests: opts.include_tests,
         };
         // Behaviour extraction is heuristic over arbitrary source: a defect in it
         // costs that section of the book, never the whole scan.
@@ -780,7 +781,7 @@ const TEST_DIRS: &[&str] = &[
 /// Directories that hold tooling rather than deployed code.
 const NON_ARCHITECTURE_DIRS: &[&str] = &["docs", "doc", "scripts", "hack", "tools", "misc", "design", "website"];
 
-fn is_non_architecture_dir(name: &str) -> bool {
+pub(crate) fn is_non_architecture_dir(name: &str) -> bool {
     let n = name.to_lowercase();
     TEST_DIRS.contains(&n.as_str())
         || NON_ARCHITECTURE_DIRS.contains(&n.as_str())

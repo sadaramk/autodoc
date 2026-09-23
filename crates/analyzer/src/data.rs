@@ -177,7 +177,16 @@ fn split_statements(sql: &str) -> Vec<&str> {
 }
 
 /// `*.sql` and `*.prisma` files (not part of the parsed source index), sorted by path.
-fn schema_files(root: &Path) -> Vec<String> {
+/// `.sql` and `.prisma` files anywhere in the repository.
+///
+/// These have no grammar, so they never reach the scanned file list and this
+/// walk is the only thing that sees them — which means it has to refuse the same
+/// directories the main walk did. It did not, and nunki's own published book
+/// therefore showed `invoices`, `orders` and `payments` as its data model, read
+/// from `tests/fixtures/flows/db/schema.sql` and the polyglot-shop fixture.
+/// Every repository with a schema under `tests/` had the same problem; nunki's
+/// was merely the one on its own gallery page.
+fn schema_files(root: &Path, include_tests: bool) -> Vec<String> {
     let mut out = vec![];
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
@@ -188,7 +197,10 @@ fn schema_files(root: &Path) -> Vec<String> {
             // `file_type()` comes off the directory entry; `p.is_dir()` is a
             // second stat per file, which on a large tree is the whole cost.
             if entry.file_type().map(|t| t.is_dir()).unwrap_or_else(|_| p.is_dir()) {
-                if !SKIP_DIRS.contains(&name.as_str()) && !name.starts_with('.') {
+                let skip = SKIP_DIRS.contains(&name.as_str())
+                    || name.starts_with('.')
+                    || (!include_tests && crate::scan::is_non_architecture_dir(&name));
+                if !skip {
                     stack.push(p);
                 }
                 continue;
@@ -211,7 +223,9 @@ fn schema_files(root: &Path) -> Vec<String> {
 }
 
 /// Liquibase changelog candidates: XML / YAML / JSON files declaring a `databaseChangeLog`.
-fn changelog_candidates(root: &Path) -> Vec<String> {
+/// Liquibase changelogs, found the same way and refusing the same directories: a
+/// changelog in a fixture describes the fixture.
+fn changelog_candidates(root: &Path, include_tests: bool) -> Vec<String> {
     let mut out = vec![];
     let mut stack = vec![root.to_path_buf()];
     while let Some(dir) = stack.pop() {
@@ -220,7 +234,11 @@ fn changelog_candidates(root: &Path) -> Vec<String> {
             let p = entry.path();
             let name = entry.file_name().to_string_lossy().to_string();
             if entry.file_type().map(|t| t.is_dir()).unwrap_or_else(|_| p.is_dir()) {
-                if !SKIP_DIRS.contains(&name.as_str()) && !name.starts_with('.') && name != "test" {
+                let skip = SKIP_DIRS.contains(&name.as_str())
+                    || name.starts_with('.')
+                    || name == "test"
+                    || (!include_tests && crate::scan::is_non_architecture_dir(&name));
+                if !skip {
                     stack.push(p);
                 }
                 continue;
@@ -277,7 +295,8 @@ pub fn extract(index: &SourceIndex) -> DataModel {
         }
     }
     // DDL sources in path order: `.sql` / `.prisma` files and SQL strings inside code migrations.
-    let mut ddl: Vec<(String, Option<usize>)> = schema_files(&index.root).into_iter().map(|p| (p, None)).collect();
+    let mut ddl: Vec<(String, Option<usize>)> =
+        schema_files(&index.root, index.include_tests).into_iter().map(|p| (p, None)).collect();
     for (k, (i, t)) in texts.iter().enumerate() {
         if is_migration(index.files[*i].path) && t.to_uppercase().contains("CREATE TABLE") {
             ddl.push((index.files[*i].path.to_string(), Some(k)));
@@ -324,7 +343,7 @@ pub fn extract(index: &SourceIndex) -> DataModel {
     raw.extend(std::mem::take(&mut sql_out.entities));
     raw.extend(prisma_entities);
     let mut liquibase_tables = vec![];
-    for path in liquibase::changelog_files(&index.root, &changelog_candidates(&index.root)) {
+    for path in liquibase::changelog_files(&index.root, &changelog_candidates(&index.root, index.include_tests)) {
         if let Some(text) = index.read(&path) {
             liquibase::parse(&path, &text, unit_for(&path), &mut liquibase_tables);
         }

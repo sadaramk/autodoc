@@ -20,6 +20,13 @@ pub struct SourceIndex<'a> {
     pub root: PathBuf,
     pub units: &'a [UnitSummary],
     pub files: Vec<SourceFile<'a>>,
+    /// Whether test, fixture and example directories were scanned.
+    ///
+    /// The data model finds `.sql` and changelog files with its own walk — they
+    /// have no grammar, so they never reach `files` — and that walk has to refuse
+    /// the same directories the main one did, or a repository's test fixtures
+    /// become its documented schema.
+    pub include_tests: bool,
 }
 
 impl<'a> SourceIndex<'a> {

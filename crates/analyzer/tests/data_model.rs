@@ -624,3 +624,46 @@ fn csharp_ef_core_entities_access_and_enums() {
         "`.FirstOrDefault` on the orders set"
     );
 }
+
+/// A fixture's schema is the fixture's, not the repository's.
+///
+/// `.sql` files have no grammar, so they never reach the scanned file list and
+/// `schema_files` — a separate walk — is the only thing that sees them. That walk
+/// skipped `node_modules` and friends but not test, fixture or example
+/// directories, so it applied a different policy from the walk beside it.
+///
+/// nunki's own published book showed `invoices`, `orders`, `payments` and `posts`
+/// as its data model, read out of `tests/fixtures/flows/db/schema.sql` and the
+/// polyglot-shop fixture. Every repository with a schema under `tests/` had the
+/// same problem; nunki's was the one on its own gallery page.
+#[test]
+fn a_schema_under_tests_is_not_the_repositorys_data_model() {
+    let root = fixture("fixture-schemas");
+    let m = model(&root);
+
+    assert!(tables(&m).contains(&"catalogue_items"), "the repository's own schema is read: {:?}", tables(&m));
+    for fixture_table in ["invoices", "orders"] {
+        assert!(
+            !tables(&m).contains(&fixture_table),
+            "{fixture_table} comes from tests/fixtures and is not this repository's data: {:?}",
+            tables(&m)
+        );
+    }
+    for e in &m.entities {
+        assert!(
+            !e.evidence.file_path.contains("tests/fixtures"),
+            "{} is cited to a fixture: {}",
+            e.table,
+            e.evidence.file_path
+        );
+    }
+
+    // `--include-tests` means what it says: asked for the test tree, the fixture
+    // schema is part of what was read.
+    let with_tests = scan(&root, &ScanOptions { behavior: true, include_tests: true, ..Default::default() })
+        .unwrap()
+        .data
+        .expect("behavior scan returns a data model");
+    let names: Vec<&str> = with_tests.entities.iter().map(|e| e.table.as_str()).collect();
+    assert!(names.contains(&"invoices"), "include_tests reads the fixture schema too: {names:?}");
+}
