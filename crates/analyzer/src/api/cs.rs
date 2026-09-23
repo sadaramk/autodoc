@@ -351,7 +351,7 @@ pub(crate) fn extract(index: &crate::source::SourceIndex, files: &[Loaded], h: &
     let mut ops: Vec<Draft> = vec![];
     for fi in 0..idx.files.len() {
         controllers(&idx, fi, &mut models, &mut ops);
-        minimal_api(&idx, fi, &mut ops);
+        minimal_api(&idx, fi, &mut models, &mut ops);
     }
     h.ops.extend(ops);
     models.emit(&idx, h);
@@ -601,7 +601,7 @@ fn validation_rules(attrs: &[(String, String)], ev: &EvidenceRef) -> Vec<super::
 }
 
 /// `app.MapGet("/healthz", () => …)` and its siblings.
-fn minimal_api(idx: &Index, fi: usize, ops: &mut Vec<Draft>) {
+fn minimal_api(idx: &Index, fi: usize, models: &mut Models, ops: &mut Vec<Draft>) {
     let f = idx.files[fi];
     let code = &f.src.code;
     let base = path_base(idx, f.unit);
@@ -634,10 +634,99 @@ fn minimal_api(idx: &Index, fi: usize, ops: &mut Vec<Draft>) {
                 let _ = s;
                 op.success_status = Some(201);
             }
+            // Minimal APIs declare their contract in two places, and reading
+            // neither is why every operation in eShopOnWeb came out `Opaque`
+            // (#48): `.Produces<T>()` names the response, and the lambda's first
+            // non-injected parameter is the body.
+            let stmt = &f.src.text[close.min(f.src.text.len())..statement_end(&f.src.code, close)];
+            let mut response_declared = false;
+            if let Some(ty) = produces_type(stmt) {
+                models.want(f.unit, &ty);
+                op.response = Some(super::type_ref(&ty));
+                response_declared = true;
+            }
+            let mut request_declared = false;
+            if matches!(verb, &"POST" | &"PUT" | &"PATCH") {
+                if let Some(ty) = lambda_body_type(&f.src.text, args.get(1).copied()) {
+                    models.want(f.unit, &ty);
+                    op.request_body = Some(super::type_ref(&ty));
+                    request_declared = true;
+                }
+            }
             fill_path_params(&mut op);
-            ops.push(Draft { op, request_declared: false, response_declared: false });
+            ops.push(Draft { op, request_declared, response_declared });
         }
     }
+}
+
+/// End of the statement a route registration sits in.
+///
+/// `.Produces<T>()` is chained after the `Map…` call and before the `;`, and a
+/// fixed lookahead would either miss a long chain or run into the next endpoint.
+fn statement_end(code: &str, from: usize) -> usize {
+    code[from..].find(';').map(|i| from + i).unwrap_or(code.len()).min(code.len())
+}
+
+/// The type in `.Produces<CreateCatalogItemResponse>()`, which is ASP.NET Core's
+/// own machine-readable declaration of what an endpoint returns.
+///
+/// `Produces<T>(StatusCodes.Status201Created)` and bare `Produces(404)` both
+/// occur; only the generic form names a type, and a non-2xx one describes an
+/// error rather than the success shape.
+fn produces_type(stmt: &str) -> Option<String> {
+    for at in text::find_word(stmt, "Produces") {
+        let rest = &stmt[at + "Produces".len()..];
+        let Some(inner) = rest.strip_prefix('<') else { continue };
+        let Some(end) = inner.find('>') else { continue };
+        let ty = inner[..end].trim();
+        // A status argument after the type: `.Produces<T>(StatusCodes.Status404NotFound)`
+        // is about a failure, and taking it as the response would misreport it.
+        let after = inner[end + 1..].trim_start();
+        let failure = after.strip_prefix('(').map(|a| a.contains("Status4") || a.contains("Status5")).unwrap_or(false);
+        if !ty.is_empty() && !failure && ty.chars().next().is_some_and(char::is_uppercase) {
+            return Some(ty.to_string());
+        }
+    }
+    None
+}
+
+/// The request body of a minimal-API lambda: its first parameter that is not
+/// something the framework injects.
+///
+/// `[Authorize(…)] async (CreateCatalogItemRequest request, IRepository<CatalogItem> repo) => …`
+/// is the ordinary shape — attributes and `async` before the list, services
+/// after the body. `injected` already knows the framework's own types;
+/// interfaces are dependencies by convention, which is what `I` followed by an
+/// upper-case letter means in C#.
+fn lambda_body_type(text: &str, arg: Option<(usize, usize)>) -> Option<String> {
+    let (s, e) = arg?;
+    let lambda = text.get(s..e)?;
+    let arrow = lambda.find("=>")?;
+    let head = &lambda[..arrow];
+    let open = head.rfind('(')?;
+    let close = head[open..].find(')')? + open;
+    for part in head[open + 1..close].split(',') {
+        let part = part.trim();
+        // `[FromBody] Thing thing` and `Thing thing` alike: the type is the
+        // second-to-last word, the name the last.
+        let words: Vec<&str> = part.rsplitn(2, ' ').collect();
+        if words.len() != 2 {
+            continue;
+        }
+        let ty = words[1].trim().rsplit(']').next().unwrap_or(words[1]).trim();
+        if ty.is_empty() || injected(ty) || scalar(ty) {
+            continue;
+        }
+        let bare = super::unwrap_type(ty).0;
+        let bare = bare.rsplit('.').next().unwrap_or(&bare);
+        let mut cs = bare.chars();
+        let dependency = cs.next() == Some('I') && cs.next().is_some_and(char::is_uppercase);
+        if dependency || !bare.chars().next().is_some_and(char::is_uppercase) {
+            continue;
+        }
+        return Some(ty.to_string());
+    }
+    None
 }
 
 #[derive(Default)]
