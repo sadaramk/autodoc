@@ -852,3 +852,33 @@ fn a_repository_with_no_outbound_calls_says_nothing_about_them() {
     let text = serde_json::to_string(&page.blocks).unwrap();
     assert!(!text.contains("Calls that leave"), "an empty section is noise: {text}");
 }
+
+/// The business-requirements page says where the system's description came
+/// from, and that claim has to be true.
+///
+/// It badged every description "from README" — including the ones that fell back
+/// to a package manifest when no README sentence fitted. nunki's own book
+/// introduced itself with `nunki-analyzer`'s manifest line, labelled as coming
+/// from a README that says something else, on the page whose entire subject is
+/// which statements are evidenced and which are not.
+#[test]
+fn a_description_is_labelled_with_where_it_actually_came_from() {
+    for name in ["polyglot-shop", "go-mini", "cli-tool"] {
+        let out = tempfile::tempdir().unwrap();
+        let planned = plan(&fixtures().join(name), out.path(), &BookOptions::default()).unwrap();
+        let Some(page) = planned.built.book.pages.iter().find(|p| p.id == "requirements") else { continue };
+        let text = serde_json::to_string(&page.blocks).unwrap();
+
+        if text.contains("from README") {
+            // A claim about provenance needs the same evidence as any other: the
+            // page must cite the README it says the words came from.
+            let cited = planned.built.book.cites.values().any(|c| c.file.to_uppercase().contains("README"));
+            assert!(cited, "{name}: says `from README` and cites no README");
+        }
+        // Whichever label it used, the fallback must not borrow the other's name.
+        let repo_has_readme = fixtures().join(name).join("README.md").is_file();
+        if !repo_has_readme {
+            assert!(!text.contains("from README"), "{name} has no README, so nothing can come from one");
+        }
+    }
+}

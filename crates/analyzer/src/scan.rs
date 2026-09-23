@@ -2864,6 +2864,16 @@ pub fn summary_from_markdown(text: &str) -> Option<String> {
         .or_else(|| taglines.first())
         .or_else(|| candidates.first().filter(tagline_like))
         .cloned()
+        // A README may open with a good description that simply runs past a
+        // tagline's length — nunki's own is 264 characters over three lines. The
+        // fallbacks above all discarded it, and the system description silently
+        // became a component's manifest line instead: a book whose first sentence
+        // described one crate of eight. Its first sentence is the description.
+        .or_else(|| {
+            let opening = candidates.first()?;
+            let first = crate::api::text::first_sentence(opening)?;
+            (!imperative(&first) && !first.ends_with(':')).then_some(first)
+        })
 }
 
 fn prose_of(paragraph: &str) -> Option<String> {
@@ -2962,6 +2972,22 @@ mod tests {
         assert_eq!(nested["evidence"]["repo"], "billing");
         assert_eq!(nested["errors"][0]["evidence"]["repo"], "billing");
         assert_eq!(nested["name"], "x", "stamping must not touch anything else");
+    }
+
+    /// nunki's own README opens with a description three lines long, and every
+    /// fallback discarded it for exceeding a tagline's length — so the system
+    /// description became `nunki-analyzer`'s manifest line, and a book about
+    /// eight crates introduced itself as an AST scanner.
+    #[test]
+    fn a_long_opening_paragraph_is_not_discarded_for_its_length() {
+        let readme = "<h1><img src=\"media/mark.png\" alt=\"\" width=\"26\"> nunki</h1>\n\n                      [![CI](https://x/badge.svg)](https://x)\n\n                      **Architecture documentation generated from source code.** Every claim links to the file \
+                      and line it came from, and every citation is verified against the commit — so documentation \
+                      that has gone wrong fails the build instead of misleading a reader.\n";
+        assert_eq!(
+            summary_from_markdown(readme).as_deref(),
+            Some("Architecture documentation generated from source code."),
+            "the first sentence of the opening paragraph is the description"
+        );
     }
 
     #[test]

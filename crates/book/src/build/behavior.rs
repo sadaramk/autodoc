@@ -834,8 +834,18 @@ impl<'a> Builder<'a> {
             None => blocks.push(Block::Para { inl: vec![gap("the problem this system solves, for whom")] }),
         }
         if let Some(d) = self.report.system.description.clone() {
-            let mut inl = vec![Inline::badge("observed", "from README"), Inline::text(format!(" {d}"))];
-            if let Some(ev) = super::readme_evidence(std::path::Path::new(&self.report.repo.root), &d) {
+            // Say where it came from, and only that. The description falls back to
+            // a package manifest when no README sentence fits, and this line used
+            // to badge every one of them "from README" — a claim about provenance
+            // that was itself unsourced, on the page whose whole subject is which
+            // statements are evidenced and which are not.
+            let found = super::readme_evidence(std::path::Path::new(&self.report.repo.root), &d);
+            let badge = match found {
+                Some(_) => Inline::badge("observed", "from README"),
+                None => Inline::badge("declared", "from the package description"),
+            };
+            let mut inl = vec![badge, Inline::text(format!(" {d}"))];
+            if let Some(ev) = found {
                 inl.push(self.cite(&ev));
             }
             blocks.push(Block::Para { inl });
