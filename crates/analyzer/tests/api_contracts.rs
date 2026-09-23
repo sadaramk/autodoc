@@ -905,3 +905,39 @@ fn csharp_aspnet_core_controllers_and_minimal_api() {
     assert_eq!(order.fields[3].model.as_deref(), Some("catalog:Product"), "a nested model resolves");
     assert_eq!(order.doc.as_deref(), Some("A placed order."));
 }
+
+/// A route resolved to the wrong function is worse than one resolved to none.
+///
+/// wild-workouts has four functions called `MakeHourAvailable` in one package —
+/// the HTTP handler, a gRPC method and two generated wrappers — and resolution by
+/// bare name took the first by file order, which is `grpc.go`. The book then
+/// cited a gRPC method for an HTTP route, and the citation *verified*, because
+/// evidence checks that the symbol name appears in the cited range and it does.
+///
+/// It also made the operation `Opaque`: a gRPC method has no `*http.Request`, so
+/// there was no body to read. Measured across six repositories in #48, 48% of
+/// operations were opaque and this was part of the cause.
+#[test]
+fn a_route_is_resolved_to_the_handler_with_a_handler_signature() {
+    let root = fixture("go-handler-collision");
+    let api = api_of(&root);
+    let op = api
+        .operations
+        .iter()
+        .find(|o| o.method == "PUT" && o.path == "/trainer/calendar/make-hour-available")
+        .expect("the chi route is extracted");
+
+    assert_eq!(
+        op.handler.evidence.file_path, "internal/ports/http.go",
+        "cited {} — the gRPC method sorts first, so a bare-name match lands there",
+        op.handler.evidence.file_path
+    );
+
+    // And because the right function was found, the contract follows from it.
+    assert_eq!(
+        op.request_body.as_ref().map(|t| t.type_name.as_str()),
+        Some("HourUpdate"),
+        "the body decoded in the HTTP handler is the operation's request"
+    );
+    assert_ne!(op.confidence, Confidence::Opaque, "a handler whose body is read is not opaque");
+}
