@@ -202,6 +202,7 @@ pub fn build(
         b.api_pages(&unit);
     }
     b.access_page();
+    b.commands_page();
     b.functional_page();
     b.requirements_page();
     // Figure nodes register citations of their own, so they have to be linked
@@ -674,6 +675,7 @@ impl<'a> Builder<'a> {
                 let (unit, group) = api["api/".len()..].split_once('/').unwrap();
                 format!("pages/06-api-{unit}--{group}.md")
             }
+            "commands" => "pages/06-commands.md".to_string(),
             "requirements" => "pages/08-business-requirements.md".to_string(),
             "evidence" => "pages/09-evidence-and-unknowns.md".to_string(),
             "history" => "pages/09-architecture-history.md".to_string(),
@@ -1481,6 +1483,96 @@ impl<'a> Builder<'a> {
         ]
     }
 
+    /// What each command-line tool in the repository can be asked to do.
+    ///
+    /// A CLI serves no HTTP operations, so a book about one used to prove its
+    /// dependency graph and stop — while `nunki --help` held exactly what the
+    /// reader wanted. A `clap` declaration is a contract on citable lines, and
+    /// this is the page that says so (#53).
+    fn commands_page(&mut self) {
+        let surfaces = self.report.cli.clone();
+        if surfaces.is_empty() {
+            return;
+        }
+        let total: usize = surfaces.iter().map(|s| s.commands.len()).sum();
+        let mut blocks = Vec::new();
+        for surface in &surfaces {
+            blocks.push(Block::Heading {
+                level: 2,
+                id: format!("program-{}", nunki_analyzer::scan::slug(&surface.program)),
+                text: surface.program.clone(),
+            });
+            let mut intro = vec![Inline::text("Declared with clap in ")];
+            intro.push(self.element(&surface.unit));
+            intro.push(Inline::text(". "));
+            if let Some(about) = &surface.about {
+                intro.push(Inline::text(format!("{about}. ")));
+            }
+            intro.extend(self.cites(std::slice::from_ref(&surface.evidence), 1));
+            blocks.push(Block::Para { inl: intro });
+
+            for command in &surface.commands {
+                blocks.push(Block::Heading {
+                    level: 3,
+                    id: format!("command-{}", nunki_analyzer::scan::slug(&command.name)),
+                    text: format!("{} {}", surface.program, command.name),
+                });
+                let mut line: Vec<Inline> = match &command.about {
+                    Some(about) => vec![Inline::text(format!("{about} "))],
+                    // The declaration says nothing, and neither does the book.
+                    None => vec![Inline::badge("gap", "needs input: what it is for")],
+                };
+                line.extend(self.cites(std::slice::from_ref(&command.evidence), 1));
+                blocks.push(Block::Para { inl: line });
+
+                if command.args.is_empty() {
+                    blocks.push(Block::Para { inl: vec![Inline::text("Takes no arguments.")] });
+                    continue;
+                }
+                let mut rows = Vec::new();
+                for arg in &command.args {
+                    let kind = match arg.kind {
+                        nunki_analyzer::cli::ArgKind::Flag => "flag",
+                        nunki_analyzer::cli::ArgKind::Option => "option",
+                        nunki_analyzer::cli::ArgKind::Positional => "positional",
+                    };
+                    let default = match (&arg.default, arg.required) {
+                        (Some(d), _) => vec![Inline::code(d.clone())],
+                        // A flag left out is false; saying "required" of it would
+                        // be wrong, and saying nothing is what the code says.
+                        (None, true) => vec![Inline::badge("gap", "required")],
+                        (None, false) => vec![],
+                    };
+                    rows.push(vec![
+                        vec![Inline::code(arg.name.clone())],
+                        vec![Inline::text(kind)],
+                        vec![Inline::code(arg.type_name.clone())],
+                        default,
+                        arg.doc.as_deref().map(|d| vec![Inline::text(d.to_string())]).unwrap_or_default(),
+                        self.cites(std::slice::from_ref(&arg.evidence), 1),
+                    ]);
+                }
+                blocks.push(Block::Table {
+                    columns: vec![
+                        "Argument".into(),
+                        "Kind".into(),
+                        "Type".into(),
+                        "Default".into(),
+                        "What it does".into(),
+                        "Declared at".into(),
+                    ],
+                    rows,
+                });
+            }
+        }
+        let summary = format!(
+            "{total} command{} read from the clap declarations, with the arguments each one takes and what \
+             the code does when they are left out.",
+            if total == 1 { "" } else { "s" }
+        );
+        self.push_page("commands", "Commands", "Reference", vec![Inline::text(summary)], blocks);
+    }
+
     fn evidence_page(&mut self) {
         let r = self.report;
         let mut blocks = Vec::new();
@@ -1671,6 +1763,10 @@ impl<'a> Builder<'a> {
                     })
                     .chain(self.pages.iter().filter(|p| p.id == "access").map(|p| item(&p.id, &p.title)))
                     .collect(),
+            },
+            NavGroup {
+                title: "Command reference".into(),
+                items: self.pages.iter().filter(|p| p.id == "commands").map(|p| item(&p.id, &p.title)).collect(),
             },
             NavGroup {
                 title: "Product".into(),

@@ -53,9 +53,14 @@ repository — not on effort.
 
 ### What is next
 
-Nothing is queued. [#20](https://github.com/sadaramk/nunki/issues/20)
+| | | |
+|---|---|---|
+| 1 | [#53](https://github.com/sadaramk/nunki/issues/53) | Document what a CLI can do. nunki's own book proves its dependency graph and cannot say what the tool does, because behaviour is modelled as HTTP operations and a CLI has none. `clap`'s derive declarations are the same kind of structured, citable contract a route table is. |
+
+It came out of reading nunki's own published book rather than from a plan, which
+is the sort of item worth trusting. [#20](https://github.com/sadaramk/nunki/issues/20)
 (architecture history) and [#21](https://github.com/sadaramk/nunki/issues/21) (a
-system spread over several repositories) were the last two, and both are done.
+system spread over several repositories) cleared the queue before it.
 #21 kept its constraint: a citation into a sibling repository is verified in that
 repository at that repository's commit, and one naming a repository nothing read
 is reported rather than checked against whatever sits at those lines here.

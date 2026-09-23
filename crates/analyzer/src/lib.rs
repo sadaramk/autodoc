@@ -5,6 +5,7 @@
 pub mod api;
 pub mod capability;
 pub mod catalog;
+pub mod cli;
 pub mod compose;
 pub mod data;
 pub mod diff;

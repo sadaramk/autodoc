@@ -356,6 +356,10 @@ pub struct ScanReport {
     /// Entities and state machines (when `behavior` was requested).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub data: Option<crate::data::DataModel>,
+    /// What each command-line tool in the repository can be asked to do (when
+    /// `behavior` was requested). Empty for a repository that ships no CLI.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cli: Vec<crate::cli::CliSurface>,
     /// Traced request flows, most involved first (when `behavior` was requested).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub flows: Vec<crate::trace::Flow>,
@@ -610,7 +614,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         }
     }
 
-    let (api, data, flows) = if opts.behavior {
+    let (api, data, flows, cli) = if opts.behavior {
         let unit_ids: HashMap<usize, &str> =
             units.iter().flat_map(|u| u.files.iter().map(move |&fi| (fi, u.id.as_str()))).collect();
         let summaries: Vec<UnitSummary> = units.iter().map(|u| u.summary.clone()).collect();
@@ -650,9 +654,13 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         let mut api = api;
         resolve_against_members(&mut api, &opts.members, &mut notes);
         let flows = crate::trace::trace(&index, &api, Some(&data), &infra, &relationships);
-        (Some(api), Some(data), flows)
+        // What a command-line tool can be asked to do. A repository whose
+        // behaviour is a CLI has no operations to describe, and used to get a
+        // book that proved its dependency graph and said nothing about the tool.
+        let cli = crate::cli::extract(&index);
+        (Some(api), Some(data), flows, cli)
     } else {
-        (None, None, Vec::new())
+        (None, None, Vec::new(), Vec::new())
     };
     let topology = opts.behavior.then(|| {
         let resolve = |name: &str, image: Option<&str>, build: Option<&str>| -> Option<String> {
@@ -715,6 +723,7 @@ pub fn scan(root: &Path, opts: &ScanOptions) -> Result<ScanReport, crate::ScanEr
         },
         depth: opts.depth,
         stats,
+        cli,
         system: SystemSummary { name: display_name(&repo_name), description },
         containers: units.into_iter().map(|u| u.summary).collect(),
         infrastructure: infra,
