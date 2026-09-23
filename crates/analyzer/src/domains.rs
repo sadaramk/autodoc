@@ -1151,7 +1151,8 @@ mod tests {
         for i in 0..20 {
             es.push(entity(&format!("misc{i:02}"), &[]));
         }
-        let index = SourceIndex { root: std::path::PathBuf::from("."), units: &[], files: vec![] };
+        let index =
+            SourceIndex { root: std::path::PathBuf::from("."), units: &[], files: vec![], include_tests: false };
         let run = |mut es: Vec<Entity>| {
             assign(&mut es, &index);
             let mut by: BTreeMap<String, Vec<String>> = BTreeMap::new();
