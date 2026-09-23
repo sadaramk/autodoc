@@ -210,6 +210,13 @@ fn html_is_self_contained_and_escapes_untrusted_text() {
     let mut ir = random_ir(7);
     ir.title = "</script><script>alert(1)</script>".into();
     ir.nodes[0].label = "<img src=x onerror=alert(1)>".into();
+    // A bare quote is the payload that catches a missing `esc` in an attribute
+    // rather than in text: `aria-label="…"`, `data-id="…"`, a `<title>`. A tag
+    // payload passes straight through an unescaped attribute without breaking it.
+    ir.nodes[1].label = "\" onmouseover=alert(1) x=\"".into();
+    if let Some(sub) = ir.nodes[1].tech_stack.as_mut() {
+        *sub = "\" onfocus=alert(1) y=\"".into();
+    }
     let html = render_html(&ir, &RenderOptions::default()).content;
     assert!(!html.contains("<script>alert"));
     assert!(!html.contains("<img src=x"));
@@ -218,6 +225,23 @@ fn html_is_self_contained_and_escapes_untrusted_text() {
     assert!(!html.contains("@import"));
     assert_eq!(html.matches("<script").count(), 2, "one JSON data island, one inline app script");
     assert!(html.contains("Content-Security-Policy"));
+    // The attribute payload would not break a tag if it leaked, so a tag-shaped
+    // assertion cannot see it. What makes it live is an *unescaped* quote closing
+    // the attribute it sits in — and the words themselves are the label's own
+    // text, which the book is supposed to print.
+    //
+    // Checked on the markup outside the JSON data island. Inside it the quote is
+    // `\"`, which is JSON's own escaping and inert — the island's safety is that
+    // `<` and `>` are escaped, which the `<script` count above already asserts.
+    let island = html.find("<script type=\"application/json\"").expect("the page has a data island");
+    let island_end = html[island..].find("</script>").expect("unterminated island") + island;
+    let markup = format!("{}{}", &html[..island], &html[island_end..]);
+    assert!(!markup.contains("\" onmouseover=alert"), "an unescaped quote closed an attribute");
+    assert!(!markup.contains("\" onfocus=alert"), "an unescaped quote closed an attribute");
+    assert!(
+        markup.contains("&quot; onmouseover=alert(1) x=&quot;"),
+        "the quote payload never reached the markup, so this proves nothing"
+    );
 }
 
 /// The draw.io export lands in another application, so nothing downstream sees

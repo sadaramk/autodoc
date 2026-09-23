@@ -35,7 +35,7 @@ Architecture book generated from source by nunki. Every claim links to file:line
 - [data-model](diagrams/data-model.ir.json): Data model
 - [flow-api-gateway-get-catalog](diagrams/flow-api-gateway-get-catalog.ir.json): GET /catalog
 - [flow-api-gateway-post-checkout](diagrams/flow-api-gateway-post-checkout.ir.json): POST /checkout
-- [flow-fulfillment-message-handle-order](diagrams/flow-fulfillment-message-handle-order.ir.json): handle_order · Kafka topic order.placed
+- [flow-fulfillment-message-handle-order](diagrams/flow-fulfillment-message-handle-order.ir.json): handle\_order · Kafka topic order.placed
 - [flow-ledger-audit-get-reports-daily](diagrams/flow-ledger-audit-get-reports-daily.ir.json): GET /reports/daily
 - [flow-ledger-audit-get-reports-daily-status](diagrams/flow-ledger-audit-get-reports-daily-status.ir.json): GET /reports/daily/{status}
 - [flow-payments-post-charges](diagrams/flow-payments-post-charges.ir.json): POST /charges

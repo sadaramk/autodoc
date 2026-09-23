@@ -19,6 +19,19 @@ All notable changes to this project are recorded here. The format follows
 
 ### Fixed
 
+- **Structural text in the Markdown mirror was not escaped.** `markdown.rs` has
+  an `escape()` and a dozen sites did not call it: the book's name and
+  description, page, nav, section, card and figure titles, and the `README.md`
+  summary. Those land in a heading, a link label or a list item, so a `<` from a
+  scanned repository was raw in files that mdBook, MDX, Obsidian and Jekyll
+  render as HTML, and a `]` or a newline broke the link or row it sat in. GitHub
+  sanitises, which is why this was not urgent; those four do not, which is why it
+  was not nothing.
+
+  Snippets and code spans still quote the source exactly — escaping those would
+  misreport the code. A link destination is wrapped in angle brackets when it
+  holds a space or a bracket, since a permalink's path comes from `.git/config`.
+
 - **A label from a scanned repository was markup when draw.io rendered it.**
   Every shape the draw.io export writes sets `html=1`, which is what gives
   labels their wrapping — and it also means draw.io parses a label as HTML. The

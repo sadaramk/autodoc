@@ -53,6 +53,26 @@ app.listen(3000);
     root
 }
 
+/// The text with every code span's contents removed.
+///
+/// A code span is literal in every Markdown renderer, so what sits inside one is
+/// not markup however it is spelled. Checking the whole file would fail on text
+/// the book is quoting correctly.
+fn outside_code_spans(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    for line in text.lines() {
+        let mut in_span = false;
+        for part in line.split('`') {
+            if !in_span {
+                out.push_str(part);
+            }
+            in_span = !in_span;
+        }
+        out.push('\n');
+    }
+    out
+}
+
 #[test]
 fn a_hostile_repository_cannot_put_markup_into_its_own_book() {
     let tmp = tempfile::tempdir().unwrap();
@@ -83,9 +103,67 @@ fn a_hostile_repository_cannot_put_markup_into_its_own_book() {
         }
     }
     assert!(seen_in_a_figure, "no figure carries the hostile name, so the SVG assertions prove nothing");
+}
 
-    // Deliberately not asserted for the Markdown beside the page: it quotes
-    // excerpts of the scanned source verbatim, and a snippet of a file that
-    // really does contain `<img src=x onerror=...>` should say so. Markdown is
-    // not the sink — the page is, because that is what a browser parses.
+/// The Markdown beside the page draws a line the HTML does not.
+///
+/// A *snippet* quotes the scanned source, so a file that really contains
+/// `<img src=x onerror=…>` should say so — escaping it would misreport the code.
+/// A *title* is structure: it lands in a heading, a link label or a list item,
+/// and a raw `<` there is live HTML the moment someone renders the file with
+/// mdBook, MDX, Obsidian or Jekyll, none of which sanitise the way GitHub does.
+///
+/// So this asserts both halves. Asserting only the first would have let the
+/// second rot, which is what it did until now.
+#[test]
+fn markdown_escapes_structure_and_quotes_source_verbatim() {
+    let tmp = tempfile::tempdir().unwrap();
+    let out = tempfile::tempdir().unwrap();
+    let repo = hostile_repo(tmp.path());
+
+    let planned = nunki_book::plan(&repo, out.path(), &nunki_book::BookOptions::default()).unwrap();
+
+    // Structure: the repository's name reaches a heading, a link label and a list
+    // item in README.md and llms.txt. None of them may carry a raw tag.
+    //
+    // Outside code spans only. Markdown renders a code span literally, so
+    // `` `<img …>` `` is inert — and escaping it there would be wrong twice over:
+    // it would misreport a name the book is quoting exactly, which is the same
+    // reasoning that keeps snippets verbatim.
+    let mut checked = 0;
+    for (name, text) in planned.files.iter().filter(|(p, _)| p.ends_with(".md") || p.ends_with(".txt")) {
+        let prose = outside_code_spans(text);
+        assert!(!prose.contains("<img "), "{name}: a raw img tag outside a code span");
+        checked += 1;
+    }
+    assert!(checked >= 3, "only {checked} Markdown files were checked");
+    // Every page's own file carries the name in its heading, so the page files are
+    // covered too — an earlier version checked only README.md and llms.txt, and a
+    // revert of the page-title escaping went unnoticed.
+    for name in ["README.md", "llms.txt"] {
+        let text = planned.files.get(name).unwrap_or_else(|| panic!("{name} is generated"));
+        assert!(text.contains("&lt;img"), "{name}: the name is absent entirely, so this proves nothing");
+    }
+    let pages: Vec<&String> = planned.files.keys().filter(|p| p.starts_with("pages/")).collect();
+    assert!(!pages.is_empty(), "the book has page files");
+    assert!(
+        pages.iter().any(|p| planned.files[*p].contains("&lt;img")),
+        "no page file carries the escaped name, so the page heading is not covered"
+    );
+
+    // A link label cannot be closed early, and a destination cannot be ended by a
+    // space or a bracket.
+    for (path, text) in planned.files.iter().filter(|(p, _)| p.ends_with(".md") || p.ends_with(".txt")) {
+        for line in text.lines().filter(|l| l.starts_with("- [")) {
+            let opens = line.matches('[').count();
+            let closes = line.matches(']').count();
+            assert_eq!(opens, closes, "{path}: unbalanced link brackets in `{line}`");
+        }
+    }
+
+    // Verbatim: a snippet of the hostile file keeps what the file says. The
+    // repository's `src/server.ts` contains the payload in a doc comment, and a
+    // citation that quoted it differently would be misreporting the source.
+    let full = planned.files.get("llms-full.txt").expect("llms-full.txt is generated");
+    assert!(full.contains("documents the handler"), "the doc comment reached the book at all");
 }

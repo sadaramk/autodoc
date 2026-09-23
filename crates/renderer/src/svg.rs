@@ -130,19 +130,19 @@ pub fn render(ir: &DiagramIR, lay: &Layout, opts: &SvgOptions) -> String {
         r#"<svg xmlns="http://www.w3.org/2000/svg" class="nunki {kind}" data-theme="{theme}" data-diagram-type="{kind}" {frame} data-width="{w}" data-height="{h}" role="img" aria-labelledby="{p}-title {p}-desc">"#,
         kind = type_class_of(ir.diagram_type),
         theme = theme_attr(ir.theme),
-        p = opts.id_prefix
+        p = esc(opts.id_prefix)
     );
     let _ = write!(
         s,
         r#"<title id="{p}-title">{}</title><desc id="{p}-desc">{}</desc>"#,
         esc(&ir.title),
         esc(&desc),
-        p = opts.id_prefix
+        p = esc(opts.id_prefix)
     );
     let _ = write!(s, "<style>{}</style>", svg_style(opts.accent));
     s.push_str(MARKERS);
     let _ = write!(s, r#"<rect class="ad-canvas" x="0" y="0" width="{w}" height="{h}"/>"#);
-    let _ = write!(s, r#"<g id="{}-viewport" class="ad-viewport">"#, opts.id_prefix);
+    let _ = write!(s, r#"<g id="{}-viewport" class="ad-viewport">"#, esc(opts.id_prefix));
     if opts.header {
         header(&mut s, ir);
     }
