@@ -6,50 +6,7 @@ All notable changes to this project are recorded here. The format follows
 `DiagramIR` schema and the CLI surface may still change between minor versions;
 `version` in every IR file says which schema it was written against.
 
-## [Unreleased]
-
-### Changed
-
-- **tree-sitter 0.27.** 0.27 indexes a node's children by `u32` while still
-  counting them as `usize`, which is the whole of the change on this side. Only
-  one `tree-sitter` resolves in the tree, because the grammar crates depend on
-  `tree-sitter-language` rather than on the core; no grammar version moved, which
-  is what a parse tree depends on. Every fixture, the example book's 138
-  citations and the browser journeys are unchanged.
-
-### Fixed
-
-- **Structural text in the Markdown mirror was not escaped.** `markdown.rs` has
-  an `escape()` and a dozen sites did not call it: the book's name and
-  description, page, nav, section, card and figure titles, and the `README.md`
-  summary. Those land in a heading, a link label or a list item, so a `<` from a
-  scanned repository was raw in files that mdBook, MDX, Obsidian and Jekyll
-  render as HTML, and a `]` or a newline broke the link or row it sat in. GitHub
-  sanitises, which is why this was not urgent; those four do not, which is why it
-  was not nothing.
-
-  Snippets and code spans still quote the source exactly — escaping those would
-  misreport the code. A link destination is wrapped in angle brackets when it
-  holds a space or a bracket, since a permalink's path comes from `.git/config`.
-
-- **A label from a scanned repository was markup when draw.io rendered it.**
-  Every shape the draw.io export writes sets `html=1`, which is what gives
-  labels their wrapping — and it also means draw.io parses a label as HTML. The
-  XML file is parsed as XML first, which undid the one round of escaping the
-  export applied, so a node called `<img src=x onerror=…>` arrived as a live tag
-  inside the person's drawing. The export is one way and lands in another
-  application, so nothing downstream would ever have noticed.
-
-  Labels are now escaped for HTML before the format's own escaping, which for
-  XML means twice and for CSV means once — the two formats put a different
-  number of parsers between the file and the renderer, and treating them alike
-  would break one of them. `xml` also escapes `'` and drops control characters
-  that made the document unparseable rather than merely wrong.
-
-  Two directive-injection paths went with it: a newline in the diagram's title
-  ended the CSV's header comment, and the `connect` rule swapped quotes for
-  apostrophes instead of escaping the JSON it writes. Both are a scanned
-  repository choosing how its own diagram imports.
+## [0.5.0] - 2026-09-23
 
 ### Added
 
@@ -84,28 +41,6 @@ All notable changes to this project are recorded here. The format follows
   Markdown, figures and manifest are unchanged, and the only difference in the
   output is the embedded reader, which now knows how to show a citation from
   another repository.
-
-### Fixed
-
-- **An outbound call the book could not attribute was documented nowhere.**
-  Every use of `client_calls` in the book asked for the ones that resolved to
-  an operation, so a service calling something in another repository produced
-  a book that said nothing about the dependency. The call was extracted,
-  stored in the model, and dropped on the way to the page — documentation that
-  is confidently incomplete, which is the failure this project exists to
-  prevent, happening in the middle of its own output.
-
-  The evidence page now has *Calls that leave what is documented*: the method
-  and path, the host it is aimed at, the function responsible, and the line
-  that makes the call. A repository whose calls all resolve prints nothing,
-  rather than an empty section.
-
-  The host is kept on the model rather than discarded after unit matching, and
-  one level of indirection is followed to find it — `const URL = … ?? "http://
-  notifications:9000"` used through a `${URL}/path` template is the ordinary
-  shape, and the host is in neither line alone.
-
-### Added
 
 - **An architecture history.** `nunki diff … --record v1.1` appends what a
   release changed to `history.json` beside the book, and the book renders it as
@@ -191,7 +126,112 @@ All notable changes to this project are recorded here. The format follows
   It is a generated file like any other, so `check` compares it and the model
   cannot drift from the prose built beside it.
 
+- **Authored prose can be pinned, and `check` reports it when it rots.**
+  `authored.json` is the one thing in a book nunki does not derive, and it was
+  the one thing it never checked. Two ways it went stale, both silent. An
+  intent keyed to an operation that is later renamed simply stopped appearing:
+  the lookup missed, the prose vanished, and nothing said so — `check` now
+  fails and names the entry. And prose describing code that moved stayed on the
+  page and quietly stopped being true; an operation intent can now carry
+  `evidence` — `path:START-END`, the spelling `nunki verify` takes — which
+  becomes a citation like any other, verified against the commit.
+
+  Pinning is optional by design. An `authored.json` written before this
+  existed keeps working untouched: unpinned prose is published and listed as
+  unchecked rather than failing a build on upgrade. An untouched starter file
+  reports nothing at all, since every entry in it is blank and a blank claims
+  nothing — including when the operation it was generated for disappears.
+
+### Changed
+
+- **tree-sitter 0.27.** 0.27 indexes a node's children by `u32` while still
+  counting them as `usize`, which is the whole of the change on this side. Only
+  one `tree-sitter` resolves in the tree, because the grammar crates depend on
+  `tree-sitter-language` rather than on the core; no grammar version moved, which
+  is what a parse tree depends on. Every fixture, the example book's 138
+  citations and the browser journeys are unchanged.
+
 ### Fixed
+
+- **A repository's test fixtures were documented as its data model.** `.sql` and
+  `.prisma` files have no grammar, so they never reach the scanned file list and
+  a separate walk is the only thing that sees them — and that walk skipped
+  `node_modules` and dotfiles but not test, fixture or example directories. Any
+  repository with a schema under `tests/` had its fixtures published as its data;
+  nunki's own book listed `invoices`, `orders` and `payments`, read out of the
+  fixtures its tests run against. Both that walk and the Liquibase one now apply
+  the same policy as the main scan, so `--include-tests` still means what it says.
+
+- **A generated specification could not be read back by `conform`.** `spec` writes
+  the method inside the code span — `` `POST /charges` `` — and the parser handled
+  that shape, then reported the position of the backtick, so the method search
+  looked at the text *before* the span and found nothing. Asked to check a
+  repository against a specification generated from that same repository, nunki
+  reported its own operation as "implemented and declared nowhere". The method is
+  now carried from where it was parsed.
+
+- **A route could be resolved to the wrong function.** Four functions named
+  `MakeHourAvailable` in one Go package — the HTTP handler, a gRPC method and two
+  generated wrappers — and resolution took the first by filename order. The book
+  cited a gRPC method for an HTTP route, and the citation *verified*, because
+  evidence checks that the symbol name appears in the cited range and it does. A
+  candidate whose parameters are what the framework hands a handler now wins.
+
+- **A C# minimal API's contract was not read.** `.Produces<T>()` and the lambda's
+  first non-injected parameter both declare a contract, and neither was read, so
+  every operation in an endpoint-per-class codebase came out with nothing
+  declared. Measured across six repositories, operations declaring neither a
+  request nor a response fell from 48% to 39%.
+
+- **Structural text in the Markdown mirror was not escaped.** `markdown.rs` has
+  an `escape()` and a dozen sites did not call it: the book's name and
+  description, page, nav, section, card and figure titles, and the `README.md`
+  summary. Those land in a heading, a link label or a list item, so a `<` from a
+  scanned repository was raw in files that mdBook, MDX, Obsidian and Jekyll
+  render as HTML, and a `]` or a newline broke the link or row it sat in. GitHub
+  sanitises, which is why this was not urgent; those four do not, which is why it
+  was not nothing.
+
+  Snippets and code spans still quote the source exactly — escaping those would
+  misreport the code. A link destination is wrapped in angle brackets when it
+  holds a space or a bracket, since a permalink's path comes from `.git/config`.
+
+- **A label from a scanned repository was markup when draw.io rendered it.**
+  Every shape the draw.io export writes sets `html=1`, which is what gives
+  labels their wrapping — and it also means draw.io parses a label as HTML. The
+  XML file is parsed as XML first, which undid the one round of escaping the
+  export applied, so a node called `<img src=x onerror=…>` arrived as a live tag
+  inside the person's drawing. The export is one way and lands in another
+  application, so nothing downstream would ever have noticed.
+
+  Labels are now escaped for HTML before the format's own escaping, which for
+  XML means twice and for CSV means once — the two formats put a different
+  number of parsers between the file and the renderer, and treating them alike
+  would break one of them. `xml` also escapes `'` and drops control characters
+  that made the document unparseable rather than merely wrong.
+
+  Two directive-injection paths went with it: a newline in the diagram's title
+  ended the CSV's header comment, and the `connect` rule swapped quotes for
+  apostrophes instead of escaping the JSON it writes. Both are a scanned
+  repository choosing how its own diagram imports.
+
+- **An outbound call the book could not attribute was documented nowhere.**
+  Every use of `client_calls` in the book asked for the ones that resolved to
+  an operation, so a service calling something in another repository produced
+  a book that said nothing about the dependency. The call was extracted,
+  stored in the model, and dropped on the way to the page — documentation that
+  is confidently incomplete, which is the failure this project exists to
+  prevent, happening in the middle of its own output.
+
+  The evidence page now has *Calls that leave what is documented*: the method
+  and path, the host it is aimed at, the function responsible, and the line
+  that makes the call. A repository whose calls all resolve prints nothing,
+  rather than an empty section.
+
+  The host is kept on the model rather than discarded after unit matching, and
+  one level of indirection is followed to find it — `const URL = … ?? "http://
+  notifications:9000"` used through a `${URL}/path` template is the ordinary
+  shape, and the host is in neither line alone.
 
 - **A requirement identifier no longer changes when another requirement is
   added.** `FR-001` and `BR-001` were positions in a list, produced by
@@ -212,8 +252,6 @@ All notable changes to this project are recorded here. The format follows
 
   Identifiers in the example book all change once, and are then stable.
 
-### Fixed
-
 - Minimal-API routes written without a leading slash were not read.
   `app.MapGet("api/items", …)` is as ordinary in ASP.NET Core as
   `app.MapGet("/api/items", …)` — the route is relative to the app root — but
@@ -222,24 +260,6 @@ All notable changes to this project are recorded here. The format follows
   in its public API**: seven operations and the whole API page for that
   service, absent from the book with nothing saying so. Found by pointing
   nunki at real repositories while investigating #6.
-
-### Added
-
-- **Authored prose can be pinned, and `check` reports it when it rots.**
-  `authored.json` is the one thing in a book nunki does not derive, and it was
-  the one thing it never checked. Two ways it went stale, both silent. An
-  intent keyed to an operation that is later renamed simply stopped appearing:
-  the lookup missed, the prose vanished, and nothing said so — `check` now
-  fails and names the entry. And prose describing code that moved stayed on the
-  page and quietly stopped being true; an operation intent can now carry
-  `evidence` — `path:START-END`, the spelling `nunki verify` takes — which
-  becomes a citation like any other, verified against the commit.
-
-  Pinning is optional by design. An `authored.json` written before this
-  existed keeps working untouched: unpinned prose is published and listed as
-  unchecked rather than failing a build on upgrade. An untouched starter file
-  reports nothing at all, since every entry in it is blank and a blank claims
-  nothing — including when the operation it was generated for disappears.
 
 ## [0.4.1] - 2026-09-21
 
@@ -665,6 +685,7 @@ First public release.
   created once and never overwritten.
 
 [Unreleased]: https://github.com/sadaramk/nunki/compare/v0.4.1...HEAD
+[0.5.0]: https://github.com/sadaramk/nunki/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/sadaramk/nunki/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/sadaramk/nunki/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/sadaramk/nunki/compare/v0.2.7...v0.3.0
