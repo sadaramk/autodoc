@@ -27,7 +27,14 @@ jobs:
       # produced by the same commit it describes. It runs before anything is
       # copied into site/, so the scan sees the repository and not the output.
       - name: nunki's own repository
-        run: ./target/release/nunki generate . --out /tmp/nunki-self
+        # `authored.json` is read from the output directory and written there
+        # only when absent, so a fresh /tmp means the business intent is
+        # recreated empty on every build — the one part of the book a person
+        # writes would be the one part that never survives. Seed it first.
+        run: |
+          mkdir -p /tmp/nunki-self
+          cp docs/authored.json /tmp/nunki-self/authored.json
+          ./target/release/nunki generate . --out /tmp/nunki-self
 
       - name: The project's own demo repository
         run: |
