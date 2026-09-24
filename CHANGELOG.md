@@ -6,6 +6,31 @@ All notable changes to this project are recorded here. The format follows
 `DiagramIR` schema and the CLI surface may still change between minor versions;
 `version` in every IR file says which schema it was written against.
 
+## [Unreleased]
+
+### Added
+
+- **Every request flow can be played.** A sequence diagram's messages are
+  numbered in the order they happen, so the flows page now walks them: Play,
+  Prev and Next step through the flow while the current message is lit on the
+  diagram beside it, with what is sent, of what kind, and the line that sends
+  it. This replaces the step table rather than joining it — the same messages in
+  the same order, one of them current. A flow whose diagram was hand-edited into
+  a different shape keeps the table, because a step can only highlight a message
+  the figure actually drew.
+
+  A walkthrough over a sequence holds the view still where a walkthrough over a
+  graph zooms to each hop: a sequence names its participants once, along the
+  top, and panning to a message would scroll those names away. The message is
+  brought into view only when it is not already there.
+
+### Fixed
+
+- A walkthrough's steps are searchable by what they say, not only by who is
+  talking, and the Markdown mirror draws a walkthrough's diagram — previously
+  the primary path appeared in the book with its figure and in the mirror
+  without it.
+
 ## [0.5.0] - 2026-09-23
 
 ### Added

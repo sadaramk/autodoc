@@ -163,9 +163,15 @@ pub enum Block {
     Cards {
         cards: Vec<Card>,
     },
-    /// A walkthrough bound to a figure: each step highlights one edge.
+    /// A walkthrough bound to a figure: each step highlights one edge. The
+    /// walkthrough mounts the figure itself, so a page that offers one does not
+    /// also emit a `Figure` for the same diagram — it would draw it twice.
     Steps {
         diagram: String,
+        /// The figure's caption, when it says more than the walkthrough does —
+        /// a flow's participant and message counts, and the contract it serves.
+        #[serde(skip_serializing_if = "Vec::is_empty")]
+        caption: Vec<Inline>,
         steps: Vec<Step>,
     },
 }
@@ -201,6 +207,11 @@ pub struct Step {
 pub struct Figure {
     pub id: String,
     pub title: String,
+    /// The IR's diagram type, kebab-cased. The reader frames a walkthrough by
+    /// zooming to each hop, which suits a graph and not a sequence: a sequence's
+    /// participants are named once, at the top, and zooming to a message takes
+    /// their names off the screen.
+    pub kind: String,
     /// Inline SVG (viewBox-scaled, keyboard-operable nodes).
     pub svg: String,
     pub width: f64,

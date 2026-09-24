@@ -142,7 +142,9 @@ test("ctrl+wheel zooms a figure while plain wheel scrolls the page; fullscreen t
 
 test("critical flow walkthrough frames each hop with both cards whole", async ({ page }) => {
   await openBook(page, "#/flows");
-  const walk = page.locator(".walk");
+  // The page now has one walkthrough per drawn flow as well as the primary
+  // path; this is the primary path, the only one over the container diagram.
+  const walk = page.locator('.walk:has(.figure[data-diagram="containers"])');
   const svg = walk.locator("svg.nunki");
   const steps = walk.locator(".step");
   const count = await steps.count();
@@ -173,6 +175,92 @@ test("critical flow walkthrough frames each hop with both cards whole", async ({
   await walk.getByRole("button", { name: /Play/ }).click();
   await expect(walk.locator(".step.is-active")).toHaveCount(1);
   await page.screenshot({ path: "test-results/book-flows.png", fullPage: true });
+});
+
+// A request flow is a story with an order, so the book lets a reader be walked
+// through it rather than made to match numbers in a table against arrows in a
+// picture (#56). What makes it true is the correspondence: the message lit on
+// the diagram is always the step the reader is on, whether they stepped there or
+// Play did. Reduced motion means the reader steps; nothing moves on its own.
+test("a request flow plays message by message with the lit message matching the step", async ({ page }) => {
+  const errors = await openBook(page, "#/flows");
+  const walk = page.locator('.walk:has(.figure[data-diagram^="flow-"])').first();
+  const svg = walk.locator("svg.nunki");
+  const steps = walk.locator(".step");
+  const count = await steps.count();
+  expect(count, "a traced request flow has several messages").toBeGreaterThanOrEqual(3);
+
+  const lit = async () => {
+    const ids = await svg.locator(".ad-edges .ad-edge.is-step").evaluateAll((els) =>
+      els.map((e) => e.getAttribute("data-id"))
+    );
+    return ids;
+  };
+
+  // Keyboard: focus a step and press Enter, then walk on with Next.
+  await steps.first().focus();
+  await page.keyboard.press("Enter");
+  for (let i = 0; i < count; i++) {
+    if (i > 0) await walk.getByRole("button", { name: "Next step" }).click();
+    await expect(steps.nth(i)).toHaveClass(/is-active/);
+    await expect(steps.nth(i)).toHaveAttribute("aria-current", "step");
+    const edgeId = (await steps.nth(i).getAttribute("data-edge"))!;
+    await expect(svg.locator(`.ad-edges .ad-edge[data-id="${edgeId}"]`)).toHaveClass(/is-step/);
+    // Exactly one message is lit, and it is this step's: a walkthrough that lit
+    // two messages, or a stale one, would look like the flow branches.
+    expect(await lit(), `step ${i + 1} of ${count}`).toEqual([edgeId]);
+    // And you can see it. A step that highlights a message scrolled out of the
+    // panel tells the reader nothing, which is the failure a walkthrough over a
+    // tall sequence invites.
+    const canvas = (await walk.locator(".fig-canvas svg").boundingBox())!;
+    const line = (await svg.locator(`.ad-edge[data-id="${edgeId}"] .ad-edge-line`).boundingBox())!;
+    expect(line.y, `step ${i + 1} is above the panel`).toBeGreaterThanOrEqual(canvas.y - 0.5);
+    expect(line.y + line.height, `step ${i + 1} is below the panel`).toBeLessThanOrEqual(canvas.y + canvas.height + 0.5);
+  }
+  // A sequence names its participants once, along the top, so a walkthrough
+  // holds still rather than scrolling them away — for as long as the diagram
+  // fits the panel at a legible scale. Past that the reader can pan and fit.
+  const figure = walk.locator(".figure");
+  if (!(await figure.evaluate((el) => el.classList.contains("is-cropped")))) {
+    const canvas = (await walk.locator(".fig-canvas svg").boundingBox())!;
+    for (const head of await svg.locator(".ad-node .ad-card").all()) {
+      const box = (await head.boundingBox())!;
+      expect(box.y, "a lifeline head scrolled off the panel").toBeGreaterThanOrEqual(canvas.y - 0.5);
+    }
+  }
+  await page.screenshot({ path: "test-results/book-flow-walk.png", fullPage: true });
+
+  // Play advances on its own, and the lit message keeps up with the step.
+  const index = () => steps.evaluateAll((els) => els.findIndex((e) => e.classList.contains("is-active")));
+  await walk.getByRole("button", { name: /Play/ }).click();
+  await expect(walk.getByRole("button", { name: /Pause/ })).toBeVisible();
+  await expect.poll(index, { timeout: 8000 }).toBeGreaterThan(0);
+  // Paused before comparing: the next tick is 1.6s away and would otherwise be
+  // free to move the step between reading it and reading the diagram.
+  await walk.getByRole("button", { name: /Pause/ }).click();
+  await expect(walk.getByRole("button", { name: /Play/ })).toBeVisible();
+  const active = await index();
+  expect(await lit(), `Play stopped on step ${active + 1}`).toEqual([
+    await steps.nth(active).getAttribute("data-edge")
+  ]);
+  expect(errors, errors.join("\n")).toEqual([]);
+});
+
+test("reduced motion walks a flow but never advances it on its own", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await openBook(page, "#/flows");
+  const walk = page.locator('.walk:has(.figure[data-diagram^="flow-"])').first();
+  const steps = walk.locator(".step");
+  const index = () => steps.evaluateAll((els) => els.findIndex((e) => e.classList.contains("is-active")));
+  await walk.getByRole("button", { name: /Play/ }).click();
+  expect(await index(), "Play still shows the first step").toBe(0);
+  // Nothing moves by itself: the button stays Play, and after longer than the
+  // auto-advance interval the same step is current.
+  await expect(walk.getByRole("button", { name: /Play/ })).toBeVisible();
+  await page.waitForTimeout(2000);
+  expect(await index(), "reduced motion must not auto-advance").toBe(0);
+  await walk.getByRole("button", { name: "Next step" }).click();
+  expect(await index()).toBe(1);
 });
 
 test("search jumps to a page from the keyboard", async ({ page }) => {

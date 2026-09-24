@@ -158,16 +158,7 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
                 c.in_table = false;
                 out.push('\n');
             }
-            Block::Figure { diagram, caption } => {
-                if let Some(f) = c.book.diagrams.get(diagram) {
-                    out.push_str(&format!("![{}]({})\n\n", escape(&f.title, false), relative(c.dir, &f.svg_path)));
-                    out.push_str(&format!(
-                        "_{}_ · [IR]({})\n\n",
-                        inlines(c, caption).trim(),
-                        relative(c.dir, &f.ir_path)
-                    ));
-                }
-            }
+            Block::Figure { diagram, caption } => figure(c, &mut out, diagram, caption),
             Block::Callout { tone, title, inl } => {
                 let kind = match tone.as_str() {
                     "warning" => "WARNING",
@@ -192,7 +183,11 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
                 }
                 out.push('\n');
             }
-            Block::Steps { diagram: _, steps } => {
+            Block::Steps { diagram, caption, steps } => {
+                // A walkthrough is the only thing that draws its figure, so the
+                // mirror has to draw it here or the diagram is in the book and
+                // not in the Markdown — and the Markdown is what an agent reads.
+                figure(c, &mut out, diagram, caption);
                 for (i, s) in steps.iter().enumerate() {
                     out.push_str(&format!("{}. {} — {}\n", i + 1, inlines(c, &s.title), inlines(c, &s.body).trim()));
                 }
@@ -201,6 +196,18 @@ fn blocks(c: &mut Ctx, bs: &[Block]) -> String {
         }
     }
     out
+}
+
+/// A figure: the rendered SVG, its caption and a link to the IR it came from.
+/// Shared by `Figure` and `Steps`, which mounts its own figure.
+fn figure(c: &mut Ctx, out: &mut String, diagram: &str, caption: &[Inline]) {
+    let Some(f) = c.book.diagrams.get(diagram) else { return };
+    let (svg, ir) = (relative(c.dir, &f.svg_path), relative(c.dir, &f.ir_path));
+    out.push_str(&format!("![{}]({})\n\n", escape(&f.title, false), svg));
+    match inlines(c, caption).trim() {
+        "" => out.push_str(&format!("[IR]({ir})\n\n")),
+        cap => out.push_str(&format!("_{cap}_ · [IR]({ir})\n\n")),
+    }
 }
 
 fn meta_line(book: &Book) -> String {
