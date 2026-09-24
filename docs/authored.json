@@ -1,0 +1,83 @@
+{
+  "$comment": "Business intent for nunki's own book. The tool refuses to generate any of this: why a system exists, for whom, and what would count as success cannot be read from source, so they are written here and shown as authored. Copied into the output directory by .github/workflows/pages.yml before the self-documenting book is generated — without that, a fresh /tmp output directory means these answers are recreated empty on every build.",
+  "business": {
+    "problem": "Architecture documentation is written once, drifts from the code, and gives no signal that it has stopped being true. An engineer inheriting a system cannot tell which parts of the description still hold, and an agent reading it cannot either — so both fall back to reading the source, and the documentation becomes something nobody trusts and everyone maintains.",
+    "goals": [
+      "Describe a codebase as it is — architecture, components, data, request flows, commands and specifications — derived from the source rather than from anyone's memory of it.",
+      "Make every claim checkable: each statement carries the file, line and commit it was read from, and `nunki check` fails when the code moves out from under it.",
+      "Be read equally by a person and by a machine: the same model behind the HTML book, the Markdown mirror, `llms.txt`, `behaviour.json` and the MCP server, so an agent and a reviewer are looking at the same facts.",
+      "Say what could not be determined, in the book, where a reader will see it — an unanswered question is more useful than a confident gap.",
+      "Run in CI on every pull request, so documentation drift is caught at the moment it is introduced rather than discovered months later.",
+      "Be the ground truth an agent reads before it changes a codebase: understanding that is verified against a commit is the step that has to come before autonomous work, and the step most agentic tooling skips."
+    ],
+    "nonGoals": [
+      "Inventing intent. Why a system exists, who it serves and what success means are authored by a person; the tool marks them as open questions rather than guessing — this file is that answer for nunki itself.",
+      "Writing or changing code. nunki reads a repository and never modifies one. Agentic coding is what the ground truth is for, not what nunki does.",
+      "Replacing review. A book is a well-evidenced starting point to check, not the authority on an architecture.",
+      "Being a code search engine. Finding a symbol is answered well by other tools; nunki answers what the system is and how its parts relate.",
+      "Round-tripping a diagram somebody has since edited. The source is right about the architecture; the drawing is right about the drawing.",
+      "Caching parsed facts between runs. Measured on five large repositories and rejected: it would buy seconds and introduce the one failure this project exists to prevent, a stale entry producing a book that looks correct."
+    ],
+    "stakeholders": [
+      {
+        "name": "Engineer inheriting a codebase",
+        "role": "Reader",
+        "interest": "Understand a system without reading all of it, and know which claims are verified and which are guesses."
+      },
+      {
+        "name": "Reviewer on a pull request",
+        "role": "Reviewer",
+        "interest": "See what a change did to the architecture, in the pull request, without regenerating anything by hand."
+      },
+      {
+        "name": "Coding agent",
+        "role": "Consumer",
+        "interest": "A structured, cited model of the system to read before proposing a change — contracts, flows and commands as data rather than prose to re-parse."
+      },
+      {
+        "name": "Maintainer of the documented repository",
+        "role": "Owner",
+        "interest": "Documentation that fails loudly when it stops being true, so it is worth keeping rather than quietly abandoned."
+      }
+    ],
+    "successMetrics": [
+      {
+        "metric": "Citations verified against the pinned commit in a generated book",
+        "target": "100%. `nunki check` fails below it, so a book that cannot prove itself does not merge."
+      },
+      {
+        "metric": "Share of a repository's source that was actually read",
+        "target": "Stated on the first page of every book; the scan refuses below 10% unless `--allow-partial` is passed."
+      },
+      {
+        "metric": "Documentation drift caught before merge rather than after",
+        "target": "`nunki check` runs on every pull request; regenerating the book must change nothing."
+      },
+      {
+        "metric": "Operations whose contract is read from the source rather than left undeclared",
+        "target": "Measured across six real repositories in #48: 52% at the time of measurement, 61% after reading C# minimal APIs and fixing handler resolution. Re-measured before a release rather than assumed."
+      },
+      {
+        "metric": "A published surface that stays still",
+        "target": "`DiagramIR` and the CLI surface unchanged for a full minor cycle, enforced by a schema stability gate and a snapshot of every `--help`."
+      }
+    ],
+    "assumptions": [
+      "The repository being documented is untrusted input. It is read, never executed, and a book may be generated for code nobody here wrote.",
+      "A person will answer the questions the tool refuses to answer. Until they do, those questions stay visible in the book rather than being filled with plausible prose.",
+      "A reader would rather be told that something could not be determined than be given a confident answer that might be wrong."
+    ],
+    "constraints": [
+      "Static analysis cannot see runtime service discovery, reflection, dynamically built URLs, configuration injected at deploy time, or infrastructure provisioned outside the repository.",
+      "Every claim has to be reproducible from a commit, so nothing in a book may depend on state outside the repository it describes.",
+      "The generated book is committed alongside the code it describes, so regenerating an unchanged commit must produce byte-identical output."
+    ]
+  },
+  "operations": {},
+  "glossary": {
+    "Evidence": "A file, a line range and a commit behind a claim, verified by re-reading the file and comparing against the pinned commit.",
+    "Book": "The generated architecture documentation: an interactive HTML reader, a Markdown mirror, the diagram IR and the behaviour model.",
+    "DiagramIR": "The typed intermediate representation a diagram is compiled from. Hand-editable, validated, and the thing a figure is rendered from.",
+    "Authored": "Prose a person wrote, badged as such in the book, and — when it carries a pin — verified against the commit like any other citation."
+  }
+}
