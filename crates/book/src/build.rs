@@ -75,6 +75,9 @@ pub struct Built {
     pub authored_unpinned: Vec<String>,
     /// The behaviour model as data, for everything that cannot read prose.
     pub behaviour: crate::behaviour::Behaviour,
+    /// How much of the system this book specifies, measured against the source
+    /// it was read from.
+    pub score: crate::score::Score,
 }
 
 const SNIPPET_LINES: u32 = 40;
@@ -252,8 +255,11 @@ pub fn build(
         .filter(|(id, i)| i.says_something() && i.evidence.is_empty() && operation_ids.contains(id))
         .map(|(id, _)| id.clone())
         .collect();
+    let book = Book { meta, nav, pages, diagrams: figures, cites };
+    let score = crate::score::score(&report, &book.cites.values().collect::<Vec<_>>(), &authored_for_audit);
     Ok(Built {
-        book: Book { meta, nav, pages, diagrams: figures, cites },
+        book,
+        score,
         diagrams,
         warnings,
         authored_template: Authored::template(&operation_ids),
@@ -1600,9 +1606,79 @@ impl<'a> Builder<'a> {
         self.push_page("commands", "Commands", "Reference", vec![Inline::text(summary)], blocks);
     }
 
+    /// How much of the system this book specifies, dimension by dimension.
+    ///
+    /// Built here rather than on the first page because this is the last page
+    /// assembled, and one of the dimensions counts the citations every earlier
+    /// page made. It belongs here on merit too: the number is a statement about
+    /// what is and is not known, which is what this page is for.
+    fn score_blocks(&self) -> Vec<Block> {
+        let score = crate::score::score(self.report, &self.cites.values().collect::<Vec<_>>(), &self.authored);
+        let Some(total) = score.total else { return vec![] };
+        let mut blocks = vec![
+            Block::Heading { level: 2, id: "specified".into(), text: "How much is specified".into() },
+            Block::Para {
+                inl: vec![Inline::text(format!(
+                    "{total}% specified: the mean of the measures below. Each one counts what this book accounts \
+                     for against what the source contains — so the number says how much of the system is \
+                     described, not how complete the document looks. A measure the source has nothing to count \
+                     is left out rather than counted as zero: a library has no operations to declare, and \
+                     scoring it as though it did would measure the repository's shape instead of this book.",
+                ))],
+            },
+        ];
+        let rows = score
+            .dimensions
+            .iter()
+            .map(|d| {
+                let measured = match d.percent() {
+                    Some(p) => vec![Inline::strong(format!("{p}%"))],
+                    None => vec![Inline::badge("muted", "nothing to count")],
+                };
+                vec![
+                    vec![Inline::text(d.name)],
+                    measured,
+                    vec![Inline::text(match d.of {
+                        0 => format!("no {} found", d.unit),
+                        of => format!("{} of {of} {}", d.got, d.unit),
+                    })],
+                    d.note.clone().map(|n| vec![Inline::text(n)]).unwrap_or_default(),
+                ]
+            })
+            .collect();
+        blocks.push(Block::Table {
+            columns: vec!["Measure".into(), "Share".into(), "Counted".into(), "Note".into()],
+            rows,
+        });
+        if let Some(weak) = score.weakest() {
+            // A total nobody can act on is worse than one number and a
+            // direction, so the page names what is holding it down.
+            blocks.push(Block::Callout {
+                tone: "note".into(),
+                title: format!("Weakest: {}", weak.name.to_lowercase()),
+                inl: vec![Inline::text(match weak.name {
+                    "Source read" => "This one is nunki's limit rather than the repository's: those files have \
+                                      declarations no parser here can read."
+                        .to_string(),
+                    "Intent authored" => "Actor and purpose cannot be read from code. This number moves when \
+                                          somebody answers the questions in `authored.json`, not when the code \
+                                          changes."
+                        .to_string(),
+                    _ => format!(
+                        "{} of {} {} — the rest is what the code does not declare, which a book can report but \
+                         not invent.",
+                        weak.got, weak.of, weak.unit
+                    ),
+                })],
+            });
+        }
+        blocks
+    }
+
     fn evidence_page(&mut self) {
         let r = self.report;
         let mut blocks = Vec::new();
+        blocks.extend(self.score_blocks());
         blocks.extend(self.repositories_block());
         blocks.extend(self.unresolved_calls_block());
         let observed = r.relationships.iter().filter(|x| Self::observed(x)).count();

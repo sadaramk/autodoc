@@ -31,6 +31,32 @@ All notable changes to this project are recorded here. The format follows
   the primary path appeared in the book with its figure and in the mirror
   without it.
 
+## [Unreleased]
+
+### Added
+
+- **A book says how much of its system it specifies.** Six measures, each
+  dividing what the book accounts for by what the *source* contains: how much
+  of the source was read, how many entry points declare a contract, how many
+  operations were traced, how many entities were described, how many citations
+  verify, and how many requirements a person has given an actor and a purpose
+  for. The mean of them is on the evidence page, beside the measure holding it
+  down, and on the line `generate` prints.
+
+  Every denominator is counted from the code, so the number cannot be improved
+  by writing more prose — only by reading more of the repository, or by the
+  repository declaring more. A measure the source has nothing to count is left
+  out rather than scored zero: a library has no operations and a command-line
+  tool has no entities, and marking either down measures the repository's shape
+  instead of the book. The total says how many measures it rests on, because
+  one drawn from two is not the claim one drawn from six is.
+
+  A command counts as an entry point beside an HTTP operation. Without that,
+  nunki's own book scored 100% on the two measures that are nearly always 100%
+  while saying nothing about the thing it actually is. With it, nunki scores
+  71%, and names the reason: most of its own `clap` arguments have no doc
+  comment, so its published command reference has empty cells. (#58)
+
 ## [0.5.0] - 2026-09-23
 
 ### Added
