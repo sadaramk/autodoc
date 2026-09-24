@@ -315,6 +315,12 @@
     var d = book.diagrams[id];
     if (!d) return null;
     opts = opts || {};
+    // Zooming to each hop suits a graph, where a step is two boxes and a line
+    // that could be anywhere. A sequence diagram already reads top to bottom
+    // with its participants named once along the top, so a walkthrough over one
+    // highlights the message and brings it into view without taking the whole
+    // picture away.
+    var framing = !!(opts.steps && opts.steps.length) && d.kind !== "sequence";
     var canvas = h("div", { class: "fig-canvas" });
     canvas.innerHTML = d.svg; // trusted: compiled and escaped by the engine
     var svg = canvas.querySelector("svg");
@@ -407,7 +413,7 @@
       if (animated) animateVb(target); else { vb = target; applyVb(); }
     }
     function layoutView() {
-      if (opts.steps && opts.steps.length && !panel.classList.contains("is-fullscreen")) {
+      if (framing && !panel.classList.contains("is-fullscreen")) {
         // Panel height fits the tallest step frame, so nothing below is empty.
         var cw = canvas.clientWidth || W, maxH = window.innerHeight * 0.72, elH = 160;
         opts.steps.forEach(function (edgeId) {
@@ -553,7 +559,11 @@
       var edgeEl = svg.querySelector('.ad-edges .ad-edge[data-id="' + cssEscape(edgeId) + '"]');
       if (edgeEl) {
         edgeEl.classList.add("is-step");
-        if (opts.steps) frameStep(edgeId, true);
+        // A graph's hop is framed; a sequence's message is only brought into
+        // view if it isn't already. That minimal pan is what keeps the lifeline
+        // heads — the only thing naming who is talking — on the screen for as
+        // long as the diagram fits the panel.
+        if (framing) frameStep(edgeId, true);
         else try { reveal(edgeEl.querySelector(".ad-edge-line").getBBox()); } catch (err) { /* not rendered */ }
       }
       [e.source, e.target].forEach(function (n) {
@@ -674,7 +684,7 @@
 
   function renderSteps(b, ctx) {
     var fig = mountFigure(b.diagram, {
-      caption: [{ t: "text", v: "Each step frames one hop." }],
+      caption: b.caption && b.caption.length ? b.caption : [{ t: "text", v: "Each step frames one hop." }],
       steps: b.steps.map(function (s) { return s.edge; })
     });
     if (fig) ctx.figureIds.push(b.diagram);
@@ -849,7 +859,10 @@
       if (b.t === "para" || b.t === "callout") bits.push(plain(b.inl) + (b.title ? " " + b.title : ""));
       if (b.t === "table") b.rows.forEach(function (r) { bits.push(r.map(plain).join(" ")); });
       if (b.t === "list") b.items.forEach(function (it) { bits.push(plain(it)); });
-      if (b.t === "steps") b.steps.forEach(function (s) { bits.push(plain(s.title)); });
+      // Body as well as title: a walkthrough stands in for the step table it
+      // replaced, and the message names are in the body. Indexing only titles
+      // would make a flow's messages unsearchable.
+      if (b.t === "steps") b.steps.forEach(function (s) { bits.push(plain(s.title) + " " + plain(s.body)); });
       bits.forEach(function (text) {
         index.push({ page: p.id, anchor: heading ? heading.id : null, title: heading ? heading.text : p.title, where: p.title, snippet: text, text: text.toLowerCase(), weight: 1 });
       });

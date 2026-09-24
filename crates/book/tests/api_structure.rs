@@ -18,7 +18,9 @@ fn inlines(b: &Block) -> Vec<&Inline> {
         Block::Table { rows, .. } => rows.iter().flatten().flatten().collect(),
         Block::Figure { caption, .. } => caption.iter().collect(),
         Block::List { items } => items.iter().flatten().collect(),
-        Block::Steps { steps, .. } => steps.iter().flat_map(|s| s.title.iter().chain(s.body.iter())).collect(),
+        Block::Steps { caption, steps, .. } => {
+            caption.iter().chain(steps.iter().flat_map(|s| s.title.iter().chain(s.body.iter()))).collect()
+        }
         _ => vec![],
     }
 }

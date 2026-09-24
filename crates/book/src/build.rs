@@ -595,6 +595,10 @@ impl<'a> Builder<'a> {
             Figure {
                 id: id.to_string(),
                 title: ir.title.clone(),
+                kind: serde_json::to_value(ir.diagram_type)
+                    .ok()
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_default(),
                 svg: embedded.content,
                 width: embedded.layout.width,
                 height: embedded.layout.height,
@@ -1318,7 +1322,7 @@ impl<'a> Builder<'a> {
                 ];
                 steps.push(Step { edge: e.id.clone(), title, body });
             }
-            blocks.push(Block::Steps { diagram: "containers".into(), steps });
+            blocks.push(Block::Steps { diagram: "containers".into(), caption: vec![], steps });
         }
 
         let request_flows = self.request_flow_blocks();

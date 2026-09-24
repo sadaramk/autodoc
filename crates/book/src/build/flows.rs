@@ -167,10 +167,8 @@ impl<'a> Builder<'a> {
                 v: format!("{} {}", op.method, op.path),
             });
         }
-        if let Some(f) = self.figure(&fig, caption) {
-            blocks.push(f);
-        }
         let mut rows = Vec::new();
+        let mut steps = Vec::new();
         for (i, s) in flow.steps.iter().enumerate() {
             let mut msg = vec![Inline::code(s.label.clone())];
             if let Some(p) = &s.payload {
@@ -196,18 +194,56 @@ impl<'a> Builder<'a> {
                 code.push(Inline::text(" "));
             }
             code.push(self.cite(&s.evidence));
-            rows.push(vec![
-                vec![Inline::text((i + 1).to_string())],
-                vec![self.party(flow, &s.from), Inline::text(" → "), self.party(flow, &s.to)],
-                msg,
-                kind,
-                code,
-            ]);
+            let pair = vec![self.party(flow, &s.from), Inline::text(" → "), self.party(flow, &s.to)];
+            // The same message, said twice: a row to read and a step to walk. The
+            // step carries what a reader needs while the diagram holds their
+            // attention — what is sent, of what kind, and the line that sends it.
+            steps.push(Step {
+                edge: format!("m{}", i + 1),
+                title: pair.clone(),
+                body: msg
+                    .iter()
+                    .cloned()
+                    .chain([Inline::text(" ")])
+                    .chain(kind.iter().cloned())
+                    .chain([Inline::text(" ")])
+                    .chain(code.iter().cloned())
+                    .collect(),
+            });
+            rows.push(vec![vec![Inline::text((i + 1).to_string())], pair, msg, kind, code]);
         }
-        blocks.push(Block::Table {
-            columns: vec!["#".into(), "From → to".into(), "Message".into(), "Kind".into(), "Code".into()],
-            rows,
-        });
+        // A sequence figure's messages are already numbered in the order they
+        // happen, so this table was always a walkthrough that nothing walked
+        // (#56). Playing it highlights each message on the diagram as its step
+        // becomes current — what the primary path on the container diagram has
+        // always done and no request flow could. The walkthrough replaces both
+        // the figure and the table because it *is* them: the same messages in
+        // the same order, beside the same diagram, one of them current.
+        //
+        // Highlighting means naming the edge that draws the message, so it is
+        // only offered when the rendered figure is still the one these steps
+        // describe: a hand-edited IR may have renamed or dropped messages, and a
+        // step pointing at an edge that is no longer there would highlight
+        // nothing. Then the table stands on its own, as it did before.
+        let drawn: Vec<&str> = self
+            .diagrams
+            .iter()
+            .find(|d| d.id == fig)
+            .map(|d| d.ir.edges.iter().map(|e| e.id.as_str()).collect())
+            .unwrap_or_default();
+        let walk =
+            steps.len() > 1 && drawn.len() == steps.len() && drawn.iter().zip(&steps).all(|(id, s)| *id == s.edge);
+        if walk {
+            blocks.push(Block::Steps { diagram: fig.clone(), caption, steps });
+        } else {
+            if let Some(f) = self.figure(&fig, caption) {
+                blocks.push(f);
+            }
+            blocks.push(Block::Table {
+                columns: vec!["#".into(), "From → to".into(), "Message".into(), "Kind".into(), "Code".into()],
+                rows,
+            });
+        }
         if !flow.notes.is_empty() {
             blocks.push(Block::Callout {
                 tone: "note".into(),

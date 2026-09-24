@@ -49,7 +49,9 @@ fn inlines_of(b: &Block) -> Vec<&Inline> {
         Block::Table { rows, .. } => rows.iter().flatten().flatten().collect(),
         Block::Figure { caption, .. } => caption.iter().collect(),
         Block::List { items } => items.iter().flatten().collect(),
-        Block::Steps { steps, .. } => steps.iter().flat_map(|s| s.title.iter().chain(s.body.iter())).collect(),
+        Block::Steps { caption, steps, .. } => {
+            caption.iter().chain(steps.iter().flat_map(|s| s.title.iter().chain(s.body.iter()))).collect()
+        }
         Block::Heading { .. } | Block::Stats { .. } | Block::Cards { .. } => vec![],
     }
 }
@@ -188,6 +190,62 @@ fn generation_is_deterministic_and_prunes_files_it_no_longer_produces() {
     let third = generate(&repo, out.path(), &BookOptions::default()).unwrap();
     assert_eq!(third.removed, vec!["pages/03-containers-legacy.md".to_string()]);
     assert!(!out.path().join("pages/03-containers-legacy.md").exists());
+}
+
+/// A request flow's messages happen in an order, so the book lets a reader walk
+/// them: each step highlights one message on the sequence diagram beside it.
+/// The step has to name the edge the figure actually drew — a step pointing at
+/// an edge that is not in the IR highlights nothing, and nothing in the book
+/// would say so — and the walkthrough replaces the figure and the step table
+/// rather than joining them, or the page says everything twice.
+#[test]
+fn every_drawn_flow_can_be_walked_message_by_message() {
+    let out = tempfile::tempdir().unwrap();
+    let planned = plan(&fixtures().join("polyglot-shop"), out.path(), &BookOptions::default()).unwrap();
+    let page = planned.built.book.pages.iter().find(|p| p.id == "flows").unwrap();
+    let ir_of = |id: &str| planned.built.diagrams.iter().find(|d| d.id == id).map(|d| &d.ir);
+
+    let walks: Vec<(&String, &Vec<nunki_book::model::Step>)> = page
+        .blocks
+        .iter()
+        .filter_map(|b| match b {
+            Block::Steps { diagram, steps, .. } if diagram.starts_with("flow-") => Some((diagram, steps)),
+            _ => None,
+        })
+        .collect();
+    assert!(walks.len() >= 2, "every drawn flow gets a walkthrough, got {}", walks.len());
+
+    for (diagram, steps) in &walks {
+        let ir = ir_of(diagram).unwrap_or_else(|| panic!("figure {diagram}"));
+        let drawn: Vec<&str> = ir.edges.iter().map(|e| e.id.as_str()).collect();
+        let walked: Vec<&str> = steps.iter().map(|s| s.edge.as_str()).collect();
+        assert_eq!(walked, drawn, "{diagram}: a step must highlight a message the figure drew");
+        // Each step carries the line that sends its message: walking the flow is
+        // reading the code, which is the only reason to walk it in this book.
+        for s in steps.iter() {
+            assert!(
+                s.body.iter().any(|i| matches!(i, Inline::Cite { .. })),
+                "{diagram} step {} has no citation: {:?}",
+                s.edge,
+                s.body
+            );
+        }
+        assert!(
+            !page.blocks.iter().any(|b| matches!(b, Block::Figure { diagram: d, .. } if d == *diagram)),
+            "{diagram} is drawn by its walkthrough, so the page must not also emit a figure for it"
+        );
+    }
+
+    // The Markdown mirror is what an agent reads, and a walkthrough is the only
+    // thing that draws its figure — so the diagram and every message have to
+    // survive the mirror, not just the reader.
+    let md = &planned.files["pages/05-critical-flows.md"];
+    let (diagram, steps) = walks[0];
+    assert!(md.contains(&format!("diagrams/{diagram}.svg")), "flows Markdown is missing {diagram}: {md}");
+    for s in steps.iter() {
+        let n = s.edge.trim_start_matches('m');
+        assert!(md.contains(&format!("\n{n}. ")), "flows Markdown is missing step {n} of {diagram}: {md}");
+    }
 }
 
 #[test]
