@@ -99,6 +99,7 @@ impl From<ThemeArg> for Theme {
 enum Command {
     /// Write an nunki.toml with editorial defaults into a repository.
     Init {
+        /// Repository to write the configuration into.
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Overwrite an existing nunki.toml.
@@ -107,8 +108,11 @@ enum Command {
     },
     /// Scan a repository: C4 containers, relationships, evidence, draft IR.
     Analyze {
+        /// Repository to scan.
         #[arg(default_value = ".")]
         path: PathBuf,
+        /// How far to decompose the system: system, container or component.
+        /// Defaults to what nunki.toml says.
         #[arg(long, value_enum)]
         depth: Option<DepthArg>,
         /// Container id to decompose at component depth.
@@ -120,6 +124,7 @@ enum Command {
         /// Write the draft DiagramIR.
         #[arg(long, value_name = "FILE")]
         emit_ir: Option<PathBuf>,
+        /// Colour scheme recorded in the draft IR: light or dark.
         #[arg(long, value_enum)]
         theme: Option<ThemeArg>,
         /// Also scan test, fixture and example directories.
@@ -128,10 +133,12 @@ enum Command {
     },
     /// Validate a DiagramIR file and print diagnostics (exit 1 on errors).
     Validate {
+        /// DiagramIR file to validate.
         ir: PathBuf,
         /// Repository used to verify evidence (defaults to metadata.targetRepo).
         #[arg(long)]
         repo: Option<PathBuf>,
+        /// Treat every warning as an error.
         #[arg(long)]
         strict: bool,
         /// Print the machine-readable report.
@@ -140,45 +147,59 @@ enum Command {
     },
     /// Compile a DiagramIR into standalone HTML or SVG.
     Render {
+        /// DiagramIR file to compile.
         ir: PathBuf,
+        /// File to write. Defaults to the IR's name with the format's extension.
         #[arg(short, long)]
         output: Option<PathBuf>,
+        /// What to write: html or svg. Defaults to the output file's extension.
         #[arg(long, value_enum)]
         format: Option<FormatArg>,
+        /// Repository used to verify evidence (defaults to metadata.targetRepo).
         #[arg(long)]
         repo: Option<PathBuf>,
         /// indigo | coral | #RRGGBB
         #[arg(long)]
         accent: Option<String>,
+        /// Treat every warning as an error.
         #[arg(long)]
         strict: bool,
         /// Skip evidence verification and snippets.
         #[arg(long)]
         no_verify: bool,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
     },
     /// Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams.
     Generate {
+        /// Repository to document.
         #[arg(default_value = ".")]
         path: PathBuf,
+        /// Directory to write the book into. Defaults to what nunki.toml says.
         #[arg(short, long)]
         out: Option<PathBuf>,
+        /// indigo | coral | #RRGGBB
         #[arg(long)]
         accent: Option<String>,
+        /// Colour scheme the book opens in: light or dark. A reader can switch.
         #[arg(long, value_enum)]
         theme: Option<ThemeArg>,
+        /// Also read test, fixture and example directories.
         #[arg(long)]
         include_tests: bool,
         /// Write the book even when almost nothing in the repository could be read.
         #[arg(long)]
         allow_partial: bool,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
     },
     /// Export a diagram for another tool. One way: the source stays authoritative.
     Export {
+        /// DiagramIR file to export.
         ir: PathBuf,
+        /// What to write: a draw.io file, or CSV to merge into an existing drawing.
         #[arg(long, value_enum, default_value = "drawio")]
         format: ExportFormat,
         /// Output file. Defaults to the IR's name with the format's extension; `-` writes to stdout.
@@ -191,6 +212,7 @@ enum Command {
     },
     /// Write the specification in another toolchain's format, from the code.
     Spec {
+        /// Repository to read the specification from.
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Dialect to write. `openspec` writes one current-state spec per
@@ -204,6 +226,7 @@ enum Command {
     },
     /// Check the code against a specification someone else wrote.
     Conform {
+        /// Repository to check against the specification.
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Specification files. Defaults to the layouts the toolkits use:
@@ -211,6 +234,7 @@ enum Command {
         /// `specs/*/spec.md`.
         #[arg(long)]
         spec: Vec<PathBuf>,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
         /// Exit 1 when something declared is missing or contradicted.
@@ -219,6 +243,7 @@ enum Command {
     },
     /// What changed architecturally between two revisions. Markdown for a PR comment.
     Diff {
+        /// Repository whose revisions are compared.
         #[arg(default_value = ".")]
         path: PathBuf,
         /// Revision to compare against, such as `main` or `origin/main`.
@@ -227,8 +252,10 @@ enum Command {
         /// Revision to compare. Defaults to the working tree's HEAD.
         #[arg(long, default_value = "HEAD")]
         head: String,
+        /// Also read test, fixture and example directories.
         #[arg(long)]
         include_tests: bool,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
         /// Exit 1 when anything changed, so a pipeline can require a review.
@@ -245,22 +272,28 @@ enum Command {
     },
     /// Fail (exit 1) when the book is out of date or cites stale code. For CI.
     Check {
+        /// Repository the book describes.
         #[arg(default_value = ".")]
         path: PathBuf,
+        /// Book directory to check. Defaults to what nunki.toml says.
         #[arg(short, long)]
         out: Option<PathBuf>,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
     },
     /// Verify evidence references like `src/main.rs:10-42`.
     Verify {
+        /// References to check, as `file:line` or `file:start-end`.
         #[arg(required = true, value_name = "FILE:LINE[-END]")]
         refs: Vec<String>,
+        /// Repository the references are read from.
         #[arg(long, default_value = ".")]
         repo: PathBuf,
         /// Pinned commit to check drift against (defaults to HEAD).
         #[arg(long)]
         commit: Option<String>,
+        /// Print the machine-readable report.
         #[arg(long)]
         json: bool,
     },

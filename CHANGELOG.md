@@ -57,6 +57,23 @@ All notable changes to this project are recorded here. The format follows
   71%, and names the reason: most of its own `clap` arguments have no doc
   comment, so its published command reference has empty cells. (#58)
 
+## [Unreleased]
+
+### Fixed
+
+- **nunki's own command reference said nothing about most of its arguments.**
+  Thirty-two `clap` arguments across eleven commands carried no doc comment, so
+  the book nunki publishes about itself had an empty "What it does" cell for
+  each of them — including `PATH`, which every command takes. Every argument now
+  says what it is for, in the terms of the command it belongs to: `PATH` is the
+  repository to scan for `analyze`, to document for `generate`, and the one a
+  book describes for `check`.
+
+  Found by the specification score on its first run, which put nunki's own
+  contract-declared measure at 15%. It is 100% now. Help text only: every flag,
+  argument and value placeholder is unchanged, so the promise in #9 is
+  untouched. (#61)
+
 ## [0.5.0] - 2026-09-23
 
 ### Added
