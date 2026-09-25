@@ -166,6 +166,7 @@ pub fn book(r: &nunki_book::WriteReport) -> String {
         e.total,
         if e.stale + e.broken > 0 { format!(" ({} stale, {} broken)", e.stale, e.broken) } else { String::new() }
     );
+    let _ = writeln!(s, "  {}", r.score.line());
     let _ = writeln!(s, "  {} written, {} unchanged, {} removed", r.written.len(), r.unchanged, r.removed.len());
     for c in &r.curated {
         let _ = writeln!(s, "  kept hand-edited diagrams/{c}.ir.json");

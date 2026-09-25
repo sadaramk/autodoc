@@ -6,6 +6,22 @@ _Evidence_ · [Book index](../README.md)
 
 **138** Citations · **138** Verified · **0** Stale · **0** Broken
 
+## How much is specified
+
+76% specified: the mean of the measures below. Each one counts what this book accounts for against what the source contains — so the number says how much of the system is described, not how complete the document looks. A measure the source has nothing to count is left out rather than counted as zero: a library has no operations to declare, and scoring it as though it did would measure the repository's shape instead of this book.
+
+| Measure | Share | Counted | Note |
+|---|---|---|---|
+| Source read | **100%** | 24 of 24 source files |  |
+| Contract declared | **60%** | 3 of 5 entry points | 1 operation(s) declared part of a contract and are counted as neither |
+| Behaviour traced | **100%** | 5 of 5 operations |  |
+| Data described | **100%** | 4 of 4 entities |  |
+| Evidence verified | **100%** | 138 of 138 citations |  |
+| Intent authored | **0%** | 0 of 5 operations | actor and purpose come from `authored.json`, never from the code |
+
+> [!NOTE]
+> **Weakest: intent authored** — Actor and purpose cannot be read from code. This number moves when somebody answers the questions in `authored.json`, not when the code changes.
+
 ## Observed versus declared
 
 11 of 11 relationships were _observed in code_; 0 are only _declared_ in compose files or manifests and may not be exercised at runtime.

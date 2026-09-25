@@ -19,6 +19,7 @@ pub mod html;
 pub mod markdown;
 pub mod model;
 pub mod openspec;
+pub mod score;
 
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
@@ -95,6 +96,8 @@ pub struct WriteReport {
     pub curated: Vec<String>,
     pub evidence: model::EvidenceHealth,
     pub warnings: Vec<String>,
+    /// How much of the system the book specifies, measured against the source.
+    pub score: score::Score,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -243,6 +246,7 @@ pub fn generate(repo: &Path, out_dir: &Path, opts: &BookOptions) -> Result<Write
         curated: b.diagrams.iter().filter(|d| d.curated).map(|d| d.id.clone()).collect(),
         evidence: b.book.meta.evidence.clone(),
         warnings: b.warnings.clone(),
+        score: b.score.clone(),
     })
 }
 
