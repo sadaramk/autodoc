@@ -29,6 +29,12 @@ Two things are worth doing locally before pushing regardless, because CI cannot
 tell you what they mean: `make demo-check` when analyzer or book output changes,
 and reverting your fix to confirm the new test actually fails without it.
 
+`make demo` builds its binary in the `test` service, which bind-mounts this tree.
+Do not move it back into an image built with `COPY`: BuildKit normalises mtimes,
+cargo compares them against a cached `target/` and skips the build, and the demo
+then regenerates the example with the previous binary while `demo-check` passes
+against it. Both targets would agree, and both would be wrong (#62).
+
 ## Cutting a release
 
 A tag builds and publishes; nothing is uploaded by hand.
