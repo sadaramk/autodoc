@@ -24,16 +24,34 @@ build:
 # machine: a book records the repository root it was generated from and the
 # commit it was pinned to. The fixture is copied to a fixed path inside the
 # container, away from this repository's `.git`, so neither leaks into it.
-DEMO_IN_CONTAINER = docker compose run --rm --entrypoint sh nunki -c \
-	'cp -R /repo/tests/fixtures/polyglot-shop /tmp/polyglot-shop && \
-	 nunki $(1) /tmp/polyglot-shop --out /repo/examples/polyglot-shop'
+#
+# Built in the `test` service, which bind-mounts this working tree, rather than
+# in an image built from it. An image stage that copies the source and then
+# compiles can hand cargo normalised mtimes against a cached target directory;
+# cargo concludes everything is fresh, does nothing, and the demo regenerates
+# the example with the *previous* binary. `demo-check` then passes, because it
+# checks the book against the same stale binary that wrote it — which is the
+# drift these targets exist to catch, arriving silently through the mechanism
+# meant to prevent it (#62). A bind mount has real mtimes and no copy step, so
+# cargo's own freshness check is the one doing the work.
+DEMO_BIN = target/release/nunki
+DEMO_FIXTURE = /tmp/polyglot-shop
 
-# Both rebuild the image first: a stale binary would regenerate the example
-# from the previously released code and hide the very drift this checks for.
-demo: build
+# Belt and braces: cargo guarantees this after a successful build, and it is
+# the exact invariant that broke, so it is worth asserting rather than assuming.
+DEMO_IN_CONTAINER = docker compose run --rm test sh -c \
+	'set -e; \
+	 cargo build --release --locked -p nunki-cli; \
+	 newer=$$(find crates -name "*.rs" -newer $(DEMO_BIN) -print -quit); \
+	 [ -z "$$newer" ] || { echo "refusing: $(DEMO_BIN) is older than $$newer" >&2; exit 1; }; \
+	 rm -rf $(DEMO_FIXTURE); \
+	 cp -R /workspace/tests/fixtures/polyglot-shop $(DEMO_FIXTURE); \
+	 $(DEMO_BIN) $(1) $(DEMO_FIXTURE) --out /workspace/examples/polyglot-shop'
+
+demo:
 	$(call DEMO_IN_CONTAINER,generate)
 
-demo-check: build
+demo-check:
 	$(call DEMO_IN_CONTAINER,check)
 
 schema:

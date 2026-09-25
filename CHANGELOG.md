@@ -74,6 +74,24 @@ All notable changes to this project are recorded here. The format follows
   argument and value placeholder is unchanged, so the promise in #9 is
   untouched. (#61)
 
+## [Unreleased]
+
+### Fixed
+
+- **`make demo` could regenerate the examples with a stale binary.** The image
+  stage copied the source and then compiled it, and BuildKit's normalised
+  mtimes against a cached `target/` directory let cargo conclude everything was
+  fresh: `cargo build --release` finished in 0.3s having compiled nothing, and
+  the example was rewritten by the *previous* binary. `make demo-check` then
+  passed, because it checked the book against the same stale binary that wrote
+  it — the drift these targets exist to catch, arriving through the mechanism
+  meant to prevent it.
+
+  Both targets now build in the `test` service, which bind-mounts the working
+  tree: real mtimes, no copy step, and cargo's own freshness check doing the
+  work. The recipe additionally refuses to run when the binary is older than
+  any source file, which is the invariant that broke. (#62)
+
 ## [0.5.0] - 2026-09-23
 
 ### Added
