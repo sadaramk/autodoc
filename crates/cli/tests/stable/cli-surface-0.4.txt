@@ -1,0 +1,185 @@
+$ nunki --help
+Verifiable, editorial architecture diagrams from source code
+
+Usage: nunki <COMMAND>
+
+Commands:
+  init      Write an nunki.toml with editorial defaults into a repository
+  analyze   Scan a repository: C4 containers, relationships, evidence, draft IR
+  validate  Validate a DiagramIR file and print diagnostics (exit 1 on errors)
+  render    Compile a DiagramIR into standalone HTML or SVG
+  generate  Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams
+  export    Export a diagram for another tool. One way: the source stays authoritative
+  diff      What changed architecturally between two revisions. Markdown for a PR comment
+  check     Fail (exit 1) when the book is out of date or cites stale code. For CI
+  verify    Verify evidence references like `src/main.rs:10-42`
+  schema    Print the DiagramIR JSON Schema
+  serve     Run the MCP server on stdio
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+
+$ nunki init --help
+Write an nunki.toml with editorial defaults into a repository
+
+Usage: nunki init [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+      --force  Overwrite an existing nunki.toml
+  -h, --help   Print help
+
+$ nunki analyze --help
+Scan a repository: C4 containers, relationships, evidence, draft IR
+
+Usage: nunki analyze [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+      --depth <DEPTH>   [possible values: system, container, component]
+      --focus <FOCUS>   Container id to decompose at component depth
+      --json <FILE>     Write the full scan report as JSON (`-` for stdout)
+      --emit-ir <FILE>  Write the draft DiagramIR
+      --theme <THEME>   [possible values: light, dark]
+      --include-tests   Also scan test, fixture and example directories
+  -h, --help            Print help
+
+$ nunki validate --help
+Validate a DiagramIR file and print diagnostics (exit 1 on errors)
+
+Usage: nunki validate [OPTIONS] <IR>
+
+Arguments:
+  <IR>  
+
+Options:
+      --repo <REPO>  Repository used to verify evidence (defaults to metadata.targetRepo)
+      --strict       
+      --json         Print the machine-readable report
+  -h, --help         Print help
+
+$ nunki render --help
+Compile a DiagramIR into standalone HTML or SVG
+
+Usage: nunki render [OPTIONS] <IR>
+
+Arguments:
+  <IR>  
+
+Options:
+  -o, --output <OUTPUT>  
+      --format <FORMAT>  [possible values: html, svg]
+      --repo <REPO>      
+      --accent <ACCENT>  indigo | coral | #RRGGBB
+      --strict           
+      --no-verify        Skip evidence verification and snippets
+      --json             
+  -h, --help             Print help
+
+$ nunki generate --help
+Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams
+
+Usage: nunki generate [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+  -o, --out <OUT>        
+      --accent <ACCENT>  
+      --theme <THEME>    [possible values: light, dark]
+      --include-tests    
+      --allow-partial    Write the book even when almost nothing in the repository could be read
+      --json             
+  -h, --help             Print help
+
+$ nunki export --help
+Export a diagram for another tool. One way: the source stays authoritative
+
+Usage: nunki export [OPTIONS] <IR>
+
+Arguments:
+  <IR>
+          
+
+Options:
+      --format <FORMAT>
+          Possible values:
+          - drawio:     A draw.io file, carrying the book's layout: open it directly
+          - drawio-csv: CSV for draw.io's Extras → Insert → Advanced → CSV, to merge into an existing drawing. draw.io routes the edges itself, so the result is laid out less well than the `drawio` file
+          
+          [default: drawio]
+
+  -o, --output <OUTPUT>
+          Output file. Defaults to the IR's name with the format's extension; `-` writes to stdout
+
+      --repo <REPO>
+          Repository the evidence belongs to, for permalinks. Defaults to the directory holding the IR, which for a generated book is inside it
+
+  -h, --help
+          Print help (see a summary with '-h')
+
+$ nunki diff --help
+What changed architecturally between two revisions. Markdown for a PR comment
+
+Usage: nunki diff [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+      --base <BASE>    Revision to compare against, such as `main` or `origin/main` [default: HEAD~1]
+      --head <HEAD>    Revision to compare. Defaults to the working tree's HEAD [default: HEAD]
+      --include-tests  
+      --json           
+      --exit-code      Exit 1 when anything changed, so a pipeline can require a review
+  -h, --help           Print help
+
+$ nunki check --help
+Fail (exit 1) when the book is out of date or cites stale code. For CI
+
+Usage: nunki check [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  [default: .]
+
+Options:
+  -o, --out <OUT>  
+      --json       
+  -h, --help       Print help
+
+$ nunki verify --help
+Verify evidence references like `src/main.rs:10-42`
+
+Usage: nunki verify [OPTIONS] <FILE:LINE[-END]>...
+
+Arguments:
+  <FILE:LINE[-END]>...  
+
+Options:
+      --repo <REPO>      [default: .]
+      --commit <COMMIT>  Pinned commit to check drift against (defaults to HEAD)
+      --json             
+  -h, --help             Print help
+
+$ nunki schema --help
+Print the DiagramIR JSON Schema
+
+Usage: nunki schema
+
+Options:
+  -h, --help  Print help
+
+$ nunki serve --help
+Run the MCP server on stdio
+
+Usage: nunki serve
+
+Options:
+  -h, --help  Print help

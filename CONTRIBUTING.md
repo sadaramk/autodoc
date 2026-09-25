@@ -109,9 +109,15 @@ The deprecation path, when something genuinely has to go:
    then point the test at it. The removal goes in the changelog under
    **Removed**, naming the release that deprecated it.
 
-The CLI works the same way. `crates/cli/tests/surface.rs` snapshots every
-subcommand's help, so a renamed flag or a changed default shows up in review as
-a diff of the promised surface. Regenerate only once the change is a decision:
+The CLI works the same way, and is checked the same way.
+`crates/cli/tests/surface.rs` snapshots every subcommand's help, so any change
+shows up in review as a diff of the promised surface;
+`crates/cli/tests/stability.rs` then classifies it against the frozen baseline
+in `crates/cli/tests/stable/` and **refuses** the breaking half — a subcommand
+or flag that disappears, a value placeholder that changes, a default that
+changes, an accepted value that goes. Help text is free to change, which is why
+detecting a diff was never enough on its own. Regenerate the snapshot only once
+the change is a decision:
 
 ```bash
 UPDATE_CLI_SURFACE=1 cargo test -p nunki-cli --test surface

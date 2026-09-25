@@ -111,6 +111,27 @@ All notable changes to this project are recorded here. The format follows
   cannot double unnoticed. The reasoning and the measurement are in
   `ROADMAP.md`. (#59)
 
+## [Unreleased]
+
+### Added
+
+- **The CLI's stability promise is enforced, not just reviewed.**
+  `crates/cli/tests/stability.rs` compares the surface against a baseline
+  frozen when the promise was made and refuses the breaking half — a subcommand
+  or flag that disappears, a value placeholder that changes, a default that
+  changes, an accepted value that goes — while leaving help text free to change.
+
+  `CONTRIBUTING.md` already said the CLI worked the same way as `DiagramIR`.
+  It did not: the schema had an executor and the CLI had an invitation to read
+  the diff carefully. A release that only reworded help produced a 34-line diff
+  in the snapshot, indistinguishable at a glance from a renamed flag. Now the
+  two halves are checked alike. (#9)
+
+  `ROADMAP.md` records where both clocks stand, with dates: baselines frozen
+  2026-09-21 at v0.4.1, v0.5.0 shipped 2026-09-23, one property added to the
+  schema and two flags added to the CLI in between, nothing removed on either
+  side. (#8, #9)
+
 ## [0.5.0] - 2026-09-23
 
 ### Added
