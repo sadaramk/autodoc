@@ -87,6 +87,30 @@ than the list.
   the behaviour phase — parsing already is — which needs the same restructure
   without the staleness. ([#5](https://github.com/sadaramk/nunki/issues/5))
 
+- **Shrinking what an agent pays to have nunki connected.** Measured
+  2026-09-25: the MCP server publishes 4 tools costing 9,454 characters,
+  ~2,363 tokens, loaded into every request whether or not a tool is ever
+  called — MCP has no way to hide a tool until it is named, so this is a
+  standing cost. Two thirds of it is one thing: `nunki_compile_diagram`'s
+  `$defs`, the `DiagramIR` type graph inlined at 4,877 characters, against
+  1,479 for all four descriptions together. Rewriting every sentence in the
+  server would move under a sixth of the number.
+
+  The inlined types are kept. They are why an agent can produce valid IR
+  without a round trip, and replacing them with a pointer to `nunki schema`
+  would buy context back by making the self-heal loop in journey 2 the common
+  path instead of the exception — paying in correctness for a saving in
+  tokens. What was wrong was not measuring it: the surface could have doubled
+  and nothing would have said so. `nunki-mcp` now refuses a surface over
+  12,000 characters, which leaves room for a fifth tool of ordinary size and
+  none for a second inlined schema. Raising that ceiling is a decision to
+  record here with its measurement, not a number to edit until a test passes.
+
+  The book, the Markdown mirror and `llms.txt` are not part of this: they are
+  read when something asks for them. `llms.txt` — the index an agent reads
+  first — is 4,562 characters for the example book, and `llms-full.txt` is
+  76,947. ([#59](https://github.com/sadaramk/nunki/issues/59))
+
 - **Following dispatch that happens at runtime.** Twice investigated, twice
   abandoned. A cross-unit expansion was built and reverted during 0.2 for
   changing nothing on five real repositories; instrumenting the code path
