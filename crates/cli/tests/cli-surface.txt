@@ -29,7 +29,7 @@ Write an nunki.toml with editorial defaults into a repository
 Usage: nunki init [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository to write the configuration into [default: .]
 
 Options:
       --force  Overwrite an existing nunki.toml
@@ -41,14 +41,14 @@ Scan a repository: C4 containers, relationships, evidence, draft IR
 Usage: nunki analyze [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository to scan [default: .]
 
 Options:
-      --depth <DEPTH>   [possible values: system, container, component]
+      --depth <DEPTH>   How far to decompose the system: system, container or component. Defaults to what nunki.toml says [possible values: system, container, component]
       --focus <FOCUS>   Container id to decompose at component depth
       --json <FILE>     Write the full scan report as JSON (`-` for stdout)
       --emit-ir <FILE>  Write the draft DiagramIR
-      --theme <THEME>   [possible values: light, dark]
+      --theme <THEME>   Colour scheme recorded in the draft IR: light or dark [possible values: light, dark]
       --include-tests   Also scan test, fixture and example directories
   -h, --help            Print help
 
@@ -58,11 +58,11 @@ Validate a DiagramIR file and print diagnostics (exit 1 on errors)
 Usage: nunki validate [OPTIONS] <IR>
 
 Arguments:
-  <IR>  
+  <IR>  DiagramIR file to validate
 
 Options:
       --repo <REPO>  Repository used to verify evidence (defaults to metadata.targetRepo)
-      --strict       
+      --strict       Treat every warning as an error
       --json         Print the machine-readable report
   -h, --help         Print help
 
@@ -72,16 +72,16 @@ Compile a DiagramIR into standalone HTML or SVG
 Usage: nunki render [OPTIONS] <IR>
 
 Arguments:
-  <IR>  
+  <IR>  DiagramIR file to compile
 
 Options:
-  -o, --output <OUTPUT>  
-      --format <FORMAT>  [possible values: html, svg]
-      --repo <REPO>      
+  -o, --output <OUTPUT>  File to write. Defaults to the IR's name with the format's extension
+      --format <FORMAT>  What to write: html or svg. Defaults to the output file's extension [possible values: html, svg]
+      --repo <REPO>      Repository used to verify evidence (defaults to metadata.targetRepo)
       --accent <ACCENT>  indigo | coral | #RRGGBB
-      --strict           
+      --strict           Treat every warning as an error
       --no-verify        Skip evidence verification and snippets
-      --json             
+      --json             Print the machine-readable report
   -h, --help             Print help
 
 $ nunki generate --help
@@ -90,15 +90,15 @@ Generate the architecture book: index.html, Markdown mirror, llms.txt, diagrams
 Usage: nunki generate [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository to document [default: .]
 
 Options:
-  -o, --out <OUT>        
-      --accent <ACCENT>  
-      --theme <THEME>    [possible values: light, dark]
-      --include-tests    
+  -o, --out <OUT>        Directory to write the book into. Defaults to what nunki.toml says
+      --accent <ACCENT>  indigo | coral | #RRGGBB
+      --theme <THEME>    Colour scheme the book opens in: light or dark. A reader can switch [possible values: light, dark]
+      --include-tests    Also read test, fixture and example directories
       --allow-partial    Write the book even when almost nothing in the repository could be read
-      --json             
+      --json             Print the machine-readable report
   -h, --help             Print help
 
 $ nunki export --help
@@ -108,10 +108,12 @@ Usage: nunki export [OPTIONS] <IR>
 
 Arguments:
   <IR>
-          
+          DiagramIR file to export
 
 Options:
       --format <FORMAT>
+          What to write: a draw.io file, or CSV to merge into an existing drawing
+
           Possible values:
           - drawio:     A draw.io file, carrying the book's layout: open it directly
           - drawio-csv: CSV for draw.io's Extras → Insert → Advanced → CSV, to merge into an existing drawing. draw.io routes the edges itself, so the result is laid out less well than the `drawio` file
@@ -134,6 +136,8 @@ Usage: nunki spec [OPTIONS] [PATH]
 
 Arguments:
   [PATH]
+          Repository to read the specification from
+          
           [default: .]
 
 Options:
@@ -157,11 +161,11 @@ Check the code against a specification someone else wrote
 Usage: nunki conform [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository to check against the specification [default: .]
 
 Options:
       --spec <SPEC>  Specification files. Defaults to the layouts the toolkits use: `.kiro/specs/*/requirements.md`, `openspec/specs/*/spec.md`, `specs/*/spec.md`
-      --json         
+      --json         Print the machine-readable report
       --exit-code    Exit 1 when something declared is missing or contradicted
   -h, --help         Print help
 
@@ -171,13 +175,13 @@ What changed architecturally between two revisions. Markdown for a PR comment
 Usage: nunki diff [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository whose revisions are compared [default: .]
 
 Options:
       --base <BASE>       Revision to compare against, such as `main` or `origin/main` [default: HEAD~1]
       --head <HEAD>       Revision to compare. Defaults to the working tree's HEAD [default: HEAD]
-      --include-tests     
-      --json              
+      --include-tests     Also read test, fixture and example directories
+      --json              Print the machine-readable report
       --exit-code         Exit 1 when anything changed, so a pipeline can require a review
       --record <VERSION>  Append this comparison to the book's architecture history, as the release named here. Run at release time: the entry is committed and never recomputed, so the history survives the code it describes
       --out <OUT>         Book directory to record into. Defaults to whatever nunki.toml says
@@ -189,11 +193,11 @@ Fail (exit 1) when the book is out of date or cites stale code. For CI
 Usage: nunki check [OPTIONS] [PATH]
 
 Arguments:
-  [PATH]  [default: .]
+  [PATH]  Repository the book describes [default: .]
 
 Options:
-  -o, --out <OUT>  
-      --json       
+  -o, --out <OUT>  Book directory to check. Defaults to what nunki.toml says
+      --json       Print the machine-readable report
   -h, --help       Print help
 
 $ nunki verify --help
@@ -202,12 +206,12 @@ Verify evidence references like `src/main.rs:10-42`
 Usage: nunki verify [OPTIONS] <FILE:LINE[-END]>...
 
 Arguments:
-  <FILE:LINE[-END]>...  
+  <FILE:LINE[-END]>...  References to check, as `file:line` or `file:start-end`
 
 Options:
-      --repo <REPO>      [default: .]
+      --repo <REPO>      Repository the references are read from [default: .]
       --commit <COMMIT>  Pinned commit to check drift against (defaults to HEAD)
-      --json             
+      --json             Print the machine-readable report
   -h, --help             Print help
 
 $ nunki schema --help
