@@ -92,6 +92,25 @@ All notable changes to this project are recorded here. The format follows
   work. The recipe additionally refuses to run when the binary is older than
   any source file, which is the invariant that broke. (#62)
 
+## [Unreleased]
+
+### Added
+
+- **The standing cost of connecting nunki to an agent is measured and
+  budgeted.** Every tool the MCP server publishes sits in the model's context
+  on every request, called or not, and MCP has no way to hide one until it is
+  named. Measured 2026-09-25: 4 tools, 9,454 characters, ~2,363 tokens — two
+  thirds of it `nunki_compile_diagram`'s inlined `DiagramIR` type graph,
+  against 1,479 characters for all four descriptions together.
+
+  The types stay inlined: they are why an agent can produce valid IR without a
+  round trip, and a pointer to `nunki schema` would buy context back by making
+  the self-heal loop the common path rather than the exception. What was
+  missing was the measurement. `nunki-mcp` now refuses a surface over 12,000
+  characters and prints the per-tool breakdown when it does, so the number
+  cannot double unnoticed. The reasoning and the measurement are in
+  `ROADMAP.md`. (#59)
+
 ## [0.5.0] - 2026-09-23
 
 ### Added

@@ -421,6 +421,51 @@ mod tests {
         assert_eq!(compile["properties"]["ir"]["properties"]["nodes"]["items"]["$ref"], "#/$defs/Node");
     }
 
+    /// What an agent pays to have nunki connected, before it asks for anything.
+    ///
+    /// Every tool in `tools/list` is in the model's context on every request:
+    /// MCP has no way to hide one until it is named, so this is a standing cost
+    /// and the only levers are how many tools there are and how large each
+    /// schema is.
+    ///
+    /// Measured 2026-09-25: 4 tools, 9,454 characters, ~2,363 tokens. Two
+    /// thirds of it is one thing — `nunki_compile_diagram`'s `$defs`, the
+    /// `DiagramIR` type graph inlined at 4,877 characters, against 1,479 for
+    /// all four descriptions together. That is deliberate and is not being
+    /// shrunk: the inlined types are why an agent can produce valid IR without
+    /// a round trip, and trading them for a smaller number would buy context
+    /// back by making the tool worse at the one loop it exists for.
+    ///
+    /// So this is a budget, not a diet. The risk worth guarding is the surface
+    /// doubling because a second schema was inlined without anyone noticing —
+    /// not the size it is today. The ceiling leaves room for a fifth tool of
+    /// ordinary size and refuses another `DiagramIR`.
+    #[test]
+    fn the_standing_cost_of_connecting_nunki_stays_within_its_budget() {
+        const BUDGET: usize = 12_000;
+        let mut s = Server::default();
+        let r = call(&mut s, json!({"jsonrpc":"2.0","id":1,"method":"tools/list"}));
+        let tools = r["result"]["tools"].as_array().unwrap();
+
+        let mut breakdown = String::new();
+        let mut total = 0;
+        for t in tools {
+            let name = t["name"].as_str().unwrap();
+            let desc = t["description"].as_str().map(str::len).unwrap_or(0);
+            let schema = t["inputSchema"].to_string().len();
+            total += name.len() + desc + schema;
+            breakdown.push_str(&format!("\n  {name:28} description {desc:5}  schema {schema:6}"));
+        }
+        assert!(
+            total <= BUDGET,
+            "the always-loaded MCP surface is {total} characters (~{} tokens), over its {BUDGET} budget.\n\
+             Every agent pays this on every request, whether or not it calls a tool.{breakdown}\n\n\
+             Raising the budget is a decision to take deliberately, with the new measurement written \
+             down beside it — not a number to edit until the test passes.",
+            total / 4
+        );
+    }
+
     #[test]
     fn protocol_errors() {
         let mut s = Server::default();
