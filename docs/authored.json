@@ -8,11 +8,11 @@
       "Be read equally by a person and by a machine: the same model behind the HTML book, the Markdown mirror, `llms.txt`, `behaviour.json` and the MCP server, so an agent and a reviewer are looking at the same facts.",
       "Say what could not be determined, in the book, where a reader will see it — an unanswered question is more useful than a confident gap.",
       "Run in CI on every pull request, so documentation drift is caught at the moment it is introduced rather than discovered months later.",
-      "Be the ground truth an agent reads before it changes a codebase: understanding that is verified against a commit is the step that has to come before autonomous work, and the step most agentic tooling skips."
+      "Be the ground truth an agent reads before it changes a codebase. Understanding verified against a commit is the step that has to come before autonomous work, and the step most agentic tooling skips: the frameworks that turn a legacy system into specifications for coding agents have a language model write those specifications and annotate its own confidence, with nothing that resolves a citation or fails when the code moves underneath it. nunki produces the half a machine can check."
     ],
     "nonGoals": [
       "Inventing intent. Why a system exists, who it serves and what success means are authored by a person; the tool marks them as open questions rather than guessing — this file is that answer for nunki itself.",
-      "Writing or changing code. nunki reads a repository and never modifies one. Agentic coding is what the ground truth is for, not what nunki does.",
+      "Writing or changing code. nunki reads a repository and never modifies one. This is a division of labour, not a gap waiting to be filled: the tools that write code from a specification already exist and are good at it, and what they lack is a specification anything can verify. Goal 6 is the half nunki is for. The agent that edits the file is the other half, and it is not this one.",
       "Replacing review. A book is a well-evidenced starting point to check, not the authority on an architecture.",
       "Being a code search engine. Finding a symbol is answered well by other tools; nunki answers what the system is and how its parts relate.",
       "Round-tripping a diagram somebody has since edited. The source is right about the architecture; the drawing is right about the drawing.",
