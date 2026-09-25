@@ -68,9 +68,33 @@ is reported rather than checked against whatever sits at those lines here.
 What remains are **[#8](https://github.com/sadaramk/nunki/issues/8) and
 [#9](https://github.com/sadaramk/nunki/issues/9), which are clocks rather than
 tasks**: both promise a surface *unchanged for a full minor cycle*, which no
-amount of work completes — only elapsed time without a violation does. The
-machinery that would notice a violation is in place, so the clock is running.
-Nothing to do but not break them.
+amount of work completes — only elapsed time without a violation does.
+
+Their other acceptance criteria are met, and were checked rather than assumed.
+The schema ships as a release asset (`release.yml`); the deprecation path is
+written down (CONTRIBUTING.md); the exit codes are documented
+(`README.md`) and asserted in journeys — `2` at `journeys.rs:80`, `1` at
+`:156` and `:184`, `0` throughout.
+
+**Where the clocks stand, measured 2026-09-25.** Both baselines were frozen on
+2026-09-21 at v0.4.1, and v0.5.0 shipped on 2026-09-23, so one minor cycle has
+elapsed under them:
+
+- `DiagramIR` has changed exactly once against the frozen 0.4 baseline — one
+  property added, `Evidence.repo`, for multi-repository citations. Nothing
+  removed, nothing retyped, nothing made required.
+- The CLI surface has changed shape twice, both additions, both on 2026-09-22:
+  `--spec` on `conform` and `--record` on `diff`. Nothing has ever been removed
+  or renamed. The help-text rewrite on 2026-09-24 changed no flag.
+
+Whether four days of one author's use is the *soak* a 1.0 promise implies is a
+judgement, and a different question from whether the promise has held. The
+promise has held, and it is now enforced on both sides rather than on one:
+`crates/cli/tests/stability.rs` refuses a breaking CLI change the way
+`crates/ir-spec/tests/stability.rs` refuses a breaking schema change. Until it
+existed, the CLI half was enforced by whoever read the diff — and a release
+that only reworded help produced a 34-line diff there, indistinguishable at a
+glance from a renamed flag.
 
 ## Not doing
 
